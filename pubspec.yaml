@@ -1,0 +1,9 @@
+name:  dart_rtc_client
+description:  A Dart WebRTC Client library 
+author: Sami Ylonen <sami.ylonen@gmail.com>
+version: 0.1.0
+
+dependencies:
+  unittest: 0.3.4
+  dart_rtc_common:
+    git: git://github.com/samiy-xx/dart_rtc_common.git

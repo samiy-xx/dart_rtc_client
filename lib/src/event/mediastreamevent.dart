@@ -1,12 +1,16 @@
 part of rtc_client;
 
 class MediaStreamAvailableEvent extends RtcEvent {
-  MediaStream ms;
-  PeerWrapper pw;
+  MediaStream stream;
+  PeerWrapper peerWrapper;
+  bool isLocal = false;
   
-  MediaStreamAvailableEvent(MediaStream m, PeerWrapper p) {
-    ms = m;
-    pw = p;
+  MediaStreamAvailableEvent(MediaStream m, PeerWrapper p, [bool local]) {
+    stream = m;
+    peerWrapper = p;
+    
+    if (?local)
+      isLocal = local;
   }
 }
 

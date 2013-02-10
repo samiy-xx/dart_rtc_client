@@ -122,7 +122,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
           _pm.setLocalStream(stream);
           _sh.initialize();
           _initializedController.add(new InitializedEvent(true, "UserMedia received"));
-          _mediaStreamAvailableStreamController.add(new MediaStreamAvailableEvent(stream, null));
+          _mediaStreamAvailableStreamController.add(new MediaStreamAvailableEvent(stream, null, true));
         });
       } else {
         _initializedController.add(new InitializedEvent(false, "Failed to get user media"));

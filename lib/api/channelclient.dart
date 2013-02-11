@@ -166,12 +166,15 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     return this;
   }
   
-  void setChannelLimit(int l) {
+  bool setChannelLimit(int l) {
     if (_channelId != null) {
       if (isChannelOwner) {
         _sh.sendPacket(new SetChannelVarsCommand.With(_myId, _channelId, l));
+        return true;
       }
     }
+    
+    return false;
   }
   /**
    * Requests the server to transmit the message to all users in channel

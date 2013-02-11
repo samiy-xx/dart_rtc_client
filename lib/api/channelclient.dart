@@ -2,6 +2,7 @@ part of rtc_client;
 
 class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
   PeerConnectionEventListener, PeerMediaEventListener, PeerDataEventListener {
+  InitializationState _currentState;
   
   StreamingSignalHandler _sh;
   PeerManager _pm;
@@ -124,12 +125,12 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
           _mediaStreamAvailableStreamController.add(new MediaStreamAvailableEvent(stream, null, true));
         });
       } else {
-        _initializedController.add(new InitializationStateEvent(false, "Failed to get user media", InitializationState.NOT_READY));
+        setState(InitializationState.NOT_READY);
         return;
       }
     }
     _sh.initialize();
-    _initializedController.add(new InitializationStateEvent(true, "UserMedia received", InitializationState.MEDIA_READY));
+    setState(InitializationState.MEDIA_READY);
   }
   
   /**
@@ -164,6 +165,16 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     _channelId = c;
     _sh.channelId = c;
     return this;
+  }
+  
+  void setState(InitializationState state) {
+    if (_currentState == state)
+      return;
+    
+    _currentState = state;
+    
+    if (_initializedController.hasSubscribers)
+      _initializedController.add(new InitializationStateEvent(state));
   }
   
   bool setChannelLimit(int l) {
@@ -238,8 +249,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
   void _connectionSuccessPacketHandler(ConnectionSuccessPacket p) {
     _myId = p.id;
     
-    if (_initializedController.hasSubscribers)
-      _initializedController.add(new InitializationStateEvent(true, "Connection to server has been established", InitializationState.REMOTE_READY));
+    setState(InitializationState.REMOTE_READY);
   }
   
   void _channelPacketHandler(ChannelPacket p) {
@@ -247,8 +257,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     if (_packetController.hasSubscribers)
       _packetController.add(new PacketEvent(p, pw));
     
-    if (_initializedController.hasSubscribers)
-      _initializedController.add(new InitializationStateEvent(true, "Channel ready", InitializationState.CHANNEL_READY));
+    setState(InitializationState.CHANNEL_READY);
   }
   
   void _joinPacketHandler(JoinPacket p) {

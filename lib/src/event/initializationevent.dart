@@ -12,13 +12,10 @@ class InitializationState {
 }
 
 class InitializationStateEvent extends RtcEvent {
-  String message;
-  bool initialized;
+  
   InitializationState state;
   
-  InitializationStateEvent(bool i, String m, InitializationState s) {
-    initialized = i;
-    message = m;
+  InitializationStateEvent(InitializationState s) {
     state = s;
   }
 }

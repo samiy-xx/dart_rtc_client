@@ -43,8 +43,8 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
   StreamController<MediaStreamRemovedEvent> _mediaStreamRemovedStreamController;
   Stream<MediaStreamRemovedEvent> get onRemoteMediaStreamRemovedEvent  => _mediaStreamRemovedStreamController.stream;
   
-  StreamController<InitializedEvent> _initializedController;
-  Stream<InitializedEvent> get onInitializedEvent => _initializedController.stream;
+  StreamController<InitializationStateEvent> _initializedController;
+  Stream<InitializationStateEvent> get onInitializationStateChangeEvent => _initializedController.stream;
   
   StreamController<SignalingOpenEvent> _signalingOpenController;
   Stream<SignalingOpenEvent> get onSignalingOpenEvent => _signalingOpenController.stream;
@@ -85,7 +85,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     
     _sh = new StreamingSignalHandler(ds);
     
-    _initializedController = new StreamController<InitializedEvent>.broadcast();
+    _initializedController = new StreamController<InitializationStateEvent>.broadcast();
     _mediaStreamAvailableStreamController = new StreamController.broadcast();
     _mediaStreamRemovedStreamController = new StreamController.broadcast();
     _signalingOpenController = new StreamController.broadcast();
@@ -121,15 +121,15 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
           _ms = stream;
           _pm.setLocalStream(stream);
           _sh.initialize();
-          _initializedController.add(new InitializedEvent(true, "UserMedia received"));
           _mediaStreamAvailableStreamController.add(new MediaStreamAvailableEvent(stream, null, true));
         });
       } else {
-        _initializedController.add(new InitializedEvent(false, "Failed to get user media"));
+        _initializedController.add(new InitializationStateEvent(false, "Failed to get user media", InitializationState.NOT_READY));
         return;
       }
     }
     _sh.initialize();
+    _initializedController.add(new InitializationStateEvent(true, "UserMedia received", InitializationState.MEDIA_READY));
   }
   
   /**
@@ -237,13 +237,18 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
   
   void _connectionSuccessPacketHandler(ConnectionSuccessPacket p) {
     _myId = p.id;
-    _initializedController.add(new InitializedEvent(true, "Connection to server has been established"));
+    
+    if (_initializedController.hasSubscribers)
+      _initializedController.add(new InitializationStateEvent(true, "Connection to server has been established", InitializationState.REMOTE_READY));
   }
   
   void _channelPacketHandler(ChannelPacket p) {
     PeerWrapper pw = _pm.findWrapper(p.id);
     if (_packetController.hasSubscribers)
       _packetController.add(new PacketEvent(p, pw));
+    
+    if (_initializedController.hasSubscribers)
+      _initializedController.add(new InitializationStateEvent(true, "Channel ready", InitializationState.CHANNEL_READY));
   }
   
   void _joinPacketHandler(JoinPacket p) {

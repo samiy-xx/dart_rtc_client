@@ -88,7 +88,7 @@ abstract class RtcClient {
   /**
    * Event fires when signalhandler is ready
    */
-  Stream<InitializedEvent> get onInitializedEvent;
+  Stream<InitializationStateEvent> get onInitializationStateChangeEvent;
   
   /**
    * Event fires when signaling has connected to the server via data source

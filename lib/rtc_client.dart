@@ -4,7 +4,8 @@ import 'dart:html';
 import 'dart:json' as json;
 import 'dart:async';
 
-import 'package:dart_rtc_common/rtc_common.dart';
+//import 'package:dart_rtc_common/rtc_common.dart';
+import '../../dart_rtc_common/lib/rtc_common.dart';
 
 part 'src/peer/peermanager.dart';
 part 'src/peer/peerwrapper.dart';

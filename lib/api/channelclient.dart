@@ -106,6 +106,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     _sh.registerHandler(PacketType.CHANNEL, _channelPacketHandler);
     _sh.registerHandler(PacketType.CONNECTED, _connectionSuccessPacketHandler);
     _sh.registerHandler(PacketType.CHANNELMESSAGE, _channelMessagePacketHandler);
+    _sh.registerHandler(PacketType.CHANGENICK, _defaultPacketHandler);
   }
   
   void initialize() {
@@ -167,6 +168,11 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     return this;
   }
   
+  ChannelClient setAutoCreatePeer(bool v) {
+    _sh._createPeerOnJoin = v;
+    return this;
+  }
+  
   void setState(InitializationState state) {
     if (_currentState == state)
       return;
@@ -184,6 +190,12 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     }
     
     return false;
+  }
+  
+  void createPeerConnection(String id) {
+    PeerWrapper p = _pm.createPeer();
+    p.id = id;
+    p.setAsHost(true);
   }
   /**
    * Requests the server to transmit the message to all users in channel
@@ -252,6 +264,11 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     setState(InitializationState.REMOTE_READY);
   }
   
+  void _defaultPacketHandler(Packet p) {
+    PeerWrapper pw = _pm.findWrapper(p.id);
+    if (_packetController.hasSubscribers)
+      _packetController.add(new PacketEvent(p, pw));
+  }
   void _channelPacketHandler(ChannelPacket p) {
     PeerWrapper pw = _pm.findWrapper(p.id);
     if (_packetController.hasSubscribers)

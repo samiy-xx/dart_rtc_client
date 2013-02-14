@@ -18,6 +18,11 @@ class SignalHandler extends PacketHandler implements PeerPacketEventListener, Da
   /* Enable datachannels */
   bool _dataChannelsEnabled = false;
   
+  bool _createPeerOnJoin = true;
+  
+  bool get createPeerOnJoin => _createPeerOnJoin;
+  set createPeerOnJoin(bool v) => _createPeerOnJoin = v;
+  
   /** Getter for PeerManager */
   PeerManager get peerManager => getPeerManager();
   
@@ -69,6 +74,8 @@ class SignalHandler extends PacketHandler implements PeerPacketEventListener, Da
     
     /* Listen for id, all users in channel you joined */
     registerHandler(PacketType.ID, handleId);
+    
+    registerHandler(PacketType.CHANGENICK, handleIdChange);
   }
   
   /**
@@ -194,9 +201,11 @@ class SignalHandler extends PacketHandler implements PeerPacketEventListener, Da
   void handleJoin(JoinPacket packet) {
     try {
       _log.Debug("(signalhandler.dart) JoinPacket channel ${packet.channelId} user ${packet.id}");
-      PeerWrapper p = createPeerWrapper();
-      p.id = packet.id;
-      p.setAsHost(true);
+      if (_createPeerOnJoin) {
+        PeerWrapper p = createPeerWrapper();
+        p.id = packet.id;
+        p.setAsHost(true);
+      }
     } catch (e) {
       _log.Error("(signalhandler.dart) Error handleJoin $e");
     }
@@ -208,11 +217,24 @@ class SignalHandler extends PacketHandler implements PeerPacketEventListener, Da
   void handleId(IdPacket id) {
     _log.Debug("(signalhandler.dart) ID packet: channel ${id.channelId} user ${id.id}");
     if (id.id != null && !id.id.isEmpty) {
-      PeerWrapper p = createPeerWrapper();
-      p.id = id.id;
+      if (_createPeerOnJoin) {
+        PeerWrapper p = createPeerWrapper();
+        p.id = id.id;
+      }
     }
   }
   
+  void handleIdChange(ChangeNickCommand c) {
+    _log.Debug("(signalhandler.dart) CHANGEID packet: user ${c.id} to ${c.newId}");
+    if (c.id == _id) {
+      // t's me
+      _id = c.id;
+    } else {
+      PeerWrapper pw = _peerManager.findWrapper(c.id);
+      if (pw != null)
+        pw.id = c.newId;
+    }
+  }
   /**
    * handle connection success
    */
@@ -249,12 +271,14 @@ class SignalHandler extends PacketHandler implements PeerPacketEventListener, Da
     });
     PeerWrapper peer = _peerManager.findWrapper(p.id);
     
-    if (peer != null) {
-      _log.Debug("(signalhandler.dart) Setting remote description to peer");
-      peer.setRemoteSessionDescription(t);
-    } else {
-      _log.Debug("(signalhandler.dart) Peer not found with id ${p.id}");
+    if (peer == null) {
+      _log.Debug("(signalhandler.dart) Peer not found with id ${p.id}. Creating...");
+      peer = createPeerWrapper();
+      peer.id = p.id;
     }
+    
+    _log.Debug("(signalhandler.dart) Setting remote description to peer");
+    peer.setRemoteSessionDescription(t);
   }
   
   /**

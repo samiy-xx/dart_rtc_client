@@ -13,13 +13,6 @@ class ChannelSignalHandler extends SignalHandler{
     registerHandler(PacketType.CHANNEL, handleChannelInfo);
   }
   
-  void initialize([String host]) {
-    if (_channelId == null)
-      throw new Exception("channelId is null");
-    
-    super.initialize(host);
-  }
-  
   /**
    * Callback for websocket onopen
    */

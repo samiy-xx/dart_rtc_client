@@ -92,7 +92,7 @@ class SignalHandler extends PacketHandler implements PeerPacketEventListener, Da
    * If no host parameter is given, uses the default one from lib
    * @param optional parameter host
    */
-  void initialize([String host]) {
+  void initialize() {
     if (_peerManager == null)
       throw new Exception("PeerManager is null");
     

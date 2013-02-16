@@ -34,22 +34,27 @@ class ChannelSignalHandler extends SignalHandler{
   }
   
   void handleJoin(JoinPacket packet) {
+    super.handleJoin(packet);
+    
+    // If it's our id, then we received our channel id
     if (packet.id == _id)
       _channelId = packet.channelId;
     
-    _log.Debug("(channelsignalhandler.dart) JoinPacket channel ${packet.channelId} user ${packet.id}");
-    PeerWrapper p = createPeerWrapper();
-    p.channel = packet.channelId;
-    p.id = packet.id;
-    p.setAsHost(true);
+    if (createPeerOnJoin) {
+      PeerWrapper p = _peerManager.findWrapper(packet.id);
+      if (p != null)
+        p.channel = packet.channelId;
+    }
   }
   
   void handleId(IdPacket id) {
-    _log.Debug("(channelsignalhandler.dart) ID packet: channel ${id.channelId} user ${id.id}");
-    if (id.id != null && !id.id.isEmpty) {
-      PeerWrapper p = createPeerWrapper();
-      p.id = id.id;
-      p.channel = id.channelId;
+    super.handleId(id);
+    
+    if (createPeerOnJoin) {
+      PeerWrapper p = _peerManager.findWrapper(id.id);
+      if (p != null)
+        p.channel = id.channelId;
     }
+    
   }
 }

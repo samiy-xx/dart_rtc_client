@@ -110,8 +110,6 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
   }
   
   void initialize() {
-    if (_channelId == null)
-      throw new Exception("Channel can not be null, initialize with setChannel");
     
     if (!_requireAudio && !_requireVideo && !_requireDataChannel)
       throw new Exception("Must require either video, audio or data channel");
@@ -130,7 +128,6 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
         return;
       }
     }
-    _sh.createPeerOnJoin = false;
     _sh.initialize();
     setState(InitializationState.MEDIA_READY);
   }
@@ -265,7 +262,8 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
   
   void _connectionSuccessPacketHandler(ConnectionSuccessPacket p) {
     _myId = p.id;
-    
+    if (_channelId != null)
+      joinChannel(_channelId);
     setState(InitializationState.REMOTE_READY);
   }
   

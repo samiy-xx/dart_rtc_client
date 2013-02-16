@@ -130,6 +130,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
         return;
       }
     }
+    _sh.createPeerOnJoin = false;
     _sh.initialize();
     setState(InitializationState.MEDIA_READY);
   }
@@ -171,6 +172,10 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
   ChannelClient setAutoCreatePeer(bool v) {
     _sh._createPeerOnJoin = v;
     return this;
+  }
+  
+  void joinChannel(String name) {
+    _sh.sendPacket(new ChannelJoinCommand.With(_myId, name));
   }
   
   void setState(InitializationState state) {
@@ -269,6 +274,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     if (_packetController.hasSubscribers)
       _packetController.add(new PacketEvent(p, pw));
   }
+  
   void _channelPacketHandler(ChannelPacket p) {
     PeerWrapper pw = _pm.findWrapper(p.id);
     if (_packetController.hasSubscribers)

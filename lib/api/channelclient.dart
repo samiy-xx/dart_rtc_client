@@ -175,6 +175,10 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     _sh.sendPacket(new ChannelJoinCommand.With(_myId, name));
   }
   
+  void changeId(String newId) {
+    _sh.sendPacket(new ChangeNickCommand.With(_myId, newId));
+  }
+  
   void setState(InitializationState state) {
     if (_currentState == state)
       return;

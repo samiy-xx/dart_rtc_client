@@ -3,89 +3,89 @@ part of rtc_client;
 class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
   PeerConnectionEventListener, PeerMediaEventListener, PeerDataEventListener {
   InitializationState _currentState;
-  
+
   StreamingSignalHandler _sh;
   PeerManager _pm;
   DataSource _ds;
-  
+
   bool _requireAudio = false;
   bool _requireVideo = false;
   bool _requireDataChannel = false;
-  
+
   LocalMediaStream _ms = null;
-  
+
   String _channelId;
   String _myId;
   String _otherId;
-  
+
   /**
    * Signal handler
    */
   StreamingSignalHandler get signalHandler => _sh;
-  
+
   /**
    * PeerManager
    */
   PeerManager get peerManager => _pm;
-  
+
   /**
    * My id
    */
   String get myId => _myId;
-  
+
   /**
    * Are you a channel owner
    */
   bool get isChannelOwner => _sh.isChannelOwner;
-  
+
   StreamController<MediaStreamAvailableEvent> _mediaStreamAvailableStreamController;
   Stream<MediaStreamAvailableEvent> get onRemoteMediaStreamAvailableEvent  => _mediaStreamAvailableStreamController.stream;
-  
+
   StreamController<MediaStreamRemovedEvent> _mediaStreamRemovedStreamController;
   Stream<MediaStreamRemovedEvent> get onRemoteMediaStreamRemovedEvent  => _mediaStreamRemovedStreamController.stream;
-  
+
   StreamController<InitializationStateEvent> _initializedController;
   Stream<InitializationStateEvent> get onInitializationStateChangeEvent => _initializedController.stream;
-  
+
   StreamController<SignalingOpenEvent> _signalingOpenController;
   Stream<SignalingOpenEvent> get onSignalingOpenEvent => _signalingOpenController.stream;
-  
+
   StreamController<SignalingCloseEvent> _signalingCloseController;
   Stream<SignalingCloseEvent> get onSignalingCloseEvent => _signalingCloseController.stream;
-  
+
   StreamController<SignalingErrorEvent> _signalingErrorController;
   Stream<SignalingErrorEvent> get onSignalingErrorEvent => _signalingErrorController.stream;
-  
+
   StreamController<PeerStateChangedEvent> _peerStateChangeController;
   Stream<PeerStateChangedEvent> get onPeerStateChangeEvent => _peerStateChangeController.stream;
-  
+
   StreamController<IceGatheringStateChangedEvent> _iceGatheringStateChangeController;
   Stream<IceGatheringStateChangedEvent> get onIceGatheringStateChangeEvent => _iceGatheringStateChangeController.stream;
-  
+
   StreamController<DataSourceMessageEvent> _dataSourceMessageController;
   Stream<DataSourceMessageEvent> get onDataSourceMessageEvent => _dataSourceMessageController.stream;
-  
+
   StreamController<DataSourceCloseEvent> _dataSourceCloseController;
   Stream<DataSourceCloseEvent> get onDataSourceCloseEvent => _dataSourceCloseController.stream;
-  
+
   StreamController<DataSourceOpenEvent> _dataSourceOpenController;
   Stream<DataSourceOpenEvent> get onDataSourceOpenEvent => _dataSourceOpenController.stream;
-  
+
   StreamController<DataSourceErrorEvent> _dataSourceErrorController;
   Stream<DataSourceErrorEvent> get onDataSourceErrorEvent => _dataSourceErrorController.stream;
-  
+
   StreamController<PacketEvent> _packetController;
   Stream<PacketEvent> get onPacketEvent => _packetController.stream;
-  
+
   ChannelClient(DataSource ds) {
     _ds = ds;
     _ds.subscribe(this);
-    
+
     _pm = new PeerManager();
     _pm.subscribe(this);
-    
+
     _sh = new StreamingSignalHandler(ds);
-    
+
     _initializedController = new StreamController<InitializationStateEvent>.broadcast();
     _mediaStreamAvailableStreamController = new StreamController.broadcast();
     _mediaStreamRemovedStreamController = new StreamController.broadcast();
@@ -99,7 +99,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     _dataSourceOpenController = new StreamController.broadcast();
     _dataSourceErrorController = new StreamController.broadcast();
     _packetController = new StreamController.broadcast();
-    
+
     _sh.registerHandler(PacketType.JOIN, _joinPacketHandler);
     _sh.registerHandler(PacketType.ID, _idPacketHandler);
     _sh.registerHandler(PacketType.BYE, _byePacketHandler);
@@ -108,30 +108,34 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     _sh.registerHandler(PacketType.CHANNELMESSAGE, _channelMessagePacketHandler);
     _sh.registerHandler(PacketType.CHANGENICK, _defaultPacketHandler);
   }
-  
+
   void initialize() {
-    
+
     if (!_requireAudio && !_requireVideo && !_requireDataChannel)
       throw new Exception("Must require either video, audio or data channel");
-    
+
     // If either is set, need to request permission for audio and/or video
-    if ((_requireAudio || _requireVideo) && _ms == null) { 
+    if ((_requireAudio || _requireVideo) && _ms == null) {
       if (MediaStream.supported) {
         window.navigator.getUserMedia(audio: _requireAudio, video: _requireVideo).then((LocalMediaStream stream) {
           _ms = stream;
           _pm.setLocalStream(stream);
           _sh.initialize();
+          print("WWWWTTTTTFFFFF!!!!!!");
+          setState(InitializationState.MEDIA_READY);
           _mediaStreamAvailableStreamController.add(new MediaStreamAvailableEvent(stream, null, true));
         });
       } else {
         setState(InitializationState.NOT_READY);
         return;
       }
+    } else {
+
     }
-    _sh.initialize();
-    setState(InitializationState.MEDIA_READY);
+
+
   }
-  
+
   /**
    * Implements RtcClient setRequireAudio
    */
@@ -139,7 +143,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     _requireAudio = b;
     return this;
   }
-  
+
   /**
    * Implements RtcClient setRequireVideo
    */
@@ -147,7 +151,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     _requireVideo = b;
     return this;
   }
-  
+
   /**
    * Implements RtcClient setRequireDataChannel
    */
@@ -156,7 +160,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     _sh.setDataChannelsEnabled(b);
     return this;
   }
-  
+
   /**
    * Implements RtcClient setChannel
    */
@@ -165,58 +169,67 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     _sh.channelId = c;
     return this;
   }
-  
+
   ChannelClient setAutoCreatePeer(bool v) {
     _sh._createPeerOnJoin = v;
     return this;
   }
-  
+
   void joinChannel(String name) {
     _sh.sendPacket(new ChannelJoinCommand.With(_myId, name));
   }
-  
+
   void changeId(String newId) {
     _sh.sendPacket(new ChangeNickCommand.With(_myId, newId));
   }
-  
+
   void setState(InitializationState state) {
     if (_currentState == state)
       return;
-    
+
     _currentState = state;
-    
+
     if (_initializedController.hasSubscribers)
       _initializedController.add(new InitializationStateEvent(state));
   }
-  
+
   bool setChannelLimit(int l) {
     if (_channelId != null) {
       _sh.sendPacket(new SetChannelVarsCommand.With(_myId, _channelId, l));
       return true;
     }
-    
+
     return false;
   }
-  
+
   void createPeerConnection(String id) {
     PeerWrapper p = _pm.createPeer();
     p.id = id;
     p.setAsHost(true);
   }
+
+  bool peerWrapperExists(String id) {
+    return findPeer(id) != null;
+  }
+
+  PeerWrapper findPeer(String id) {
+    return _pm.findWrapper(id);
+  }
+
   /**
    * Requests the server to transmit the message to all users in channel
    */
   void sendChannelMessage(String message) {
     _sh.send(PacketFactory.get(new ChannelMessage.With(_myId, _channelId, message)));
   }
-  
+
   /**
    * Sends a message to a peer
    */
   void sendPeerUserMessage(String peerId, String message) {
     sendPeerPacket(peerId, new UserMessage.With(_myId, message));
   }
-  
+
   /**
    * Sends a packet to peer
    */
@@ -227,21 +240,21 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
       dpw.send(p);
     }
   }
-  
+
   /**
    * Sends a blob to peer
    */
   void sendBlob(String peerId, Blob data) {
     throw new UnsupportedError("sendBlob is a work in progress");
   }
-  
+
   /**
    * Sends an arraybuffer to peer
    */
   void sendArrayBuffer(String peerId, ArrayBuffer data) {
     throw new UnsupportedError("sendArrayBuffer is a work in progress");
   }
-  
+
   /**
    * Sends an arraybufferview to peer
    */
@@ -257,71 +270,71 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
       _sh.send(PacketFactory.get(new RemoveUserCommand.With(_otherId, _channelId)));
     }
   }
-  
+
   void _channelMessagePacketHandler(ChannelMessage p) {
     PeerWrapper pw = _pm.findWrapper(p.id);
     if (_packetController.hasSubscribers)
       _packetController.add(new PacketEvent(p, pw));
   }
-  
+
   void _connectionSuccessPacketHandler(ConnectionSuccessPacket p) {
     _myId = p.id;
     if (_channelId != null)
       joinChannel(_channelId);
     setState(InitializationState.REMOTE_READY);
   }
-  
+
   void _defaultPacketHandler(Packet p) {
     PeerWrapper pw = _pm.findWrapper(p.id);
     if (_packetController.hasSubscribers)
       _packetController.add(new PacketEvent(p, pw));
   }
-  
+
   void _channelPacketHandler(ChannelPacket p) {
     PeerWrapper pw = _pm.findWrapper(p.id);
     if (_packetController.hasSubscribers)
       _packetController.add(new PacketEvent(p, pw));
-    
+
     setState(InitializationState.CHANNEL_READY);
   }
-  
+
   void _joinPacketHandler(JoinPacket p) {
     _otherId = p.id;
     PeerWrapper pw = _pm.findWrapper(p.id);
     if (_packetController.hasSubscribers)
       _packetController.add(new PacketEvent(p, pw));
   }
-  
+
   void _idPacketHandler(IdPacket p) {
     _otherId = p.id;
     PeerWrapper pw = _pm.findWrapper(p.id);
     if (_packetController.hasSubscribers)
       _packetController.add(new PacketEvent(p, pw));
   }
-  
+
   void _byePacketHandler(ByePacket p) {
     PeerWrapper pw = _pm.findWrapper(p.id);
     if (_packetController.hasSubscribers)
       _packetController.add(new PacketEvent(p, pw));
-    
+
     if (_mediaStreamRemovedStreamController.hasSubscribers)
       _mediaStreamRemovedStreamController.add(new MediaStreamRemovedEvent(pw));
   }
-  
+
   /**
    * Implements PeerDataEventListener onDateReceived
    */
   void onDataReceived(int buffered) {
-    
+
   }
-  
+
   /**
    * Implements PeerDataEventListener onChannelStateChanged
    */
   void onChannelStateChanged(DataPeerWrapper p, String state){
-    
+
   }
-  
+
   /**
    * Implements PeerDataEventListener onPacket
    */
@@ -329,7 +342,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     if (_packetController.hasSubscribers)
       _packetController.add(new PacketEvent(p, pw));
   }
-  
+
   /**
    * Remote media stream available from peer
    */
@@ -337,7 +350,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
    if (_mediaStreamAvailableStreamController.hasSubscribers)
      _mediaStreamAvailableStreamController.add(new MediaStreamAvailableEvent(ms, pw));
   }
-  
+
   /**
    * Media stream was removed
    */
@@ -345,7 +358,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     if (_mediaStreamRemovedStreamController.hasSubscribers)
       _mediaStreamRemovedStreamController.add(new MediaStreamRemovedEvent(pw));
   }
-  
+
   void onPeerCreated(PeerWrapper pw) {
     if (pw is DataPeerWrapper) {
       pw.subscribe(this);
@@ -358,7 +371,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     if (_peerStateChangeController.hasSubscribers)
       _peerStateChangeController.add(new PeerStateChangedEvent(pw, state));
   }
-  
+
   /**
    * Implements PeerConnectionEventListener onIceGatheringStateChanged
    */
@@ -374,36 +387,36 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     if (_dataSourceMessageController.hasSubscribers)
       _dataSourceMessageController.add(new DataSourceMessageEvent(m));
   }
-  
+
   /**
    * implements DataSourceConnectionEventListener onCloseDataSource
    */
   void onCloseDataSource(String m) {
     if (_dataSourceCloseController.hasSubscribers)
       _dataSourceCloseController.add(new DataSourceCloseEvent(m));
-    
+
     if (_signalingCloseController.hasSubscribers)
       _signalingCloseController.add(new SignalingCloseEvent(m));
   }
-  
+
   /**
    * implements DataSourceConnectionEventListener onOpenDataSource
    */
   void onOpenDataSource(String m) {
     if (_dataSourceOpenController.hasSubscribers)
       _dataSourceOpenController.add(new DataSourceOpenEvent(m));
-    
+
     if (_signalingOpenController.hasSubscribers)
       _signalingOpenController.add(new SignalingOpenEvent(m));
   }
-  
+
   /**
    * implements DataSourceConnectionEventListener onDataSourceError
    */
   void onDataSourceError(String e) {
     if (_dataSourceErrorController.hasSubscribers)
       _dataSourceErrorController.add(new DataSourceErrorEvent(e));
-    
+
     if (_signalingErrorController.hasSubscribers)
       _signalingErrorController.add(new SignalingErrorEvent(e));
   }

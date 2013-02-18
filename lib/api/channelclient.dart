@@ -121,7 +121,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
           _ms = stream;
           _pm.setLocalStream(stream);
           _sh.initialize();
-          print("WWWWTTTTTFFFFF!!!!!!");
+
           setState(InitializationState.MEDIA_READY);
           _mediaStreamAvailableStreamController.add(new MediaStreamAvailableEvent(stream, null, true));
         });
@@ -130,7 +130,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
         return;
       }
     } else {
-
+      _sh.initialize();
     }
 
 

@@ -15,6 +15,7 @@ part 'src/peer/binaryreadstate.dart';
 part 'src/peer/binarydatatype.dart';
 part 'src/peer/binarydatareader.dart';
 part 'src/peer/binarydatawriter.dart';
+part 'src/peer/peerstate.dart';
 
 part 'src/event/peereventlistener.dart';
 part 'src/event/signalingeventlistener.dart';

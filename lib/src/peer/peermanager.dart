@@ -7,16 +7,6 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
   /* instance */
   static PeerManager _instance;
   
-  /*
-   * Closed readystate
-   */
-  final READYSTATE_CLOSED = "closed";
-  
-  /* 
-   * Open readystate
-   */
-  final READYSTATE_OPEN = "open";
-  
   final Logger _log = new Logger();
   
   /* 
@@ -248,6 +238,7 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
     if (!_peers.contains(p))
       _peers.add(p);
   }
+  
   /**
    * Peer state changed
    * Notifies listeners about the state change
@@ -261,19 +252,18 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
       l.onPeerStateChanged(wrapper, wrapper.peer.readyState);
     });
     
-    if (wrapper.peer.readyState == READYSTATE_CLOSED) {
+    if (wrapper.peer.readyState == PEER_CLOSED) {
       int index = _peers.indexOf(wrapper);
       if (index >= 0)
         _peers.removeAt(index);
-    } else if (wrapper.peer.readyState == READYSTATE_OPEN) {
-      onOpen(e);
+    } else if (wrapper.peer.readyState == PEER_STABLE) {
+      // PEER_STABLE is the initial state and should also be the state when things are setup?
+      // TODO: hook this up
+      _log.Debug("(peermanager.dart) Peer local and remote descriptions have been exchanged");
     }
-    
   }
   
-  void onOpen(Event e) {
-    _log.Debug("Peer connection is open");
-  }
+  
   
   
 }

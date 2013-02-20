@@ -105,7 +105,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     _sh.registerHandler(PacketType.BYE, _byePacketHandler);
     _sh.registerHandler(PacketType.CHANNEL, _channelPacketHandler);
     _sh.registerHandler(PacketType.CONNECTED, _connectionSuccessPacketHandler);
-    _sh.registerHandler(PacketType.CHANNELMESSAGE, _channelMessagePacketHandler);
+    _sh.registerHandler(PacketType.CHANNELMESSAGE, _defaultPacketHandler);
     _sh.registerHandler(PacketType.CHANGENICK, _defaultPacketHandler);
   }
 
@@ -122,11 +122,11 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
           _pm.setLocalStream(stream);
           _sh.initialize();
 
-          setState(InitializationState.MEDIA_READY);
+          _setState(InitializationState.MEDIA_READY);
           _mediaStreamAvailableStreamController.add(new MediaStreamAvailableEvent(stream, null, true));
         });
       } else {
-        setState(InitializationState.NOT_READY);
+        _setState(InitializationState.NOT_READY);
         return;
       }
     } else {
@@ -170,20 +170,30 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     return this;
   }
 
+  /**
+   * If true, Signalhandler will request peermanager to create peer connections
+   * When ever a channel is joined.
+   */
   ChannelClient setAutoCreatePeer(bool v) {
     _sh._createPeerOnJoin = v;
     return this;
   }
 
+  /**
+   * Requests to join a channel
+   */
   void joinChannel(String name) {
     _sh.sendPacket(new ChannelJoinCommand.With(_myId, name));
   }
 
+  /**
+   * Change your id (nick)
+   */
   void changeId(String newId) {
     _sh.sendPacket(new ChangeNickCommand.With(_myId, newId));
   }
 
-  void setState(InitializationState state) {
+  void _setState(InitializationState state) {
     if (_currentState == state)
       return;
 
@@ -193,6 +203,10 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
       _initializedController.add(new InitializationStateEvent(state));
   }
 
+  /**
+   * Sets the userlimit on channel
+   * The issuer has to be the channel owner
+   */
   bool setChannelLimit(int l) {
     if (_channelId != null) {
       _sh.sendPacket(new SetChannelVarsCommand.With(_myId, _channelId, l));
@@ -202,16 +216,25 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     return false;
   }
 
+  /**
+   * Creates a peer connections and sets the creator as the host
+   */
   void createPeerConnection(String id) {
     PeerWrapper p = _pm.createPeer();
     p.id = id;
     p.setAsHost(true);
   }
 
+  /**
+   * Finds if a peer connection with given id exists
+   */
   bool peerWrapperExists(String id) {
     return findPeer(id) != null;
   }
 
+  /**
+   * Finds a peer connection with given id
+   */
   PeerWrapper findPeer(String id) {
     return _pm.findWrapper(id);
   }
@@ -271,23 +294,17 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     }
   }
 
-  void _channelMessagePacketHandler(ChannelMessage p) {
-    PeerWrapper pw = _pm.findWrapper(p.id);
-    if (_packetController.hasSubscribers)
-      _packetController.add(new PacketEvent(p, pw));
-  }
-
-  void _connectionSuccessPacketHandler(ConnectionSuccessPacket p) {
-    _myId = p.id;
-    if (_channelId != null)
-      joinChannel(_channelId);
-    setState(InitializationState.REMOTE_READY);
-  }
-
   void _defaultPacketHandler(Packet p) {
     PeerWrapper pw = _pm.findWrapper(p.id);
     if (_packetController.hasSubscribers)
       _packetController.add(new PacketEvent(p, pw));
+  }
+  
+  void _connectionSuccessPacketHandler(ConnectionSuccessPacket p) {
+    _myId = p.id;
+    if (_channelId != null)
+      joinChannel(_channelId);
+    _setState(InitializationState.REMOTE_READY);
   }
 
   void _channelPacketHandler(ChannelPacket p) {
@@ -295,7 +312,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     if (_packetController.hasSubscribers)
       _packetController.add(new PacketEvent(p, pw));
 
-    setState(InitializationState.CHANNEL_READY);
+    _setState(InitializationState.CHANNEL_READY);
   }
 
   void _joinPacketHandler(JoinPacket p) {

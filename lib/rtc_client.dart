@@ -39,6 +39,7 @@ part 'src/util/constraints.dart';
 part 'src/util/peerconstraints.dart';
 part 'src/util/streamconstraints.dart';
 part 'src/util/videoconstraints.dart';
+part 'src/util/serverconstraints.dart';
 
 part 'src/datasource/datasource.dart';
 part 'src/datasource/websocketdatasource.dart';

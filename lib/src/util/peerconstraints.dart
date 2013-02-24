@@ -29,7 +29,7 @@ class PeerConstraints implements Constraints {
     _dataChannelEnabled = value;
   }
 
-  /*
+  /**
    * Implements Constraints toMap
    */
   Map toMap() {

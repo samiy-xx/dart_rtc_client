@@ -33,8 +33,8 @@ class QueueClient extends ChannelClient  {
    * Initializes the connection
    * and clears the queue
    */
-  void initialize() {
-    super.initialize();
+  void initialize([VideoConstraints constraints]) {
+    super.initialize(constraints);
     _queued.clear();
   }
 

@@ -143,7 +143,14 @@ class PeerWrapper extends GenericEventTarget<PeerEventListener>{
     if (ms == null)
       throw new Exception("MediaStream was null");
     _log.Debug("(peerwrapper.dart) Adding stream to peer $id");
-    _peer.addStream(ms);
+    try {
+      _peer.addStream(ms, _manager.getStreamConstraints().toMap());
+    } on DomException catch(e, s) {
+      _log.Error("DOM Error setting constraints: ${_manager.getStreamConstraints().toMap().toString()}");
+      _peer.addStream(ms);
+    } catch(e) {
+      _log.Error("Exception on adding stream");
+    }
   }
 
   /*

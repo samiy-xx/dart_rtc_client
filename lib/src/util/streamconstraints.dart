@@ -14,7 +14,7 @@ class StreamConstraints implements Constraints {
    * Constructor
    */
   StreamConstraints() {
-    _bitRate = 1000;
+    _bitRate = 200;
   }
 
   /**

@@ -8,9 +8,13 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
   PeerManager _pm;
   DataSource _ds;
 
-  bool _requireAudio = false;
-  bool _requireVideo = false;
-  bool _requireDataChannel = false;
+  //bool _requireAudio = false;
+  //bool _requireVideo = false;
+  //bool _requireDataChannel = false;
+
+  VideoConstraints _defaultGetUserMediaConstraints;
+  PeerConstraints _defaultPeerCreationConstraints;
+  StreamConstraints _defaultStreamConstraints;
 
   LocalMediaStream _ms = null;
 
@@ -86,6 +90,10 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
 
     _sh = new StreamingSignalHandler(ds);
 
+    _defaultGetUserMediaConstraints = new VideoConstraints();
+    _defaultPeerCreationConstraints = new PeerConstraints();
+    _defaultStreamConstraints = new StreamConstraints();
+
     _initializedController = new StreamController<InitializationStateEvent>.broadcast();
     _mediaStreamAvailableStreamController = new StreamController.broadcast();
     _mediaStreamRemovedStreamController = new StreamController.broadcast();
@@ -109,15 +117,20 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     _sh.registerHandler(PacketType.CHANGENICK, _defaultPacketHandler);
   }
 
-  void initialize() {
+  void initialize([VideoConstraints constraints]) {
 
-    if (!_requireAudio && !_requireVideo && !_requireDataChannel)
+    //if (!_requireAudio && !_requireVideo && !_requireDataChannel)
+    //  throw new Exception("Must require either video, audio or data channel");
+
+    VideoConstraints con = ?constraints ? constraints : _defaultGetUserMediaConstraints;
+    if (!con.audio && !con.video && !_defaultPeerCreationConstraints.dataChannelEnabled)
       throw new Exception("Must require either video, audio or data channel");
 
     // If either is set, need to request permission for audio and/or video
-    if ((_requireAudio || _requireVideo) && _ms == null) {
+    if ((con.audio || con.video) && _ms == null) {
       if (MediaStream.supported) {
-        window.navigator.getUserMedia(audio: _requireAudio, video: _requireVideo).then((LocalMediaStream stream) {
+        // TODO: Fix, this should take a map, but it's wrong in dartlang. https://code.google.com/p/dart/issues/detail?id=8061
+        window.navigator.getUserMedia(audio: con.audio, video: con.video).then((LocalMediaStream stream) {
           _ms = stream;
           _pm.setLocalStream(stream);
           _sh.initialize();
@@ -140,7 +153,8 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
    * Implements RtcClient setRequireAudio
    */
   ChannelClient setRequireAudio(bool b) {
-    _requireAudio = b;
+    //_requireAudio = b;
+    _defaultGetUserMediaConstraints.audio = b;
     return this;
   }
 
@@ -148,7 +162,8 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
    * Implements RtcClient setRequireVideo
    */
   ChannelClient setRequireVideo(bool b) {
-    _requireVideo = b;
+    //_requireVideo = b;
+    _defaultGetUserMediaConstraints.video = b;
     return this;
   }
 
@@ -156,7 +171,8 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
    * Implements RtcClient setRequireDataChannel
    */
   ChannelClient setRequireDataChannel(bool b) {
-    _requireDataChannel = b;
+    //_requireDataChannel = b;
+    _defaultPeerCreationConstraints.dataChannelEnabled = b;
     _sh.setDataChannelsEnabled(b);
     return this;
   }
@@ -179,6 +195,22 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     return this;
   }
 
+  ChannelClient setDefaultVideoConstraints(VideoConstraints vc) {
+    _defaultGetUserMediaConstraints = vc;
+    return this;
+  }
+
+  ChannelClient setDefaultPeerConstraints(PeerConstraints pc) {
+    _defaultPeerCreationConstraints = pc;
+    _pm.setPeerConstraints(pc);
+    return this;
+  }
+
+  ChannelClient setDefaultStreamConstraints(StreamConstraints sc) {
+    _defaultStreamConstraints = sc;
+    _pm.setStreamConstraints(sc);
+    return this;
+  }
   /**
    * Requests to join a channel
    */
@@ -299,7 +331,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     if (_packetController.hasSubscribers)
       _packetController.add(new PacketEvent(p, pw));
   }
-  
+
   void _connectionSuccessPacketHandler(ConnectionSuccessPacket p) {
     _myId = p.id;
     if (_channelId != null)

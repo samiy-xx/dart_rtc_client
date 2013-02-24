@@ -25,6 +25,9 @@ class VideoConstraints implements Constraints{
   /* frame rate of the video */
   int _frameRate;
 
+  bool get audio => _audio;
+  bool get video => _video;
+
   /** Sets audio enabled/disabled */
   set audio(bool v) => _audio = v;
 

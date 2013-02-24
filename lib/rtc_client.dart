@@ -35,6 +35,11 @@ part 'src/signaling/channelsignalhandler.dart';
 part 'src/signaling/wheelsignalhandler.dart';
 part 'src/signaling/streamingsignalhandler.dart';
 
+part 'src/util/constraints.dart';
+part 'src/util/peerconstraints.dart';
+part 'src/util/streamconstraints.dart';
+part 'src/util/videoconstraints.dart';
+
 part 'src/datasource/datasource.dart';
 part 'src/datasource/websocketdatasource.dart';
 
@@ -44,9 +49,9 @@ part 'api/rtcclient.dart';
 part 'api/channelclient.dart';
 part 'api/queueclient.dart';
 
-const int CLOSE_NORMAL = 1000; 
-const int CLOSE_GOING_AWAY = 1001; 
-const int CLOSE_PROTOCOL_ERROR = 1002; 
+const int CLOSE_NORMAL = 1000;
+const int CLOSE_GOING_AWAY = 1001;
+const int CLOSE_PROTOCOL_ERROR = 1002;
 const int CLOSE_UNSUPPORTED = 1003;
 const int RESERVED = 1004;
 const int NO_STATUS = 1005;
@@ -59,7 +64,7 @@ const int UNEXPECTED_CONDITION = 1011;
 const int HANDSHAKE_FAILURE = 1015;
 
 const bool DEBUG = true;
-String WEBSOCKET_SERVER = DEBUG 
-    ? "ws://127.0.0.1:8234/ws" 
+String WEBSOCKET_SERVER = DEBUG
+    ? "ws://127.0.0.1:8234/ws"
     : "ws://bananafarm.org:8234/ws";
 typedef void PeerMediaEventListenerType(MediaStream ms, String id, bool main);

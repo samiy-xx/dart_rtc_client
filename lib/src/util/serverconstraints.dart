@@ -5,9 +5,22 @@ class StunServer {
   String _address;
   String _port;
 
+  String get address => _address;
+  String get port => _port;
+  set address(String v) => setAddress(v);
+  set port(String v) => setPort(v);
+
   StunServer() {
     _address = "stun.l.google.com";
     _port = "19302";
+  }
+
+  void setAddress(String v) {
+    _address = v;
+  }
+
+  void setPort(String v) {
+    _port = v;
   }
 
   Map toMap() {
@@ -21,11 +34,25 @@ class TurnServer extends StunServer {
   String _userName;
   String _password;
 
+  String get userName => _userName;
+  String get password => _password;
+
+  set userName(String v) => setUserName(v);
+  set password(String v) => setPassword(v);
+
   TurnServer() : super() {
     _userName = "";
     _password = "";
     _address = "";
     _port = "";
+  }
+
+  void setUserName(String v) {
+    _userName = v;
+  }
+
+  void setPassword(String v) {
+    _password = v;
   }
 
   Map toMap() {
@@ -55,6 +82,10 @@ class ServerConstraints implements Constraints {
       _turnServers.add(ss);
   }
 
+  void clear() {
+    _stunServers.clear();
+    _turnServers.clear();
+  }
   /**
    * Implements Constraints toMap
    */

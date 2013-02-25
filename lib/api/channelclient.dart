@@ -212,6 +212,27 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     return this;
   }
 
+  void clearStun() {
+    _pm._serverConstraints.clear();
+  }
+
+  StunServer createStunEntry(String address, String port) {
+    StunServer ss = new StunServer();
+    ss.setAddress(address);
+    ss.setPort(port);
+    _pm._serverConstraints.addStun(ss);
+    return ss;
+  }
+
+  TurnServer createTurnEntry(String address, String port, String userName, String password) {
+    TurnServer ts = new TurnServer();
+    ts.setAddress(address);
+    ts.setPort(port);
+    ts.setUserName(userName);
+    ts.setPassword(password);
+    _pm._serverConstraints.addTurn(ts);
+    return ts;
+  }
   /**
    * Requests to join a channel
    */

@@ -350,6 +350,15 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
   }
 
   /**
+   * Request the server that users gets kicked out of channel
+   */
+  void disconnectUser() {
+    if (isChannelOwner && _otherId != null) {
+      _sh.send(PacketFactory.get(new RemoveUserCommand.With(_otherId, _channelId)));
+    }
+  }
+
+  /**
    * Sends a blob to peer
    */
   void sendBlob(String peerId, Blob data) {
@@ -370,14 +379,6 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     throw new UnsupportedError("sendArrayBufferView is a work in progress");
   }
 
-  /**
-   * Request the server that users gets kicked out of channel
-   */
-  void disconnectUser() {
-    if (isChannelOwner && _otherId != null) {
-      _sh.send(PacketFactory.get(new RemoveUserCommand.With(_otherId, _channelId)));
-    }
-  }
 
   void _defaultPacketHandler(Packet p) {
     PeerWrapper pw = _pm.findWrapper(p.id);
@@ -392,6 +393,9 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     _setState(InitializationState.REMOTE_READY);
   }
 
+  /*
+   * TODO: Needs a stream controller and event
+   */
   void _channelPacketHandler(ChannelPacket p) {
     PeerWrapper pw = _pm.findWrapper(p.id);
     if (_packetController.hasSubscribers)
@@ -400,6 +404,9 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     _setState(InitializationState.CHANNEL_READY);
   }
 
+  /*
+   * TODO: Needs a stream controller and event
+   */
   void _joinPacketHandler(JoinPacket p) {
     _otherId = p.id;
     PeerWrapper pw = _pm.findWrapper(p.id);
@@ -407,6 +414,9 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
       _packetController.add(new PacketEvent(p, pw));
   }
 
+  /*
+   * TODO: Needs a stream controller and event
+   */
   void _idPacketHandler(IdPacket p) {
     _otherId = p.id;
     PeerWrapper pw = _pm.findWrapper(p.id);
@@ -414,6 +424,9 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
       _packetController.add(new PacketEvent(p, pw));
   }
 
+  /*
+   * TODO: Needs a stream controller and event
+   */
   void _byePacketHandler(ByePacket p) {
     PeerWrapper pw = _pm.findWrapper(p.id);
     if (_packetController.hasSubscribers)
@@ -425,6 +438,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
 
   /**
    * Implements PeerDataEventListener onDateReceived
+   * TODO : Do something with this
    */
   void onDataReceived(int buffered) {
 
@@ -432,6 +446,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
 
   /**
    * Implements PeerDataEventListener onChannelStateChanged
+   * TODO : Do something with this
    */
   void onChannelStateChanged(DataPeerWrapper p, String state){
 
@@ -461,6 +476,10 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
       _mediaStreamRemovedStreamController.add(new MediaStreamRemovedEvent(pw));
   }
 
+  /**
+   * Implements PeerConnectionEventListener onPeerCreated
+   * TODO : Cant i do this somewhere else?
+   */
   void onPeerCreated(PeerWrapper pw) {
     if (pw is DataPeerWrapper) {
       pw.subscribe(this);

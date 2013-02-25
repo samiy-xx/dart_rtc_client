@@ -2,24 +2,38 @@ part of rtc_client;
 
 class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
   PeerConnectionEventListener, PeerMediaEventListener, PeerDataEventListener {
+
+  /* Keeps track of the initialization state of the client */
   InitializationState _currentState;
 
+  /* Signal handler. TODO: Might need to remove some of the unused signalhandlers */
   StreamingSignalHandler _sh;
+
+  /* Manages the creation of peer connections */
   PeerManager _pm;
+
+  /* Datasource, TODO: Rename maybe, Datasource sounds more like database */
   DataSource _ds;
 
-  //bool _requireAudio = false;
-  //bool _requireVideo = false;
-  //bool _requireDataChannel = false;
-
+  /* Constraints for getUserMedia */
   VideoConstraints _defaultGetUserMediaConstraints;
+
+  /* Constraints for creating peer */
   PeerConstraints _defaultPeerCreationConstraints;
+
+  /* Constraints for adding stream to peer */
   StreamConstraints _defaultStreamConstraints;
 
+  /* MediaStream from our own webcam etc... */
   LocalMediaStream _ms = null;
 
+  /* The channel we're in. TODO: We should support multiple channels? */
   String _channelId;
+
+  /* our userid */
   String _myId;
+
+  /* TODO: Ugh */
   String _otherId;
 
   /**
@@ -117,10 +131,10 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     _sh.registerHandler(PacketType.CHANGENICK, _defaultPacketHandler);
   }
 
+  /**
+   * Initializes client and tells signalhandler to connect.
+   */
   void initialize([VideoConstraints constraints]) {
-
-    //if (!_requireAudio && !_requireVideo && !_requireDataChannel)
-    //  throw new Exception("Must require either video, audio or data channel");
 
     VideoConstraints con = ?constraints ? constraints : _defaultGetUserMediaConstraints;
     if (!con.audio && !con.video && !_defaultPeerCreationConstraints.dataChannelEnabled)
@@ -145,15 +159,12 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     } else {
       _sh.initialize();
     }
-
-
   }
 
   /**
    * Implements RtcClient setRequireAudio
    */
   ChannelClient setRequireAudio(bool b) {
-    //_requireAudio = b;
     _defaultGetUserMediaConstraints.audio = b;
     return this;
   }
@@ -162,7 +173,6 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
    * Implements RtcClient setRequireVideo
    */
   ChannelClient setRequireVideo(bool b) {
-    //_requireVideo = b;
     _defaultGetUserMediaConstraints.video = b;
     return this;
   }
@@ -171,7 +181,6 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
    * Implements RtcClient setRequireDataChannel
    */
   ChannelClient setRequireDataChannel(bool b) {
-    //_requireDataChannel = b;
     _defaultPeerCreationConstraints.dataChannelEnabled = b;
     _sh.setDataChannelsEnabled(b);
     return this;
@@ -195,27 +204,42 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     return this;
   }
 
+  /**
+   * Allows to set constraints for getUserMedia
+   */
   ChannelClient setDefaultVideoConstraints(VideoConstraints vc) {
     _defaultGetUserMediaConstraints = vc;
     return this;
   }
 
+  /**
+   * Allows to set constraints for peer creation
+   */
   ChannelClient setDefaultPeerConstraints(PeerConstraints pc) {
     _defaultPeerCreationConstraints = pc;
     _pm.setPeerConstraints(pc);
     return this;
   }
 
+  /**
+   * Constraints for adding stream
+   */
   ChannelClient setDefaultStreamConstraints(StreamConstraints sc) {
     _defaultStreamConstraints = sc;
     _pm.setStreamConstraints(sc);
     return this;
   }
 
+  /**
+   * Clears all Stun and Turn server entries.
+   */
   void clearStun() {
     _pm._serverConstraints.clear();
   }
 
+  /**
+   * Creates a Stun server entry and adds it to the peermanager
+   */
   StunServer createStunEntry(String address, String port) {
     StunServer ss = new StunServer();
     ss.setAddress(address);
@@ -224,6 +248,9 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     return ss;
   }
 
+  /**
+   * Creates a Turn server entry and adds it to the peermanager
+   */
   TurnServer createTurnEntry(String address, String port, String userName, String password) {
     TurnServer ts = new TurnServer();
     ts.setAddress(address);
@@ -233,6 +260,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     _pm._serverConstraints.addTurn(ts);
     return ts;
   }
+
   /**
    * Requests to join a channel
    */
@@ -247,6 +275,9 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     _sh.sendPacket(new ChangeNickCommand.With(_myId, newId));
   }
 
+  /*
+   * Sets the current initialization state.
+   */
   void _setState(InitializationState state) {
     if (_currentState == state)
       return;

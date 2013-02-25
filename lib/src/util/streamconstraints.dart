@@ -25,7 +25,7 @@ class StreamConstraints implements Constraints {
     return this;
   }
 
-  /*
+  /**
    * Implements Constraints toMap
    */
   Map toMap() {

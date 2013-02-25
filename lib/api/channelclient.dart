@@ -211,6 +211,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     _pm.setStreamConstraints(sc);
     return this;
   }
+
   /**
    * Requests to join a channel
    */

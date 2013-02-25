@@ -98,14 +98,44 @@ class PeerWrapper extends GenericEventTarget<PeerEventListener>{
    * Creates offer and calls callback
    */
   void _sendOffer() {
-    _peer.createOffer(_onOfferSuccess, _onRTCError, null);
+    try {
+    _peer.createOffer(
+        _onOfferSuccess,
+        _onRTCError,{
+          'mandatory': {
+            'OfferToReceiveAudio':true,
+            'OfferToReceiveVideo':true
+          }
+       }
+    );
+    } on DomException catch(e) {
+      _log.Debug("(peerwrapper.dart) DomException on setting offer constraints, attempting without constraints");
+      _peer.createOffer(_onOfferSuccess,_onRTCError,null);
+    } catch (e) {
+      _log.Error("(peerwrapper.dart) Error creating offer $e");
+    }
   }
 
   /*
    * Answer for offer
    */
   void _sendAnswer() {
-    _peer.createAnswer(_onAnswerSuccess, _onRTCError, null);
+    try {
+      _peer.createAnswer(
+          _onAnswerSuccess,
+          _onRTCError,{
+            'mandatory': {
+              'OfferToReceiveAudio':true,
+              'OfferToReceiveVideo':true
+            }
+         }
+      );
+    } on DomException catch(e) {
+      _log.Debug("(peerwrapper.dart) DomException on setting answer constraints, attempting without constraints");
+      _peer.createAnswer(_onAnswerSuccess,_onRTCError, null);
+    } catch (e) {
+      _log.Error("(peerwrapper.dart) Error creating answer $e");
+    }
   }
 
   void _onStateChange(Event e) {
@@ -137,7 +167,8 @@ class PeerWrapper extends GenericEventTarget<PeerEventListener>{
 
   /**
    * Ads a MediaStream to the peer connection
-   * TODO: Reintroduce constraints when these compile to javascript properly
+   * TODO: Find out why the constraints throw DOMException on chome 25. Works on dartium.
+   * As an fallback, call addStream without constraints if DOMException happends.
    */
   void addStream(MediaStream ms) {
     if (ms == null)
@@ -145,11 +176,13 @@ class PeerWrapper extends GenericEventTarget<PeerEventListener>{
     _log.Debug("(peerwrapper.dart) Adding stream to peer $id");
     try {
       _peer.addStream(ms, _manager.getStreamConstraints().toMap());
-    } on DomException catch(e) {
-      _log.Error("DOM Error setting constraints: ${_manager.getStreamConstraints().toMap().toString()}");
+    } on DomException catch(e, s) {
+      _log.Error("DOM Error setting constraints: $e ${_manager.getStreamConstraints().toMap().toString()}");
       _peer.addStream(ms);
+    } on Exception catch (e) {
+      _log.Error("Exception on adding stream $e");
     } catch(e) {
-      _log.Error("Exception on adding stream");
+      _log.Error("Exception on adding stream $e");
     }
   }
 

@@ -33,6 +33,7 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
   PeerConstraints _peerConstraints;
   /* Constraints for the stream */
   StreamConstraints _streamConstraints;
+  ServerConstraints _serverConstraints;
 
   /** Add local stream to peer connections when created */
   set setLocalStreamAtStart(bool v) => _setLocalStreamAtStart = v;
@@ -74,6 +75,8 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
     _peers = new List<PeerWrapper>();
     _streamConstraints = new StreamConstraints();
     _peerConstraints = new PeerConstraints();
+    _serverConstraints = new ServerConstraints();
+    _serverConstraints.addStun(new StunServer());
   }
 
   /**
@@ -118,8 +121,12 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
   PeerWrapper createPeer() {
 
     PeerWrapper wrapper = _createWrapper(
-        new RtcPeerConnection(
+        /*new RtcPeerConnection(
             {'iceServers': [ {'url':'stun:stun.l.google.com:19302'}]},
+            _peerConstraints.toMap()
+        )*/
+        new RtcPeerConnection(
+            _serverConstraints.toMap(),
             _peerConstraints.toMap()
         )
     );

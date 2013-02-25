@@ -145,7 +145,7 @@ class PeerWrapper extends GenericEventTarget<PeerEventListener>{
     _log.Debug("(peerwrapper.dart) Adding stream to peer $id");
     try {
       _peer.addStream(ms, _manager.getStreamConstraints().toMap());
-    } on DomException catch(e, s) {
+    } on DomException catch(e) {
       _log.Error("DOM Error setting constraints: ${_manager.getStreamConstraints().toMap().toString()}");
       _peer.addStream(ms);
     } catch(e) {

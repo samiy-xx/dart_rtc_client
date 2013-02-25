@@ -4,6 +4,9 @@ dart_rtc_client
 Dart WebRTC client library and api
 --------
 
+Do note that this library is in no way stable at the moment.   
+Things will go bang! and also Here be dragons!   
+
 ## Sample ##
 
 ```dart

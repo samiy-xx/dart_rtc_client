@@ -6,33 +6,35 @@ part of rtc_client;
 class DataPeerWrapper extends PeerWrapper {
   /* DataChannel */
   RtcDataChannel _dataChannel;
-  
+
   /* Logger */
   Logger _log = new Logger();
-  
+
   /* Current channel state */
   String _channelState = null;
-  
+
   /* reliable tcp, unreliable udp */
   bool _isReliable = false;
-  
+
   /** Set reliable */
   set isReliable(bool r) => _isReliable = r;
-  
+
+  BinaryDataWriter _binaryWriter;
   /**
    * Constructor
    */
   DataPeerWrapper(PeerManager pm, RtcPeerConnection p) : super(pm, p) {
     _peer.onDataChannel.listen(_onNewDataChannelOpen);
+    _binaryWriter = new BinaryDataWriter.forChannel(_dataChannel);
   }
-  
+
   void setAsHost(bool value) {
     super.setAsHost(value);
-    
+
     _log.Debug("(datapeerwrapper.dart) Initializing datachannel now");
     initChannel();
   }
-  
+
   void initialize() {
     if (_isHost) {
       _log.Debug("Is Host");
@@ -40,7 +42,7 @@ class DataPeerWrapper extends PeerWrapper {
       _sendOffer();
     }
   }
-  
+
   /**
    * Created the data channel
    * TODO: Whenever these reliable and unreliable are implemented by whomever. fix this.
@@ -51,34 +53,28 @@ class DataPeerWrapper extends PeerWrapper {
     _dataChannel.onClose.listen(onDataChannelClose);
     _dataChannel.onOpen.listen(onDataChannelOpen);
     _dataChannel.onError.listen(onDataChannelError);
-    _dataChannel.onMessage.listen(onDataChannelMessage); 
+    _dataChannel.onMessage.listen(onDataChannelMessage);
   }
-  
+
   /**
    * Sends a packet trough the data channel
    */
-  void send(Packet p, [bool asArrayBuffer]) {
+  void send(Packet p) {
     String packet = PacketFactory.get(p);
-    if (?asArrayBuffer) {
-      // No clue about this atm. does any browser implement this atm?
-      ArrayBuffer buf = BinaryData.createBuffer(p);
-      sendData(buf);
-    } else {
-      _dataChannel.send(packet);
-    }
+    _dataChannel.send(packet);
   }
-  
+
   /**
    * Send blob
    */
   void sendBlob(Blob b) {
     _dataChannel.send(b);
   }
-  
-  void sendData(ArrayBuffer d) {
-    ArrayBufferView view = new Uint16Array.fromBuffer(d);
-    _dataChannel.send(view);
+
+  void sendBuffer(ArrayBuffer buf) {
+    _binaryWriter.write(buf, true);
   }
+
   /**
    * Callback for when data channel created by the other party comes trough the peer
    */
@@ -89,7 +85,7 @@ class DataPeerWrapper extends PeerWrapper {
     _dataChannel.onError.listen(onDataChannelError);
     _dataChannel.onMessage.listen(onDataChannelMessage);
   }
-  
+
   /**
    * Data channel is open and ready for data
    */
@@ -97,13 +93,13 @@ class DataPeerWrapper extends PeerWrapper {
     _signalStateChanged();
     _log.Debug("(datapeerwrapper.dart) DataChannelOpen $e");
   }
-  
+
   /**
    * Ugh
    */
   void onDataChannelClose(Event e) {
     _signalStateChanged();
-    _log.Debug("(datapeerwrapper.dart) DataChannelClose $e"); 
+    _log.Debug("(datapeerwrapper.dart) DataChannelClose $e");
   }
 
   /**
@@ -115,7 +111,7 @@ class DataPeerWrapper extends PeerWrapper {
       throw new NotImplementedException("Blob is not implemented");
     } else if (e.data is ArrayBuffer || e.data is ArrayBufferView) {
       _log.Debug("Received ArrayBuffer ${e.data.runtimeType.toString()}");
-      
+
       throw new NotImplementedException("ArrayBuffer is not implemented");
     } else {
       _log.Debug("Received Text");
@@ -132,7 +128,7 @@ class DataPeerWrapper extends PeerWrapper {
   void onDataChannelError(RtcDataChannelEvent e) {
     _log.Debug("(datapeerwrapper.dart) DataChannelError $e");
   }
-  
+
   /**
    * Signal listeners that packet has arrived
    */
@@ -141,7 +137,7 @@ class DataPeerWrapper extends PeerWrapper {
       l.onPacket(this, p);
     });
   }
-  
+
   /**
    * signal listeners that channel state has changed
    */

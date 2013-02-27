@@ -1,5 +1,8 @@
 part of rtc_client;
 
+const int SIZEOF8 = 1;
+const int SIZEOF16 = 2;
+const int SIZEOF32 = 4;
 /**
  * Binary reader/writer for Datachannel
  */

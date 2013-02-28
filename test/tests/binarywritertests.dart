@@ -21,7 +21,7 @@ class BinaryWriterTests {
         defaultPacket = null;
         writer = null;
       });
-
+      /*
       test("BinaryDataWriter, writer, can create header", () {
         int length = 10;
         ArrayBuffer stringHeader = writer.createHeaderFor(BinaryDataType.STRING, length);
@@ -103,7 +103,7 @@ class BinaryWriterTests {
         expect(dv.getUint8(1), equals(BinaryDataType.PACKET.toInt()));
         expect(dv.getUint8(2), equals(packetLength));
       });
-
+*/
     });
   }
 

@@ -4,7 +4,7 @@ part of rtc_client;
  * Interface for Binary data events
  */
 abstract class BinaryDataEventListener {
-  
+
 }
 
 /**

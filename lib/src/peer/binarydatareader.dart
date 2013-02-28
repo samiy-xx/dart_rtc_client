@@ -1,36 +1,33 @@
 part of rtc_client;
 
-class BinaryDataReader extends BinaryData {
+class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
   /* data type for currently processed object */
   BinaryDataType _type;
-  
+
   ArrayBuffer _latest;
-  
+
   /* Length of data for currently processed object */
   int _length;
-  
+
   /* Left to read on current packet */
   int _leftToRead = 0;
-  
-  /* Buffer for unfinsihed data */
+
+  /* Buffer for unfinished data */
   List<int> _buffer;
-  
+
   bool _bufferData = true;
-  
-  /* Logger */
-  Logger _log = new Logger();
-  
+
   /** Currently buffered unfinished data */
   int get buffered => _buffer.length;
-  
+
   /* Current read state */
   BinaryReadState _currentReadState = BinaryReadState.INIT_READ;
-  
+
   /** Current read state */
   BinaryReadState get currentReadState => _currentReadState;
-  
+
   int get leftToRead => _leftToRead;
-  
+
   set bufferData(bool b) => _bufferData = b;
   /**
    * da mighty constructor
@@ -40,46 +37,46 @@ class BinaryDataReader extends BinaryData {
     _length = 0;
     _buffer = new List<int>();
   }
-  
+
   /**
    * Reads an ArrayBuffer
    * Can be whole packet or partial
    */
   void readChunk(ArrayBuffer buf) {
-    
+
     DataView v = new DataView(buf);
     int chunkLength = v.byteLength;
-    
+
     for (int i = 0; i < v.byteLength; i++) {
-      
+
       if (_currentReadState == BinaryReadState.INIT_READ) {
         _process_init_read(v.getUint8(i));
         continue;
       }
-      
+
       if (_currentReadState == BinaryReadState.READ_TYPE) {
         _process_read_type(v.getUint8(i));
         continue;
       }
-      
+
       if (_currentReadState == BinaryReadState.READ_LENGTH) {
         _process_read_length(i, v);
         continue;
       }
-      
+
       if (_currentReadState == BinaryReadState.READ_CONTENT) {
-        if (v.getUint8(i) == BinaryData.NULL_BYTE && v.getUint8(i+1) == _type.toInt() && v.getUint8(i+2) == BinaryData.NULL_BYTE) {
+        if (v.getUint8(i) == NULL_BYTE && v.getUint8(i+1) == _type.toInt() && v.getUint8(i+2) == NULL_BYTE) {
           _process_end();
         } else {
           _process_content(v.getUint8(i));
         }
       }
-      
+
     }
     _latest = buf;
     _signalReadChunk(chunkLength);
   }
-  
+
   ArrayBuffer getLatestChunk() {
     return _latest;
   }
@@ -87,10 +84,10 @@ class BinaryDataReader extends BinaryData {
    * Read the 0xFF byte and switch state
    */
   void _process_init_read(int b) {
-    if (b == BinaryData.FULL_BYTE)
+    if (b == FULL_BYTE)
       _currentReadState = BinaryReadState.READ_TYPE;
   }
-  
+
   /*
    * Read the BinaryDataType of the object
    */
@@ -98,7 +95,7 @@ class BinaryDataReader extends BinaryData {
     _type = new BinaryDataType.With(b);
     _currentReadState = BinaryReadState.READ_LENGTH;
   }
-  
+
   /*
    * Read the content length
    * FILE = unsigned 32 bit integer
@@ -114,11 +111,11 @@ class BinaryDataReader extends BinaryData {
       _length = dv.getUint8(index);
     else
       _length = -1;
-    
+
     _leftToRead = _length;
     _currentReadState = BinaryReadState.READ_CONTENT;
   }
-  
+
   /*
    * Push data to buffer
    */
@@ -127,7 +124,7 @@ class BinaryDataReader extends BinaryData {
       _buffer.add(b);
     _leftToRead -= 1;
   }
-  
+
   /*
    * Process end of read
    */
@@ -136,7 +133,7 @@ class BinaryDataReader extends BinaryData {
     _leftToRead = 0;
     _processBuffer();
   }
-  
+
   /*
    * Process the buffer contents
    */
@@ -157,24 +154,24 @@ class BinaryDataReader extends BinaryData {
       }
     }
   }
-  
+
   void bufferFromBlob(Blob b) {
     FileReader r = new FileReader();
     r.readAsArrayBuffer(b);
-    
+
     r.onLoadEnd.listen((ProgressEvent e) {
       listeners.where((l) => l is BinaryBlobReadEventListener).forEach((BinaryBlobReadEventListener l) {
         l.onLoadDone(r.result);
       });
     });
-    
+
     r.onProgress.listen((ProgressEvent e) {
       listeners.where((l) => l is BinaryBlobReadEventListener).forEach((BinaryBlobReadEventListener l) {
         l.onProgress();
       });
     });
   }
-  
+
   /*
    * Signal listeners that a chunk has been read
    */
@@ -183,7 +180,7 @@ class BinaryDataReader extends BinaryData {
       l.onReadChunk(chunkLength, _leftToRead);
     });
   }
-  
+
   /*
    * Packet has been read
    */
@@ -192,7 +189,7 @@ class BinaryDataReader extends BinaryData {
       l.onPacket(p);
     });
   }
-  
+
   void _signalReadString(String s) {
     listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
       l.onString(s);
@@ -206,5 +203,5 @@ class BinaryDataReader extends BinaryData {
     _currentReadState = BinaryReadState.INIT_READ;
     _leftToRead = 0;
   }
-  
+
 }

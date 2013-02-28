@@ -1,6 +1,6 @@
 part of rtc_client;
 
-class BinaryDataWriter extends BinaryData {
+class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListener>{
   /* Create Array buffer slices att his size for sending */
   int _writeChunkSize = 128;
 
@@ -10,43 +10,16 @@ class BinaryDataWriter extends BinaryData {
   /** Sets the chunk size for writing */
   set writeChunkSize(int i) => _writeChunkSize = i;
 
+  Map<int, ArrayBuffer> _sentPackets;
+
   RtcDataChannel _channel;
 
-  BinaryDataWriter() : super() {
 
-  }
-
-  BinaryDataWriter.forChannel(RtcDataChannel c) : super() {
+  BinaryDataWriter(RtcDataChannel c) : super() {
     _channel = c;
+    _sentPackets = new Map<int, ArrayBuffer>();
   }
 
-  ArrayBuffer createPacketBuffer(Packet p) {
-    String packet = PacketFactory.get(p);
-
-    ArrayBuffer buffer = new ArrayBuffer(packet.length);
-    DataView data = new DataView(buffer);
-    int i = 0;
-    while (i < packet.length) {
-      data.setUint8(i, packet.codeUnitAt(i));
-      i++;
-    }
-    return buffer;
-  }
-
-  int _calculateHeaderSize(BinaryDataType t) {
-    int out = 0;
-    if (t == BinaryDataType.PACKET)
-      out = 3;
-    else if (t == BinaryDataType.STRING)
-      out = 4;
-    else if (t == BinaryDataType.FILE)
-      out = 6;
-    return out;
-  }
-
-  int _calculateFooterSize() {
-    return 3;
-  }
 
   /**
    * Bit ugly
@@ -67,7 +40,7 @@ class BinaryDataWriter extends BinaryData {
             time,
             buffer.byteLength
         );
-        send(b, sequence, totalSequences, wrapToString);
+        send(b, time, sequence, totalSequences, wrapToString);
         read += _writeChunkSize;
         sequence++;
       }
@@ -79,19 +52,25 @@ class BinaryDataWriter extends BinaryData {
           time,
           buffer.byteLength
       );
-      send(b, 1, 1, wrapToString);
+      send(b, time, 1, 1, wrapToString);
     }
   }
 
   /**
    * send.. with possibility to wrap into a string because chrome doesnt like binary
    */
-  void send(ArrayBuffer buf, int sequence, int total, bool wrap) {
-    if (!hasHeader(buf))
+  void send(ArrayBuffer buf, int time, int sequence, int total, bool wrap) {
+    if (!BinaryData.isValid(buf))
       return;
 
+    storeBuffer(buf, time);
     Object toSend = wrap ? wrapToString(buf, sequence, total) : buf;
     _channel.send(toSend);
+  }
+
+  void storeBuffer(ArrayBuffer buf, int time) {
+    if (!_sentPackets.containsKey(time))
+      _sentPackets[time] = buf;
   }
 
   String wrapToString(ArrayBuffer buf, int sequence, int total) {
@@ -103,25 +82,14 @@ class BinaryDataWriter extends BinaryData {
     return sb.toString();
   }
 
-  /**
-   * Needs a bit of tuning =)
-   */
-  bool hasHeader(ArrayBuffer buffer) {
-    DataView view = new DataView(buffer);
-    try {
-      if (view.getUint8(0) == 0xFF)
-        return true;
-    } catch (e) {}
 
-    return false;
-  }
 
   ArrayBuffer addHeader(ArrayBuffer buf, int sequenceNumber, int totalSequences, int time, int total) {
     Uint8Array content = new Uint8Array.fromBuffer(buf);
     ArrayBuffer resultBuffer = new ArrayBuffer(buf.byteLength + 15);
     DataView writer = new DataView(resultBuffer);
 
-    writer.setUint8(0, BinaryData.FULL_BYTE);
+    writer.setUint8(0, FULL_BYTE);
     writer.setUint16(1, sequenceNumber);
     writer.setUint16(3, totalSequences);
     writer.setUint16(5, buf.byteLength);
@@ -134,7 +102,7 @@ class BinaryDataWriter extends BinaryData {
 
     return writer.buffer;
   }
-
+/*
   ArrayBuffer createHeaderFor(BinaryDataType t, int length) {
     ArrayBuffer buffer = new ArrayBuffer(_calculateHeaderSize(t));
     DataView data = new DataView(buffer);
@@ -210,5 +178,5 @@ class BinaryDataWriter extends BinaryData {
     writer.setElements(b, position);
 
     return resultBuffer;
-  }
+  }*/
 }

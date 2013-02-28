@@ -12,7 +12,6 @@ part 'src/peer/peerwrapper.dart';
 part 'src/peer/datapeerwrapper.dart';
 part 'src/peer/binarydata.dart';
 part 'src/peer/binaryreadstate.dart';
-part 'src/peer/binarydatatype.dart';
 part 'src/peer/binarydatareader.dart';
 part 'src/peer/binarydatawriter.dart';
 part 'src/peer/peerstate.dart';

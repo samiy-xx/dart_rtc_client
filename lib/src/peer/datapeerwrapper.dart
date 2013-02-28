@@ -25,7 +25,7 @@ class DataPeerWrapper extends PeerWrapper {
    */
   DataPeerWrapper(PeerManager pm, RtcPeerConnection p) : super(pm, p) {
     _peer.onDataChannel.listen(_onNewDataChannelOpen);
-    _binaryWriter = new BinaryDataWriter.forChannel(_dataChannel);
+    _binaryWriter = new BinaryDataWriter(_dataChannel);
   }
 
   void setAsHost(bool value) {
@@ -75,6 +75,9 @@ class DataPeerWrapper extends PeerWrapper {
     _binaryWriter.write(buf, true);
   }
 
+  Future<int> sendBufferAsync(ArrayBuffer buf) {
+    return _binaryWriter.writeAsync(buf, true);
+  }
   /**
    * Callback for when data channel created by the other party comes trough the peer
    */

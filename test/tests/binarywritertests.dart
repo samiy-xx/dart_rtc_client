@@ -14,12 +14,12 @@ class BinaryWriterTests {
 
       setUp(() {
         defaultPacket = new ByePacket.With(packetId);
-        writer = new BinaryDataWriter();
+        //writer = new BinaryDataWriter();
       });
 
       tearDown(() {
         defaultPacket = null;
-        writer = null;
+        //writer = null;
       });
       /*
       test("BinaryDataWriter, writer, can create header", () {

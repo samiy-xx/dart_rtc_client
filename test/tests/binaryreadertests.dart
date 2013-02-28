@@ -15,14 +15,14 @@ class BinaryReaderTests {
 
       setUp(() {
         defaultPacket = new ByePacket.With(packetId);
-        writer = new BinaryDataWriter();
-        reader = new BinaryDataReader();
+        //writer = new BinaryDataWriter();
+        //reader = new BinaryDataReader();
       });
 
       tearDown(() {
         defaultPacket = null;
-        writer = null;
-        reader = null;
+        //writer = null;
+        //reader = null;
       });
 
       /*

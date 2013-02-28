@@ -1,8 +1,6 @@
 part of rtc_client;
 
 class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
-  /* data type for currently processed object */
-  BinaryDataType _type;
 
   ArrayBuffer _latest;
 
@@ -33,7 +31,6 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
    * da mighty constructor
    */
   BinaryDataReader() : super() {
-    _type = BinaryDataType.STRING;
     _length = 0;
     _buffer = new List<int>();
   }
@@ -65,11 +62,11 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
       }
 
       if (_currentReadState == BinaryReadState.READ_CONTENT) {
-        if (v.getUint8(i) == NULL_BYTE && v.getUint8(i+1) == _type.toInt() && v.getUint8(i+2) == NULL_BYTE) {
+        /*if (v.getUint8(i) == NULL_BYTE && v.getUint8(i+1) == _type.toInt() && v.getUint8(i+2) == NULL_BYTE) {
           _process_end();
         } else {
           _process_content(v.getUint8(i));
-        }
+        }*/
       }
 
     }
@@ -92,7 +89,7 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
    * Read the BinaryDataType of the object
    */
   void _process_read_type(int b) {
-    _type = new BinaryDataType.With(b);
+    //_type = new BinaryDataType.With(b);
     _currentReadState = BinaryReadState.READ_LENGTH;
   }
 
@@ -103,7 +100,7 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
    * PACKET = unsigned 8 bit integer
    */
   void _process_read_length(int index, DataView dv) {
-    if (_type == BinaryDataType.FILE)
+    /*if (_type == BinaryDataType.FILE)
       _length = dv.getUint32(index);
     else if (_type == BinaryDataType.STRING)
       _length = dv.getUint16(index);
@@ -111,7 +108,7 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
       _length = dv.getUint8(index);
     else
       _length = -1;
-
+    */
     _leftToRead = _length;
     _currentReadState = BinaryReadState.READ_CONTENT;
   }
@@ -138,7 +135,7 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
    * Process the buffer contents
    */
   void _processBuffer() {
-    if (_type == BinaryDataType.PACKET) {
+    /*if (_type == BinaryDataType.PACKET) {
       try {
         Packet p = PacketFactory.getPacketFromString(new String.fromCharCodes(_buffer));
         _signalReadPacket(p);
@@ -152,7 +149,7 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
       } catch (e) {
         new Logger().Error(e);
       }
-    }
+    }*/
   }
 
   void bufferFromBlob(Blob b) {

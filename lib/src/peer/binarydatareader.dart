@@ -117,12 +117,16 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
   }
 
   void addToSequencer(ArrayBuffer buffer, int signature, int sequence) {
-    if (!_sequencer.containsKey(signature))
+    new Logger().Debug("add to sequencer");
+    if (!_sequencer.containsKey(signature)) {
       _sequencer[signature] = new Map<int, ArrayBuffer>();
+      new Logger().Debug("Created sequencer entry for $signature");
+    }
 
-    if (!_sequencer[signature].containsKey(sequence))
+    if (!_sequencer[signature].containsKey(sequence)) {
       _sequencer[signature][sequence] = buffer;
-
+      new Logger().Debug("Created entry for $sequence");
+    }
 
   }
 
@@ -175,19 +179,19 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
   void _process_read_type(int b) {
     _packetType = b;
     _currentReadState = BinaryReadState.READ_SEQUENCE;
-    new Logger().Debug("_process_read_type set state READ_SEQUENCE");
+    new Logger().Debug("_process_read_type $b set state READ_SEQUENCE");
   }
 
   void _process_read_sequence(int b) {
     _currentChunkSequence = b;
     _currentReadState = BinaryReadState.READ_TOTAL_SEQUENCES;
-    new Logger().Debug("_process_read_sequence set state READ_TOTAL_SEQUENCES");
+    new Logger().Debug("_process_read_sequence $b set state READ_TOTAL_SEQUENCES");
   }
 
   void _process_read_total_sequences(int b) {
     _totalSequences = b;
     _currentReadState = BinaryReadState.READ_LENGTH;
-    new Logger().Debug("_process_read_total_sequences set state RrEAD_LENGTH");
+    new Logger().Debug("_process_read_total_sequences $b set state RrEAD_LENGTH");
   }
 
   void _process_read_length(int b) {
@@ -196,19 +200,19 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
     _latest = new ArrayBuffer(b);
     _latestView = new DataView(_latest);
     _currentReadState = BinaryReadState.READ_TOTAL_LENGTH;
-    new Logger().Debug("_process_read_length set state READ_TOTAL_LENGTH");
+    new Logger().Debug("_process_read_length $b set state READ_TOTAL_LENGTH");
   }
 
   void _process_read_total_length(int b) {
     _contentTotalLength = b;
     _currentReadState = BinaryReadState.READ_SIGNATURE;
-    new Logger().Debug("_process_read_total_length set state READ_SIGNATURE");
+    new Logger().Debug("_process_read_total_length $b set state READ_SIGNATURE");
   }
 
   void _process_read_signature(int b) {
     _signature = b;
     _currentReadState = BinaryReadState.READ_CONTENT;
-    new Logger().Debug("_process_read_signture set state READ_CONTENT");
+    new Logger().Debug("_process_read_signture $b set state READ_CONTENT");
   }
 
   /*
@@ -230,10 +234,12 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
    * Process end of read
    */
   void _process_end() {
+    new Logger().Debug("_process_end");
     _currentReadState = BinaryReadState.INIT_READ;
     addToSequencer(_latest, _signature, _currentChunkSequence);
-    _signalReadChunk(_signature, _currentChunkSequence, _totalSequences, _currentChunkContentLength, _leftToRead);
+    _signalReadChunk(_latest, _signature, _currentChunkSequence, _totalSequences, _currentChunkContentLength, _leftToRead);
 
+    new Logger().Debug("$_totalRead $_contentTotalLength");
     if (_totalRead == _contentTotalLength)
       _processBuffer();
   }
@@ -242,6 +248,8 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
    * Process the buffer contents
    */
   void _processBuffer() {
+    _totalRead = 0;
+
     ArrayBuffer buffer;
     if (sequencerComplete(_signature)) {
       buffer = buildCompleteBuffer(_signature);
@@ -303,9 +311,9 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
   /*
    * Signal listeners that a chunk has been read
    */
-  void _signalReadChunk(int signature, int sequence, int totalSequences, int bytes, int bytesLeft) {
+  void _signalReadChunk(ArrayBuffer buf, int signature, int sequence, int totalSequences, int bytes, int bytesLeft) {
     listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
-      l.onReadChunk(signature, sequence, totalSequences, bytes, bytesLeft);
+      l.onReadChunk(buf, signature, sequence, totalSequences, bytes, bytesLeft);
     });
   }
 

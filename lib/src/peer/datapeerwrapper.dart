@@ -112,9 +112,10 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
   /**
    * Implements BinaryDataReceivedEventListener onReadChunk
    */
-  void onReadChunk(int signature, int sequence, int totalSequences, int bytes, int bytesLeft) {
+  void onReadChunk(ArrayBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesLeft) {
     print("received chunk $signature $sequence $totalSequences $bytes $bytesLeft");
-    _binaryWriter.removeFromBuffer(signature, sequence);
+    //_binaryWriter.removeFromBuffer(signature, sequence);
+    _binaryWriter.writeAck(buffer, false);
   }
 
   /**

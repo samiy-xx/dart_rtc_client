@@ -2,7 +2,7 @@ part of rtc_client;
 
 class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListener>{
   /* Create Array buffer slices att his size for sending */
-  int _writeChunkSize = 128;
+  int _writeChunkSize = 512;
 
   /** Get the chunk size for writing */
   int get writeChunkSize => _writeChunkSize;
@@ -38,7 +38,25 @@ class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListener>{
     int time = new DateTime.now().millisecondsSinceEpoch  ~/1000;
     new Logger().Debug("binarydatawriter.dart writing ${buffer.byteLength} in ${totalSequences} chunks");
     if (buffer.byteLength > _writeChunkSize) {
-      while (read < buffer.byteLength) {
+      new Timer.repeating(const Duration(milliseconds: 5), (Timer t) {
+        print(_channel.bufferedAmount);
+        if (read < buffer.byteLength) {
+          ArrayBuffer b = addHeader(
+              buffer.slice(read, read + _writeChunkSize),
+              packetType,
+              sequence,
+              totalSequences,
+              time,
+              buffer.byteLength
+          );
+          send(b, time, sequence, totalSequences, wrapToString);
+          read += _writeChunkSize;
+          sequence++;
+        } else {
+          t.cancel();
+        }
+      });
+      /*while (read < buffer.byteLength) {
         ArrayBuffer b = addHeader(
             buffer.slice(read, read + _writeChunkSize),
             packetType,
@@ -50,7 +68,8 @@ class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListener>{
         send(b, time, sequence, totalSequences, wrapToString);
         read += _writeChunkSize;
         sequence++;
-      }
+
+      }*/
     } else {
       ArrayBuffer b = addHeader(
           buffer,
@@ -64,11 +83,28 @@ class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListener>{
     }
   }
 
-  void writeAck(ArrayBuffer b, [bool wrap = true]) {
-    Object ack = BinaryData.createAck(b);
+  ArrayBuffer findSentData(int signature, int sequence) {
+    if (!_sentPackets.containsKey(signature));
+      return null;
+
+    List<ArrayBuffer> buffers = _sentPackets[signature];
+    for (int i = 0; i < buffers.length; i++) {
+      ArrayBuffer buffer = buffers[i];
+      DataView view = new DataView(buffer);
+      if (view.getUint16(2) == sequence)
+        return buffer;
+    }
+
+    return null;
+  }
+
+  void writeAck(ArrayBuffer buffer, [bool wrap = true]) {
+
+    Object ack = BinaryData.createAck(buffer);
     if (wrap)
       ack = wrapToString(ack, 1, 1);
 
+    print("sendig ack");
     _channel.send(ack);
   }
 
@@ -84,6 +120,7 @@ class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListener>{
     Object toSend = wrap ? wrapToString(buf, sequence, total) : buf;
     new Logger().Debug("Sending $toSend");
     _channel.send(toSend);
+
   }
 
   void removeFromBuffer(int time, int sequence) {

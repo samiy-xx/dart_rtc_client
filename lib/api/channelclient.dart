@@ -376,7 +376,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     new Logger().Debug("(channelclient.dart) sending arraybuffer");
     PeerWrapper w = _pm.findWrapper(peerId);
     if (w == null)
-      new Logger().Error("wrapper not found");
+      new Logger().Error("wrapper not found with id $peerId");
     if (w is DataPeerWrapper) {
       DataPeerWrapper dpw = w as DataPeerWrapper;
       dpw.sendBuffer(data, BINARY_TYPE_FILE);

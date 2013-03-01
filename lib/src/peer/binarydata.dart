@@ -17,10 +17,10 @@ class BinaryData {
 
   static ArrayBuffer bufferFromString(String s) {
     ArrayBuffer buffer = new ArrayBuffer(s.length);
-    DataView view = new DataView(buffer);
+    Uint8Array array = new Uint8Array.fromBuffer(buffer);
 
     for (int i = 0; i < s.length; i++) {
-      view.setUint8(0, s.codeUnitAt(i));
+      array[i] = s.codeUnitAt(i);
     }
 
     return buffer;
@@ -57,17 +57,18 @@ class BinaryData {
   }
 
   static ArrayBuffer createAck(ArrayBuffer b) {
-    ArrayBuffer ackBuffer = new ArrayBuffer(15);
-    DataView viewOriginal = new DataView(b, 0, 14);
+    ArrayBuffer ackBuffer = new ArrayBuffer(17);
+    DataView viewOriginal = new DataView(b, 0, 16);
     DataView viewAck = new DataView(ackBuffer);
 
     viewAck.setUint8(0, viewOriginal.getUint8(0));
-    viewAck.setUint16(1, viewOriginal.getUint16(1));
-    viewAck.setUint16(3, viewOriginal.getUint16(3));
-    viewAck.setUint16(5, viewOriginal.getUint16(5));
-    viewAck.setUint32(7, viewOriginal.getUint32(7));
-    viewAck.setUint32(11, viewOriginal.getUint32(11));
-    viewAck.setUint8(15, BINARY_PACKET_ACK);
+    viewAck.setUint8(1, viewOriginal.getUint8(1));
+    viewAck.setUint16(2, viewOriginal.getUint16(2));
+    viewAck.setUint16(4, viewOriginal.getUint16(4));
+    viewAck.setUint16(6, viewOriginal.getUint16(6));
+    viewAck.setUint32(8, viewOriginal.getUint32(8));
+    viewAck.setUint32(12, viewOriginal.getUint32(12));
+    viewAck.setUint8(16, BINARY_PACKET_ACK);
   }
 
   /**
@@ -92,7 +93,7 @@ class BinaryData {
         return false;
       }
 
-      int packetType = view.getUint16(1);
+      int packetType = view.getUint8(1);
       if (packetType == null) {
         new Logger().Warning("binarydata.dart Failed checking packetType");
         return false;

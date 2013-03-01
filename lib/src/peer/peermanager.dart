@@ -142,9 +142,11 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
   PeerWrapper _createWrapper(RtcPeerConnection p) {
     PeerWrapper wrapper;
     if (_peerConstraints.dataChannelEnabled) {
+      new Logger().Debug("Creating Data Peer Wrapper");
       wrapper = new DataPeerWrapper(this, p);
       (wrapper as DataPeerWrapper).isReliable = _reliableDataChannels;
     } else {
+      new Logger().Debug("Creating Peer Wrapper");
       wrapper = new PeerWrapper(this, p);
     }
 

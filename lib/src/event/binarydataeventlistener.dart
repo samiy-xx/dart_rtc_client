@@ -13,14 +13,15 @@ abstract class BinaryDataEventListener {
 abstract class BinaryDataReceivedEventListener extends BinaryDataEventListener {
   void onPacket(Packet p);
   void onString(String s);
-  void onReadChunk(int read, int leftToRead);
+  void onBuffer(ArrayBuffer b);
+  void onReadChunk(int signature, int sequence, int totalSequences, int bytes, int bytesLeft);
 }
 
 /**
  * Interface for sent binary data events
  */
 abstract class BinaryDataSentEventListener extends BinaryDataEventListener {
-  void onWriteChunk(int wrote);
+  void onWriteChunk(int signature, int sequence, int totalSequences, int bytes, int bytesLeft);
 }
 
 abstract class BinaryBlobReadEventListener extends BinaryDataEventListener {

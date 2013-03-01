@@ -85,35 +85,56 @@ class BinaryData {
   }
 
   static bool isValid(ArrayBuffer buf) {
-    DataView view = new DataView(buf, 0, 14);
+    DataView view = new DataView(buf, 0, 16);
     try {
-      if (view.getUint8(0) != FULL_BYTE)
+      if (view.getUint8(0) != FULL_BYTE) {
+        new Logger().Warning("binarydata.dart Failed checking start byte");
         return false;
+      }
 
-      int sequenceNumber = view.getUint16(1);
-      if (sequenceNumber == null || sequenceNumber < 1)
+      int packetType = view.getUint16(1);
+      if (packetType == null) {
+        new Logger().Warning("binarydata.dart Failed checking packetType");
         return false;
+      }
 
-      int totalSequences = view.getUint16(3);
-      if (totalSequences == null || totalSequences < sequenceNumber)
+      int sequenceNumber = view.getUint16(2);
+      if (sequenceNumber == null || sequenceNumber < 1) {
+        new Logger().Warning("binarydata.dart Failed checking sequenceNumber");
         return false;
+      }
 
-      int byteLength = view.getUint16(5);
-      if (byteLength == null || byteLength <= 0)
+      int totalSequences = view.getUint16(4);
+      if (totalSequences == null || totalSequences < sequenceNumber) {
+        new Logger().Warning("binarydata.dart Failed checking totalSequences");
         return false;
+      }
 
-      int totalBytes = view.getUint32(7);
-      if (totalBytes == null || totalBytes < byteLength)
+      int byteLength = view.getUint16(6);
+      if (byteLength == null || byteLength <= 0) {
+        new Logger().Warning("binarydata.dart Failed checking byteLength");
         return false;
+      }
 
-      int timeStamp = view.getUint32(11);
+      int totalBytes = view.getUint32(8);
+      if (totalBytes == null || totalBytes < byteLength) {
+        new Logger().Warning("binarydata.dart Failed checking totalBytes");
+        return false;
+      }
+
+      int signature = view.getUint32(12);
       int current = new DateTime.now().millisecondsSinceEpoch;
-      if (timeStamp == null || (timeStamp + 60000) < current)
+      if (signature == null) {
+        new Logger().Warning("binarydata.dart Failed checking signature");
         return false;
+      }
 
       return true;
 
-    } catch(e) {}
+    } catch(e, s) {
+      new Logger().Error("Error $e");
+
+    }
 
     return false;
   }

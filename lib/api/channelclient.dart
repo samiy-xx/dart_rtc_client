@@ -373,7 +373,16 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
    * Sends an arraybuffer to peer
    */
   void sendArrayBuffer(String peerId, ArrayBuffer data) {
-    throw new UnsupportedError("sendArrayBuffer is a work in progress");
+    new Logger().Debug("(channelclient.dart) sending arraybuffer");
+    PeerWrapper w = _pm.findWrapper(peerId);
+    if (w == null)
+      new Logger().Error("wrapper not found");
+    if (w is DataPeerWrapper) {
+      DataPeerWrapper dpw = w as DataPeerWrapper;
+      dpw.sendBuffer(data, BINARY_TYPE_FILE);
+    } else {
+      new Logger().Debug("(channelclient.dart) Peer wrapper is not data peer wrapper");
+    }
   }
 
   /**
@@ -412,6 +421,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
    * TODO: Needs a stream controller and event
    */
   void _joinPacketHandler(JoinPacket p) {
+    new Logger().Debug("channelclient.dart Joinpackethandler received ${p.id}");
     _otherId = p.id;
     PeerWrapper pw = _pm.findWrapper(p.id);
     if (_packetController.hasSubscribers)

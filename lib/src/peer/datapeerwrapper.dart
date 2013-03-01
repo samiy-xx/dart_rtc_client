@@ -3,7 +3,7 @@ part of rtc_client;
 /**
  * DataChannel enabled peer connection
  */
-class DataPeerWrapper extends PeerWrapper {
+class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventListener, BinaryDataSentEventListener {
   /* DataChannel */
   RtcDataChannel _dataChannel;
 
@@ -20,12 +20,18 @@ class DataPeerWrapper extends PeerWrapper {
   set isReliable(bool r) => _isReliable = r;
 
   BinaryDataWriter _binaryWriter;
+  BinaryDataReader _binaryReader;
+
   /**
    * Constructor
    */
   DataPeerWrapper(PeerManager pm, RtcPeerConnection p) : super(pm, p) {
     _peer.onDataChannel.listen(_onNewDataChannelOpen);
-    _binaryWriter = new BinaryDataWriter(_dataChannel);
+    _binaryReader = new BinaryDataReader();
+    //_binaryWriter = new BinaryDataWriter(_dataChannel);
+
+    _binaryReader.subscribe(this);
+    //_binaryWriter.subscribe(this);
   }
 
   void setAsHost(bool value) {
@@ -54,6 +60,8 @@ class DataPeerWrapper extends PeerWrapper {
     _dataChannel.onOpen.listen(onDataChannelOpen);
     _dataChannel.onError.listen(onDataChannelError);
     _dataChannel.onMessage.listen(onDataChannelMessage);
+    _binaryWriter = new BinaryDataWriter(_dataChannel);
+    _binaryWriter.subscribe(this);
   }
 
   /**
@@ -71,13 +79,51 @@ class DataPeerWrapper extends PeerWrapper {
     _dataChannel.send(b);
   }
 
-  void sendBuffer(ArrayBuffer buf) {
-    _binaryWriter.write(buf, true);
+  void sendBuffer(ArrayBuffer buf, int packetType) {
+    new Logger().Debug("(datapeerwrapper.dart) sending arraybuffer");
+    _binaryWriter.write(buf, packetType, true);
   }
 
-  Future<int> sendBufferAsync(ArrayBuffer buf) {
-    return _binaryWriter.writeAsync(buf, true);
+  Future<int> sendBufferAsync(ArrayBuffer buf, int packetType) {
+    return _binaryWriter.writeAsync(buf, packetType, true);
   }
+
+  /**
+   * Implements BinaryDataReceivedEventListener onPacket
+   */
+  void onPacket(Packet p) {
+    print ("got packet ${p.packetType.toString()}");
+  }
+
+  /**
+   * Implements BinaryDataReceivedEventListener onString
+   */
+  void onString(String s) {
+    print("got string $s");
+  }
+
+  /**
+   * Implements BinaryDataReceivedEventListener onBuffer
+   */
+  void onBuffer(ArrayBuffer b) {
+    print("got buffer, length ${b.byteLength}");
+  }
+
+  /**
+   * Implements BinaryDataReceivedEventListener onReadChunk
+   */
+  void onReadChunk(int signature, int sequence, int totalSequences, int bytes, int bytesLeft) {
+    print("received chunk $signature $sequence $totalSequences $bytes $bytesLeft");
+    _binaryWriter.removeFromBuffer(signature, sequence);
+  }
+
+  /**
+   * Implements BinaryDataReceivedEventListener onWriteChunk
+   */
+  void onWriteChunk(int signature, int sequence, int totalSequences, int bytes, int bytesLeft) {
+
+  }
+
   /**
    * Callback for when data channel created by the other party comes trough the peer
    */
@@ -87,6 +133,8 @@ class DataPeerWrapper extends PeerWrapper {
     _dataChannel.onOpen.listen(onDataChannelOpen);
     _dataChannel.onError.listen(onDataChannelError);
     _dataChannel.onMessage.listen(onDataChannelMessage);
+    _binaryWriter = new BinaryDataWriter(_dataChannel);
+    _binaryWriter.subscribe(this);
   }
 
   /**
@@ -114,14 +162,17 @@ class DataPeerWrapper extends PeerWrapper {
       throw new NotImplementedException("Blob is not implemented");
     } else if (e.data is ArrayBuffer || e.data is ArrayBufferView) {
       _log.Debug("Received ArrayBuffer ${e.data.runtimeType.toString()}");
-
       throw new NotImplementedException("ArrayBuffer is not implemented");
     } else {
+      _binaryReader.readChunkString(e.data);
       _log.Debug("Received Text");
-      Packet p = PacketFactory.getPacketFromString(e.data);
-      if (p != null) {
-        _signalPacketArrived(p);
-      }
+      try {
+        Packet p = PacketFactory.getPacketFromString(e.data);
+        if (p != null) {
+          _signalPacketArrived(p);
+        }
+      } catch(e) {}
+
     }
   }
 

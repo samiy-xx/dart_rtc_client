@@ -41,6 +41,7 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
    * da mighty constructor
    */
   BinaryDataReader(RtcDataChannel c) : super() {
+    new Logger().Debug("Binarydatareader.dart constructor, assigning channel on message");
     _channel = c;
     _channel.onMessage.listen(_onChannelMessage);
     _length = 0;
@@ -51,6 +52,7 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
   }
 
   void _onChannelMessage(MessageEvent e) {
+    new Logger().Debug("(binarydatareader.dart) _onChannelMessage");
     if (e.data is Blob) {
       throw new NotImplementedException("Blob is not implemented");
     }
@@ -64,6 +66,7 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
     }
 
     else {
+      new Logger().Debug("(binarydatareader.dart) reading string");
       readChunkString(e.data);
     }
   }
@@ -72,6 +75,7 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
     new Logger().Debug("Read chunk string");
     readChunk(BinaryData.bufferFromString(s));
   }
+
   /**
    * Reads an ArrayBuffer
    * Can be whole packet or partial
@@ -317,6 +321,7 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
   }
 
   void _process_command(int command, ArrayBuffer buffer) {
+    new Logger().Debug("(binarydatareader.dart) Processing command");
     switch (command) {
       case BINARY_PACKET_ACK:
         break;

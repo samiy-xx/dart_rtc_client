@@ -108,6 +108,8 @@ class BinaryData {
     );
 
     viewAck.setUint8(PROTOCOL_FIRST_CONTENT_POSITION, BINARY_PACKET_ACK);
+
+    return ackBuffer;
   }
 
   /**
@@ -127,6 +129,8 @@ class BinaryData {
   static bool isCommand(ArrayBuffer buffer) {
     if (buffer.byteLength == 17)
       return true;
+
+    return false;
   }
 
   static int getCommand(ArrayBuffer buffer) {

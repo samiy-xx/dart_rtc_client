@@ -2,7 +2,7 @@ part of rtc_client;
 
 class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListener>{
   /* Create Array buffer slices att his size for sending */
-  int _writeChunkSize = 980;
+  int _writeChunkSize = 950;
 
   /** Get the chunk size for writing */
   int get writeChunkSize => _writeChunkSize;
@@ -38,7 +38,7 @@ class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListener>{
     int time = new DateTime.now().millisecondsSinceEpoch  ~/1000;
     new Logger().Debug("binarydatawriter.dart writing ${buffer.byteLength} in ${totalSequences} chunks");
     if (buffer.byteLength > _writeChunkSize) {
-      new Timer.repeating(const Duration(milliseconds: 5), (Timer t) {
+      new Timer.repeating(const Duration(milliseconds: 15), (Timer t) {
         print(_channel.bufferedAmount);
         if (read < buffer.byteLength) {
           ArrayBuffer b = addHeader(
@@ -106,12 +106,12 @@ class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListener>{
   }
 
   void writeAck(ArrayBuffer buffer, [bool wrap = true]) {
-
+    print("sendig ack");
     Object ack = BinaryData.createAck(buffer);
     if (wrap)
       ack = wrapToString(ack);
 
-    print("sendig ack");
+
     _channel.send(ack);
   }
 

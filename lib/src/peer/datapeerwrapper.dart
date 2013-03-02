@@ -57,17 +57,17 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
     _sendDataChannel.onOpen.listen(onDataChannelOpen);
     _sendDataChannel.onError.listen(onDataChannelError);
 
-    _recvDataChannel = _peer.createDataChannel("recv", {'reliable': _isReliable});
-    _recvDataChannel.binaryType = "arraybuffer";
-    _recvDataChannel.onClose.listen(onDataChannelClose);
-    _recvDataChannel.onOpen.listen(onDataChannelOpen);
-    _recvDataChannel.onError.listen(onDataChannelError);
+    //_recvDataChannel = _peer.createDataChannel("recv", {'reliable': _isReliable});
+    //_recvDataChannel.binaryType = "arraybuffer";
+    //_recvDataChannel.onClose.listen(onDataChannelClose);
+    //_recvDataChannel.onOpen.listen(onDataChannelOpen);
+    //_recvDataChannel.onError.listen(onDataChannelError);
     //_recvDataChannel.onMessage.listen(onDataChannelMessage);
 
     _binaryWriter = new BinaryDataWriter(_sendDataChannel);
     _binaryWriter.subscribe(this);
 
-    _binaryReader = new BinaryDataReader(_recvDataChannel);
+    _binaryReader = new BinaryDataReader(_sendDataChannel);
     _binaryReader.subscribe(this);
   }
 
@@ -131,7 +131,7 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
     print("received chunk $signature $sequence $totalSequences $bytes $bytesLeft");
     //_binaryWriter.removeFromBuffer(signature, sequence);
     // this wont work, chrome crashes if send and receive at the same time
-    //_binaryWriter.writeAck(buffer, false);
+    _binaryWriter.writeAck(buffer, true);
   }
 
   /**
@@ -145,24 +145,27 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
    * Callback for when data channel created by the other party comes trough the peer
    */
   void _onNewDataChannelOpen(RtcDataChannelEvent e) {
-    if (e.channel.label == "send") {
-      _recvDataChannel = e.channel;
-      _recvDataChannel.onClose.listen(onDataChannelClose);
-      _recvDataChannel.onOpen.listen(onDataChannelOpen);
-      _recvDataChannel.onError.listen(onDataChannelError);
-      //_recvDataChannel.onMessage.listen(onDataChannelMessage);
-    } else {
+    new Logger().Debug("onDataChannelOpen");
+    //if (e.channel.label == "send") {
+    //  new Logger().Debug("label is send, setting to receive");
+    //  _recvDataChannel = e.channel;
+    //  _recvDataChannel.onClose.listen(onDataChannelClose);
+    //  _recvDataChannel.onOpen.listen(onDataChannelOpen);
+    //  _recvDataChannel.onError.listen(onDataChannelError);
+    //  //_binaryReader = new BinaryDataReader(_recvDataChannel);
+    //  //_binaryReader.subscribe(this);
+    //  _recvDataChannel.onMessage.listen(onDataChannelMessage);
+    //} else {
+    //  new Logger().Debug("label is ${e.channel.label} , setting to send");
       _sendDataChannel = e.channel;
       _sendDataChannel.onClose.listen(onDataChannelClose);
       _sendDataChannel.onOpen.listen(onDataChannelOpen);
       _sendDataChannel.onError.listen(onDataChannelError);
-    }
-
-    _binaryWriter = new BinaryDataWriter(_sendDataChannel);
-    _binaryWriter.subscribe(this);
-
-    _binaryReader = new BinaryDataReader(_recvDataChannel);
-    _binaryReader.subscribe(this);
+      _binaryWriter = new BinaryDataWriter(_sendDataChannel);
+      _binaryWriter.subscribe(this);
+      _binaryReader = new BinaryDataReader(_sendDataChannel);
+      _binaryReader.subscribe(this);
+    //}
   }
 
   /**
@@ -184,8 +187,9 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
   /**
    * Message, check if blob, otherwise assume string data
    */
- /* void onDataChannelMessage(MessageEvent e) {
-    if (e.data is Blob) {
+  void onDataChannelMessage(MessageEvent e) {
+    new Logger().Debug("datachannel message");
+    /*if (e.data is Blob) {
       _log.Debug("Received Blob");
       throw new NotImplementedException("Blob is not implemented");
     } else if (e.data is ArrayBuffer || e.data is ArrayBufferView) {
@@ -201,8 +205,8 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
         }
       } catch(e) {}
 
-    }
-  }*/
+    }*/
+  }
 
   /**
    * Error

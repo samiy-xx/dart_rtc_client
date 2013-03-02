@@ -13,8 +13,14 @@ const int BINARY_PACKET_ACK = 0x01;
 const int BINARY_PACKET_RESEND = 0x02;
 const int BINARY_PACKET_REQUEST_RESEND = 0x03;
 
+const int PROTOCOL_STARTBYTE_POSITION = 0;
+const int PROTOCOL_PACKETTYPE_POSITION = 1;
 const int PROTOCOL_SEQUENCE_POSITION = 2;
+const int PROTOCOL_TOTALSEQUENCE_POSITION = 4;
+const int PROTOCOL_BYTELENGTH_POSITION = 6;
+const int PROTOCOL_TOTALBYTELENGTH_POSITION = 8;
 const int PROTOCOL_SIGNATURE_POSITION = 12;
+const int PROTOCOL_FIRST_CONTENT_POSITION = 16;
 /**
  * Binary reader/writer for Datachannel
  */
@@ -66,14 +72,42 @@ class BinaryData {
     DataView viewOriginal = new DataView(b, 0, 16);
     DataView viewAck = new DataView(ackBuffer);
 
-    viewAck.setUint8(0, viewOriginal.getUint8(0));
-    viewAck.setUint8(1, viewOriginal.getUint8(1));
-    viewAck.setUint16(2, viewOriginal.getUint16(2));
-    viewAck.setUint16(4, viewOriginal.getUint16(4));
-    viewAck.setUint16(6, viewOriginal.getUint16(6));
-    viewAck.setUint32(8, viewOriginal.getUint32(8));
-    viewAck.setUint32(12, viewOriginal.getUint32(12));
-    viewAck.setUint8(16, BINARY_PACKET_ACK);
+    viewAck.setUint8(
+        PROTOCOL_STARTBYTE_POSITION,
+        viewOriginal.getUint8(PROTOCOL_STARTBYTE_POSITION)
+    );
+
+    viewAck.setUint8(
+        PROTOCOL_PACKETTYPE_POSITION,
+        viewOriginal.getUint8(PROTOCOL_PACKETTYPE_POSITION)
+    );
+
+    viewAck.setUint16(
+        PROTOCOL_SEQUENCE_POSITION,
+        viewOriginal.getUint16(PROTOCOL_SEQUENCE_POSITION)
+    );
+
+    viewAck.setUint16(
+        PROTOCOL_TOTALSEQUENCE_POSITION,
+        viewOriginal.getUint16(PROTOCOL_TOTALSEQUENCE_POSITION)
+    );
+
+    viewAck.setUint16(
+        PROTOCOL_BYTELENGTH_POSITION,
+        viewOriginal.getUint16(PROTOCOL_BYTELENGTH_POSITION)
+    );
+
+    viewAck.setUint32(
+        PROTOCOL_TOTALBYTELENGTH_POSITION,
+        viewOriginal.getUint32(PROTOCOL_TOTALBYTELENGTH_POSITION)
+    );
+
+    viewAck.setUint32(
+        PROTOCOL_SIGNATURE_POSITION,
+        viewOriginal.getUint32(PROTOCOL_SIGNATURE_POSITION)
+    );
+
+    viewAck.setUint8(PROTOCOL_FIRST_CONTENT_POSITION, BINARY_PACKET_ACK);
   }
 
   /**
@@ -82,7 +116,7 @@ class BinaryData {
   static bool hasHeader(ArrayBuffer buffer) {
     DataView view = new DataView(buffer, 0, 1);
     try {
-      if (view.getUint8(0) == 0xFF)
+      if (view.getUint8(PROTOCOL_STARTBYTE_POSITION) == 0xFF)
         return true;
     } catch (e) {}
 
@@ -112,42 +146,42 @@ class BinaryData {
   static bool isValid(ArrayBuffer buf) {
     DataView view = new DataView(buf, 0, 16);
     try {
-      if (view.getUint8(0) != FULL_BYTE) {
+      if (view.getUint8(PROTOCOL_STARTBYTE_POSITION) != FULL_BYTE) { // 0
         new Logger().Warning("binarydata.dart Failed checking start byte");
         return false;
       }
 
-      int packetType = view.getUint8(1);
+      int packetType = view.getUint8(PROTOCOL_PACKETTYPE_POSITION); // 1
       if (packetType == null) {
         new Logger().Warning("binarydata.dart Failed checking packetType");
         return false;
       }
 
-      int sequenceNumber = view.getUint16(2);
+      int sequenceNumber = view.getUint16(PROTOCOL_SEQUENCE_POSITION); // 2
       if (sequenceNumber == null || sequenceNumber < 1) {
         new Logger().Warning("binarydata.dart Failed checking sequenceNumber");
         return false;
       }
 
-      int totalSequences = view.getUint16(4);
+      int totalSequences = view.getUint16(PROTOCOL_TOTALSEQUENCE_POSITION); // 4
       if (totalSequences == null || totalSequences < sequenceNumber) {
         new Logger().Warning("binarydata.dart Failed checking totalSequences");
         return false;
       }
 
-      int byteLength = view.getUint16(6);
+      int byteLength = view.getUint16(PROTOCOL_BYTELENGTH_POSITION); // 6
       if (byteLength == null || byteLength <= 0) {
         new Logger().Warning("binarydata.dart Failed checking byteLength");
         return false;
       }
 
-      int totalBytes = view.getUint32(8);
+      int totalBytes = view.getUint32(PROTOCOL_TOTALBYTELENGTH_POSITION); // 8
       if (totalBytes == null || totalBytes < byteLength) {
         new Logger().Warning("binarydata.dart Failed checking totalBytes");
         return false;
       }
 
-      int signature = view.getUint32(12);
+      int signature = view.getUint32(PROTOCOL_SIGNATURE_POSITION); // 12
       int current = new DateTime.now().millisecondsSinceEpoch;
       if (signature == null) {
         new Logger().Warning("binarydata.dart Failed checking signature");

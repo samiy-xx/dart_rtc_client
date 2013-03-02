@@ -5,13 +5,15 @@ part of rtc_client;
  */
 class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventListener, BinaryDataSentEventListener {
   /* DataChannel */
-  RtcDataChannel _dataChannel;
+  RtcDataChannel _sendDataChannel;
+  RtcDataChannel _recvDataChannel;
 
   /* Logger */
   Logger _log = new Logger();
 
   /* Current channel state */
-  String _channelState = null;
+  String _sendChannelState = null;
+  String _recvChannelState = null;
 
   /* reliable tcp, unreliable udp */
   bool _isReliable = false;
@@ -27,11 +29,6 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
    */
   DataPeerWrapper(PeerManager pm, RtcPeerConnection p) : super(pm, p) {
     _peer.onDataChannel.listen(_onNewDataChannelOpen);
-    _binaryReader = new BinaryDataReader();
-    //_binaryWriter = new BinaryDataWriter(_dataChannel);
-
-    _binaryReader.subscribe(this);
-    //_binaryWriter.subscribe(this);
   }
 
   void setAsHost(bool value) {
@@ -54,14 +51,24 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
    * TODO: Whenever these reliable and unreliable are implemented by whomever. fix this.
    */
   void initChannel() {
-    _dataChannel = _peer.createDataChannel("somelabelhere", {'reliable': _isReliable});
-    _dataChannel.binaryType = "arraybuffer";
-    _dataChannel.onClose.listen(onDataChannelClose);
-    _dataChannel.onOpen.listen(onDataChannelOpen);
-    _dataChannel.onError.listen(onDataChannelError);
-    _dataChannel.onMessage.listen(onDataChannelMessage);
-    _binaryWriter = new BinaryDataWriter(_dataChannel);
+    _sendDataChannel = _peer.createDataChannel("send", {'reliable': _isReliable});
+    _sendDataChannel.binaryType = "arraybuffer";
+    _sendDataChannel.onClose.listen(onDataChannelClose);
+    _sendDataChannel.onOpen.listen(onDataChannelOpen);
+    _sendDataChannel.onError.listen(onDataChannelError);
+
+    _recvDataChannel = _peer.createDataChannel("recv", {'reliable': _isReliable});
+    _recvDataChannel.binaryType = "arraybuffer";
+    _recvDataChannel.onClose.listen(onDataChannelClose);
+    _recvDataChannel.onOpen.listen(onDataChannelOpen);
+    _recvDataChannel.onError.listen(onDataChannelError);
+    //_recvDataChannel.onMessage.listen(onDataChannelMessage);
+
+    _binaryWriter = new BinaryDataWriter(_sendDataChannel);
     _binaryWriter.subscribe(this);
+
+    _binaryReader = new BinaryDataReader(_recvDataChannel);
+    _binaryReader.subscribe(this);
   }
 
   /**
@@ -69,14 +76,14 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
    */
   void send(Packet p) {
     String packet = PacketFactory.get(p);
-    _dataChannel.send(packet);
+    _sendDataChannel.send(packet);
   }
 
   /**
    * Send blob
    */
   void sendBlob(Blob b) {
-    _dataChannel.send(b);
+    _sendDataChannel.send(b);
   }
 
   void sendBuffer(ArrayBuffer buf, int packetType) {
@@ -138,13 +145,24 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
    * Callback for when data channel created by the other party comes trough the peer
    */
   void _onNewDataChannelOpen(RtcDataChannelEvent e) {
-    _dataChannel = e.channel;
-    _dataChannel.onClose.listen(onDataChannelClose);
-    _dataChannel.onOpen.listen(onDataChannelOpen);
-    _dataChannel.onError.listen(onDataChannelError);
-    _dataChannel.onMessage.listen(onDataChannelMessage);
-    _binaryWriter = new BinaryDataWriter(_dataChannel);
+    if (e.channel.label == "send") {
+      _recvDataChannel = e.channel;
+      _recvDataChannel.onClose.listen(onDataChannelClose);
+      _recvDataChannel.onOpen.listen(onDataChannelOpen);
+      _recvDataChannel.onError.listen(onDataChannelError);
+      //_recvDataChannel.onMessage.listen(onDataChannelMessage);
+    } else {
+      _sendDataChannel = e.channel;
+      _sendDataChannel.onClose.listen(onDataChannelClose);
+      _sendDataChannel.onOpen.listen(onDataChannelOpen);
+      _sendDataChannel.onError.listen(onDataChannelError);
+    }
+
+    _binaryWriter = new BinaryDataWriter(_sendDataChannel);
     _binaryWriter.subscribe(this);
+
+    _binaryReader = new BinaryDataReader(_recvDataChannel);
+    _binaryReader.subscribe(this);
   }
 
   /**
@@ -152,7 +170,7 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
    */
   void onDataChannelOpen(Event e) {
     _signalStateChanged();
-    _log.Debug("(datapeerwrapper.dart) DataChannelOpen $e");
+    _log.Debug("(datapeerwrapper.dart) DataChannelOpen");
   }
 
   /**
@@ -160,13 +178,13 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
    */
   void onDataChannelClose(Event e) {
     _signalStateChanged();
-    _log.Debug("(datapeerwrapper.dart) DataChannelClose $e");
+    _log.Debug("(datapeerwrapper.dart) DataChannelClose");
   }
 
   /**
    * Message, check if blob, otherwise assume string data
    */
-  void onDataChannelMessage(MessageEvent e) {
+ /* void onDataChannelMessage(MessageEvent e) {
     if (e.data is Blob) {
       _log.Debug("Received Blob");
       throw new NotImplementedException("Blob is not implemented");
@@ -184,7 +202,7 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
       } catch(e) {}
 
     }
-  }
+  }*/
 
   /**
    * Error
@@ -206,11 +224,12 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
    * signal listeners that channel state has changed
    */
   void _signalStateChanged() {
-    if (_dataChannel.readyState != _channelState) {
+
+    if (_sendDataChannel.readyState != _sendChannelState) {
       listeners.where((l) => l is PeerDataEventListener).forEach((PeerDataEventListener l) {
-        l.onChannelStateChanged(this, _dataChannel.readyState);
+        l.onChannelStateChanged(this, _sendDataChannel.readyState);
       });
-      _channelState = _dataChannel.readyState;
+      _sendChannelState = _sendDataChannel.readyState;
     }
   }
 }

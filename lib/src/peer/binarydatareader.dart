@@ -36,15 +36,36 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
   Map<int, Map<int, ArrayBuffer>> _sequencer;
 
   Timer _timer;
+  RtcDataChannel _channel;
   /**
    * da mighty constructor
    */
-  BinaryDataReader() : super() {
+  BinaryDataReader(RtcDataChannel c) : super() {
+    _channel = c;
+    _channel.onMessage.listen(_onChannelMessage);
     _length = 0;
     _buffer = new List<int>();
     _sequencer = new Map<int, Map<int, ArrayBuffer>>();
     _timer = new Timer.repeating(const Duration(milliseconds: 10), timerTick);
     _lastProcessed = new DateTime.now().millisecondsSinceEpoch;
+  }
+
+  void _onChannelMessage(MessageEvent e) {
+    if (e.data is Blob) {
+      throw new NotImplementedException("Blob is not implemented");
+    }
+
+    else if (e.data is ArrayBuffer) {
+      readChunk(e.data);
+    }
+
+    else if (e.data is ArrayBufferView) {
+      readChunk((e.data as ArrayBufferView).buffer);
+    }
+
+    else {
+      readChunkString(e.data);
+    }
   }
 
   void readChunkString(String s) {

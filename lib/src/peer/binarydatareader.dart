@@ -5,6 +5,7 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
   ArrayBuffer _latest;
   DataView _latestView;
 
+  int _lastProcessed;
   /* Length of data for currently processed object */
   int _length;
 
@@ -33,6 +34,8 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
   int get leftToRead => _leftToRead;
 
   Map<int, Map<int, ArrayBuffer>> _sequencer;
+
+  Timer _timer;
   /**
    * da mighty constructor
    */
@@ -40,6 +43,8 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
     _length = 0;
     _buffer = new List<int>();
     _sequencer = new Map<int, Map<int, ArrayBuffer>>();
+    _timer = new Timer.repeating(const Duration(milliseconds: 10), timerTick);
+    _lastProcessed = new DateTime.now().millisecondsSinceEpoch;
   }
 
   void readChunkString(String s) {
@@ -51,15 +56,22 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
    * Can be whole packet or partial
    */
   void readChunk(ArrayBuffer buf) {
+    _lastProcessed = new DateTime.now().millisecondsSinceEpoch;
 
-    DataView v = new DataView(buf);
-    int chunkLength = v.byteLength;
     new Logger().Debug("Read chunk");
 
     int i = 0;
     if (!BinaryData.isValid(buf)) {
       new Logger().Debug("Data not valid");
     }
+
+    if (BinaryData.isCommand(buf)) {
+      _process_command(BinaryData.getCommand(buf), buf);
+      return;
+    }
+
+    DataView v = new DataView(buf);
+    int chunkLength = v.byteLength;
     while (i < chunkLength) {
 
       if (_currentReadState == BinaryReadState.INIT_READ) {
@@ -116,6 +128,13 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
     //_signalReadChunk(signature, chunkSequence, chunkTotalSequences, contentLength, contentTotalLength);
   }
 
+  void timerTick(Timer t) {
+    int now = new DateTime.now().millisecondsSinceEpoch;
+    if (now > _lastProcessed + 1000) {
+
+    }
+  }
+
   void addToSequencer(ArrayBuffer buffer, int signature, int sequence) {
     new Logger().Debug("add to sequencer");
     if (!_sequencer.containsKey(signature)) {
@@ -127,7 +146,6 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
       _sequencer[signature][sequence] = buffer;
       new Logger().Debug("Created entry for $sequence");
     }
-
   }
 
   ArrayBuffer buildCompleteBuffer(int signature) {
@@ -274,21 +292,26 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
           break;
       }
     }
-    /*if (_type == BinaryDataType.PACKET) {
-      try {
-        Packet p = PacketFactory.getPacketFromString(new String.fromCharCodes(_buffer));
-        _signalReadPacket(p);
-      } on InvalidPacketException catch(e, s) {
-        new Logger().Error(e.msg);
-      }
-    } else if (_type == BinaryDataType.STRING) {
-      try {
-        String s = BinaryData.stringFromList(_buffer);
-        _signalReadString(s);
-      } catch (e) {
-        new Logger().Error(e);
-      }
-    }*/
+
+  }
+
+  void _process_command(int command, ArrayBuffer buffer) {
+    switch (command) {
+      case BINARY_PACKET_ACK:
+        break;
+      case BINARY_PACKET_RESEND:
+        int signature = BinaryData.getSignature(buffer);
+        int sequence = BinaryData.getSequenceNumber(buffer);
+        _signalResend(signature, sequence);
+        break;
+      case BINARY_PACKET_REQUEST_RESEND:
+        int signature = BinaryData.getSignature(buffer);
+        int sequence = BinaryData.getSequenceNumber(buffer);
+        _signalRequestResend(signature, sequence);
+        break;
+      default:
+        break;
+    }
   }
 
   void bufferFromBlob(Blob b) {
@@ -308,6 +331,17 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
     });
   }
 
+  void _signalRequestResend(int signature, int sequence) {
+    listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
+      l.onRemoteRequestResend(signature, sequence);
+    });
+  }
+
+  void _signalResend(int signature, int sequence) {
+    listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
+      l.onLocalRequestResend(signature, sequence);
+    });
+  }
   /*
    * Signal listeners that a chunk has been read
    */

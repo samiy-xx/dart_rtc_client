@@ -8,8 +8,13 @@ const int FULL_BYTE = 0xFF;
 const int BINARY_TYPE_STRING = 0x10;
 const int BINARY_TYPE_PACKET = 0x11;
 const int BINARY_TYPE_FILE = 0x12;
-const int BINARY_PACKET_ACK = 0xFF;
 
+const int BINARY_PACKET_ACK = 0x01;
+const int BINARY_PACKET_RESEND = 0x02;
+const int BINARY_PACKET_REQUEST_RESEND = 0x03;
+
+const int PROTOCOL_SEQUENCE_POSITION = 2;
+const int PROTOCOL_SIGNATURE_POSITION = 12;
 /**
  * Binary reader/writer for Datachannel
  */
@@ -75,7 +80,7 @@ class BinaryData {
    * Needs a bit of tuning =)
    */
   static bool hasHeader(ArrayBuffer buffer) {
-    DataView view = new DataView(buffer, 0, 14);
+    DataView view = new DataView(buffer, 0, 1);
     try {
       if (view.getUint8(0) == 0xFF)
         return true;
@@ -83,6 +88,25 @@ class BinaryData {
 
     return false;
 
+  }
+
+  static bool isCommand(ArrayBuffer buffer) {
+    if (buffer.byteLength == 17)
+      return true;
+  }
+
+  static int getCommand(ArrayBuffer buffer) {
+    return new DataView(buffer).getUint8(16);
+  }
+
+  static int getSignature(ArrayBuffer buffer) {
+    DataView view = new DataView(buffer, 0, 16);
+    return view.getUint32(PROTOCOL_SIGNATURE_POSITION);
+  }
+
+  static int getSequenceNumber(ArrayBuffer buffer) {
+    DataView view = new DataView(buffer, 0, 16);
+    return view.getUint16(PROTOCOL_SEQUENCE_POSITION);
   }
 
   static bool isValid(ArrayBuffer buf) {

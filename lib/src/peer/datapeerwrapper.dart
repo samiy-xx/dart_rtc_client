@@ -108,14 +108,23 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
   void onBuffer(ArrayBuffer b) {
     print("got buffer, length ${b.byteLength}");
   }
-
+  /**
+   * Implements BinaryDataReceivedEventListener onRequestResend
+   */
+  void onRemoteRequestResend(int signature, int sequence) {
+    _binaryWriter.rewrite(signature, sequence);
+  }
+  void onLocalRequestResend(int signature, int sequence) {
+    _binaryWriter.rewrite(signature, sequence);
+  }
   /**
    * Implements BinaryDataReceivedEventListener onReadChunk
    */
   void onReadChunk(ArrayBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesLeft) {
     print("received chunk $signature $sequence $totalSequences $bytes $bytesLeft");
     //_binaryWriter.removeFromBuffer(signature, sequence);
-    _binaryWriter.writeAck(buffer, false);
+    // this wont work, chrome crashes if send and receive at the same time
+    //_binaryWriter.writeAck(buffer, false);
   }
 
   /**

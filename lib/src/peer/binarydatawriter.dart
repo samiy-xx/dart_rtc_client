@@ -2,7 +2,7 @@ part of rtc_client;
 
 class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListener>{
   /* Create Array buffer slices att his size for sending */
-  int _writeChunkSize = 512;
+  int _writeChunkSize = 980;
 
   /** Get the chunk size for writing */
   int get writeChunkSize => _writeChunkSize;
@@ -49,7 +49,7 @@ class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListener>{
               time,
               buffer.byteLength
           );
-          send(b, time, sequence, totalSequences, wrapToString);
+          send(b, time, wrapToString);
           read += _writeChunkSize;
           sequence++;
         } else {
@@ -79,7 +79,14 @@ class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListener>{
           time,
           buffer.byteLength
       );
-      send(b, time, 1, 1, wrapToString);
+      send(b, time, wrapToString);
+    }
+  }
+
+  void rewrite(int signature, int sequence) {
+    ArrayBuffer buffer = findSentData(signature, sequence);
+    if (buffer != null) {
+      send(buffer, null, true);
     }
   }
 
@@ -102,7 +109,7 @@ class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListener>{
 
     Object ack = BinaryData.createAck(buffer);
     if (wrap)
-      ack = wrapToString(ack, 1, 1);
+      ack = wrapToString(ack);
 
     print("sendig ack");
     _channel.send(ack);
@@ -111,13 +118,15 @@ class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListener>{
   /**
    * send.. with possibility to wrap into a string because chrome doesnt like binary
    */
-  void send(ArrayBuffer buf, int time, int sequence, int total, bool wrap) {
+  void send(ArrayBuffer buf, int time, bool wrap) {
     if (!BinaryData.isValid(buf)) {
       new Logger().Debug("Data is not valid");
       return;
     }
-    storeBuffer(buf, time);
-    Object toSend = wrap ? wrapToString(buf, sequence, total) : buf;
+    if (time != null)
+      storeBuffer(buf, time);
+
+    Object toSend = wrap ? wrapToString(buf) : buf;
     new Logger().Debug("Sending $toSend");
     _channel.send(toSend);
 
@@ -154,7 +163,7 @@ class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListener>{
     return null;
   }
 
-  String wrapToString(ArrayBuffer buf, int sequence, int total) {
+  String wrapToString(ArrayBuffer buf) {
     Uint8Array arr = new Uint8Array.fromBuffer(buf);
     //StringBuffer sb = new StringBuffer();
     //sb.write("S($sequence)($total)");

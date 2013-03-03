@@ -9,6 +9,9 @@ const int BINARY_TYPE_STRING = 0x10;
 const int BINARY_TYPE_PACKET = 0x11;
 const int BINARY_TYPE_FILE = 0x12;
 
+const int BINARY_PROTOCOL_UDP = 1;
+const int BINARY_PROTOCOL_TCP = 2;
+
 const int BINARY_PACKET_ACK = 0x01;
 const int BINARY_PACKET_RESEND = 0x02;
 const int BINARY_PACKET_REQUEST_RESEND = 0x03;

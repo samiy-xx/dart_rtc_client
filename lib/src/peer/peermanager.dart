@@ -146,7 +146,7 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
       wrapper = new DataPeerWrapper(this, p);
 
       (wrapper as DataPeerWrapper).isReliable = _reliableDataChannels;
-      (wrapper as DataPeerWrapper).initChannel();
+      //(wrapper as DataPeerWrapper).initChannel();
     } else {
       new Logger().Debug("Creating Peer Wrapper");
       wrapper = new PeerWrapper(this, p);

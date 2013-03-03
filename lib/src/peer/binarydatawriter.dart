@@ -2,7 +2,7 @@ part of rtc_client;
 
 class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListener>{
   /* Create Array buffer slices att his size for sending */
-  int _writeChunkSize = 256;
+  int _writeChunkSize = 512;
 
   /** Get the chunk size for writing */
   int get writeChunkSize => _writeChunkSize;
@@ -46,6 +46,7 @@ class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListener>{
 
   void _timerTick(Timer t) {
     int max = 5;
+
     _sentPackets.forEach((int key, List<StoreEntry> entries) {
       entries.sort((a, b) => a.compareTo(b));
       int sent = 0;
@@ -56,6 +57,7 @@ class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListener>{
 
           int now = new DateTime.now().millisecondsSinceEpoch;
           StoreEntry se = entries[i];
+
 
           if (se.sent) {
             if ((se.time + 150) < now) {

@@ -5,8 +5,7 @@ part of rtc_client;
  */
 class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventListener, BinaryDataSentEventListener {
   /* DataChannel */
-  RtcDataChannel _sendDataChannel;
-  RtcDataChannel _recvDataChannel;
+  RtcDataChannel _dataChannel;
 
   /* Logger */
   Logger _log = new Logger();
@@ -31,7 +30,7 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
     _peer.onDataChannel.listen(_onNewDataChannelOpen);
     _peer.onStateChange.listen(_onStateChanged);
 
-    //initChannel();
+
   }
 
   void _onStateChanged(Event e) {
@@ -44,7 +43,7 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
     super.setAsHost(value);
 
     _log.Debug("(datapeerwrapper.dart) Initializing datachannel now");
-    //initChannel();
+    initChannel();
   }
 
   void initialize() {
@@ -62,18 +61,17 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
    */
   void initChannel() {
     new Logger().Debug("Initializing send data channel");
-    int rnd = new Random().nextInt(10000);
-    _sendDataChannel = _peer.createDataChannel("send_$rnd", {'reliable': _isReliable});
-    _sendDataChannel.binaryType = "arraybuffer";
-    _sendDataChannel.onClose.listen(onDataChannelClose);
-    _sendDataChannel.onOpen.listen(onDataChannelOpen);
-    _sendDataChannel.onError.listen(onDataChannelError);
-    _sendDataChannel.onMessage.listen((MessageEvent e) => print(e.data));
-    _binaryWriter = new BinaryDataWriter(_sendDataChannel);
+    _dataChannel = _peer.createDataChannel("channel", {'reliable': _isReliable});
+    _dataChannel.binaryType = "arraybuffer";
+    _dataChannel.onClose.listen(onDataChannelClose);
+    _dataChannel.onOpen.listen(onDataChannelOpen);
+    _dataChannel.onError.listen(onDataChannelError);
+
+    _binaryWriter = new BinaryDataWriter(_dataChannel);
     _binaryWriter.subscribe(this);
 
-    //_binaryReader = new BinaryDataReader(_dataChannel);
-    //_binaryReader.subscribe(this);
+    _binaryReader = new BinaryDataReader(_dataChannel);
+    _binaryReader.subscribe(this);
   }
 
   /**
@@ -82,15 +80,15 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
   void _onNewDataChannelOpen(RtcDataChannelEvent e) {
     new Logger().Debug("--- Receiving incoming data channel");;
 
-    _recvDataChannel = e.channel;
-    _recvDataChannel.onClose.listen(onDataChannelClose);
-    _recvDataChannel.onOpen.listen(onDataChannelOpen);
-    _recvDataChannel.onError.listen(onDataChannelError);
+    _dataChannel = e.channel;
+    _dataChannel.onClose.listen(onDataChannelClose);
+    _dataChannel.onOpen.listen(onDataChannelOpen);
+    _dataChannel.onError.listen(onDataChannelError);
 
-    //_binaryWriter = new BinaryDataWriter(_dataChannel);
-    //_binaryWriter.subscribe(this);
+    _binaryWriter = new BinaryDataWriter(_dataChannel);
+    _binaryWriter.subscribe(this);
 
-    _binaryReader = new BinaryDataReader(_recvDataChannel);
+    _binaryReader = new BinaryDataReader(_dataChannel);
     _binaryReader.subscribe(this);
 
   }
@@ -145,6 +143,7 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
   void onRemoteRequestResend(int signature, int sequence) {
     //_binaryWriter.rewrite(signature, sequence);
   }
+
   void onLocalRequestResend(int signature, int sequence) {
     //_binaryWriter.rewrite(signature, sequence);
   }
@@ -154,8 +153,8 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
   void onReadChunk(ArrayBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesLeft) {
     new Logger().Debug("(datapeerwrapper.dart) received chunk $signature $sequence $totalSequences $bytes $bytesLeft");
     //_binaryWriter.removeFromBuffer(signature, sequence);
-    // this wont work, chrome crashes if send and receive at the same time
-    _binaryWriter.writeAck(signature, sequence, true);
+
+   _binaryWriter.writeAck(signature, sequence, true);
   }
 
   void onSendSuccess(int signature, int sequence) {
@@ -175,16 +174,18 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
    * Data channel is open and ready for data
    */
   void onDataChannelOpen(Event e) {
+    RtcDataChannel dc = e.target;
     _signalStateChanged();
-    _log.Debug("(datapeerwrapper.dart) DataChannelOpen");
+    _log.Debug("(datapeerwrapper.dart) DataChannelOpen ${dc.label}");
   }
 
   /**
    * Ugh
    */
   void onDataChannelClose(Event e) {
+    RtcDataChannel dc = e.target;
     _signalStateChanged();
-    _log.Debug("(datapeerwrapper.dart) DataChannelClose");
+    _log.Debug("(datapeerwrapper.dart) DataChannelClose ${dc.label}");
   }
 
   /**
@@ -216,11 +217,11 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
    */
   void _signalStateChanged() {
 
-    /*if (_dataChannel.readyState != _channelState) {
+    if (_dataChannel.readyState != _channelState) {
       listeners.where((l) => l is PeerDataEventListener).forEach((PeerDataEventListener l) {
         l.onChannelStateChanged(this, _dataChannel.readyState);
       });
       _channelState = _dataChannel.readyState;
-    }*/
+    }
   }
 }

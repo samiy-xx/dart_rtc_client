@@ -2,7 +2,7 @@ part of rtc_client;
 
 class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListener>{
   /* Create Array buffer slices att his size for sending */
-  int _writeChunkSize = 950;
+  int _writeChunkSize = 256;
 
   /** Get the chunk size for writing */
   int get writeChunkSize => _writeChunkSize;
@@ -10,154 +10,146 @@ class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListener>{
   /** Sets the chunk size for writing */
   set writeChunkSize(int i) => _writeChunkSize = i;
 
-  Map<int, List<ArrayBuffer>> _sentPackets;
+  Map<int, List<StoreEntry>> _sentPackets;
 
   RtcDataChannel _channel;
 
+  Timer _sendTimer;
+
   BinaryDataWriter(RtcDataChannel c) : super() {
     _channel = c;
-    _sentPackets = new Map<int, List<ArrayBuffer>>();
+    _sentPackets = new Map<int, List<StoreEntry>>();
+    _sendTimer = new Timer.repeating(const Duration(milliseconds: 50), _timerTick);
+  }
+
+  void send(ArrayBuffer buffer, int packetType) {
+    int totalSequences = (buffer.byteLength ~/ _writeChunkSize) + 1;
+    int sequence = 1;
+    int read = 0;
+    int signature = new DateTime.now().millisecondsSinceEpoch  ~/1000;
+
+    while (read < buffer.byteLength) {
+      int toRead = buffer.byteLength > _writeChunkSize ? _writeChunkSize : buffer.byteLength;
+      ArrayBuffer b = addHeader(
+          buffer.slice(read, read + toRead),
+          packetType,
+          sequence,
+          totalSequences,
+          signature,
+          buffer.byteLength
+      );
+      storeBuffer(b, signature, sequence);
+      sequence++;
+      read += toRead;
+    }
+  }
+
+  void _timerTick(Timer t) {
+    int max = 5;
+    _sentPackets.forEach((int key, List<StoreEntry> entries) {
+      entries.sort((a, b) => a.compareTo(b));
+      int sent = 0;
+      if (_channel.bufferedAmount == 0) {
+        for (int i = 0; i < entries.length; i++) {
+          if (sent >= 5)
+            continue;
+
+          int now = new DateTime.now().millisecondsSinceEpoch;
+          StoreEntry se = entries[i];
+
+          if (se.sent) {
+            if ((se.time + 150) < now) {
+              _send(se.buffer, key, true);
+              se.sent = true;
+              se.time = now;
+            }
+          } else {
+            _send(se.buffer, key, true);
+            se.sent = true;
+            se.time = now;
+          }
+          sent++;
+        }
+      }
+    });
+
   }
 
   Future<int> writeAsync(ArrayBuffer buffer, int packetType, [bool wrapToString = false]) {
     Completer completer = new Completer<int>();
-    write(buffer, packetType, wrapToString);
+    //write(buffer, packetType, wrapToString);
     completer.complete(buffer.byteLength);
     return completer.future;
   }
 
-  /**
-   * Bit ugly
-   * TODO: Make pretty
-   * TODO: Also, learn to code something else than shit.
-   */
-  void write(ArrayBuffer buffer, int packetType, [bool wrapToString = false]) {
-    int totalSequences = (buffer.byteLength ~/ _writeChunkSize) + 1;
-    int sequence = 1;
-    int read = 0;
-    int time = new DateTime.now().millisecondsSinceEpoch  ~/1000;
-    new Logger().Debug("binarydatawriter.dart writing ${buffer.byteLength} in ${totalSequences} chunks");
-    if (buffer.byteLength > _writeChunkSize) {
-      new Timer.repeating(const Duration(milliseconds: 15), (Timer t) {
-        print(_channel.bufferedAmount);
-        if (read < buffer.byteLength) {
-          ArrayBuffer b = addHeader(
-              buffer.slice(read, read + _writeChunkSize),
-              packetType,
-              sequence,
-              totalSequences,
-              time,
-              buffer.byteLength
-          );
-          send(b, time, wrapToString);
-          read += _writeChunkSize;
-          sequence++;
-        } else {
-          t.cancel();
-        }
-      });
-      /*while (read < buffer.byteLength) {
-        ArrayBuffer b = addHeader(
-            buffer.slice(read, read + _writeChunkSize),
-            packetType,
-            sequence,
-            totalSequences,
-            time,
-            buffer.byteLength
-        );
-        send(b, time, sequence, totalSequences, wrapToString);
-        read += _writeChunkSize;
-        sequence++;
-
-      }*/
-    } else {
-      ArrayBuffer b = addHeader(
-          buffer,
-          packetType,
-          1,
-          1,
-          time,
-          buffer.byteLength
-      );
-      send(b, time, wrapToString);
-    }
-  }
-
-  void rewrite(int signature, int sequence) {
-    ArrayBuffer buffer = findSentData(signature, sequence);
-    if (buffer != null) {
-      send(buffer, null, true);
-    }
-  }
 
   ArrayBuffer findSentData(int signature, int sequence) {
     if (!_sentPackets.containsKey(signature));
       return null;
 
-    List<ArrayBuffer> buffers = _sentPackets[signature];
+    List<StoreEntry> buffers = _sentPackets[signature];
     for (int i = 0; i < buffers.length; i++) {
-      ArrayBuffer buffer = buffers[i];
-      DataView view = new DataView(buffer);
-      if (view.getUint16(2) == sequence)
-        return buffer;
+      StoreEntry se = buffers[i];
+
+      if (se.sequence == sequence)
+        return se.buffer;
     }
 
     return null;
   }
 
-  void writeAck(ArrayBuffer buffer, [bool wrap = true]) {
-    print("sendig ack");
-    Object ack = BinaryData.createAck(buffer);
+  void writeAck(int signature, int sequence, [bool wrap = true]) {
+    //new Logger().Debug("Creating ack");
+    Object ack = BinaryData.createAck(signature, sequence);
     if (wrap)
       ack = wrapToString(ack);
 
-
     _channel.send(ack);
+    //new Logger().Debug("Sent ack");
   }
 
   /**
    * send.. with possibility to wrap into a string because chrome doesnt like binary
    */
-  void send(ArrayBuffer buf, int time, bool wrap) {
-    if (!BinaryData.isValid(buf)) {
-      new Logger().Debug("Data is not valid");
-      return;
-    }
-    if (time != null)
-      storeBuffer(buf, time);
-
+  void _send(ArrayBuffer buf, int time, bool wrap) {
+    //new Logger().Debug("Sending $time ${BinaryData.getSequenceNumber(buf)}");
     Object toSend = wrap ? wrapToString(buf) : buf;
-    new Logger().Debug("Sending $toSend");
     _channel.send(toSend);
-
+    //new Logger().Debug("Sent $time ${BinaryData.getSequenceNumber(buf)}");
   }
 
-  void removeFromBuffer(int time, int sequence) {
-    ArrayBuffer b = findStoredBuffer(time, sequence);
-    if (b != null) {
-      _sentPackets[time].remove(b);
-      if (_sentPackets[time].length == 0) {
-        _sentPackets.remove(time);
+  void removeFromBuffer(int signature, int sequence) {
+    StoreEntry se = findStoredBuffer(signature, sequence);
+
+    if (se != null) {
+      //new Logger().Debug("Removing stored entry ${signature} $sequence");
+      _sentPackets[signature].remove(se);
+      //new Logger().Debug("Removed stored entry ${signature} $sequence");
+      if (_sentPackets[signature].length == 0) {
+        new Logger().Debug("PAcket sent finished");
+        _sentPackets.remove(signature);
       }
     }
   }
 
-  void storeBuffer(ArrayBuffer buf, int time) {
-    if (!_sentPackets.containsKey(time))
-      _sentPackets[time] = new List<ArrayBuffer>();
+  void storeBuffer(ArrayBuffer buf, int signature, int sequence) {
+    if (!_sentPackets.containsKey(signature))
+      _sentPackets[signature] = new List<StoreEntry>();
 
-    _sentPackets[time].add(buf);
+    var se = new StoreEntry(sequence, buf);
+    new Logger().Debug("Storing buffer $signature $sequence with size ${buf.byteLength} and is valid ${BinaryData.isValid(buf)}");
+    _sentPackets[signature].add(se);
   }
 
-  ArrayBuffer findStoredBuffer(int time, int sequence) {
+  StoreEntry findStoredBuffer(int time, int sequence) {
     if (!_sentPackets.containsKey(time))
       return null;
 
     for (int i = 0; i < _sentPackets[time].length; i++) {
-      ArrayBuffer buf = _sentPackets[time][i];
-      DataView view = new DataView(buf, 0 , 14);
-      if (view.getUint16(1) == sequence)
-        return buf;
+      StoreEntry se = _sentPackets[time][i];
+
+      if (se.sequence == sequence)
+        return se;
     }
 
     return null;
@@ -165,10 +157,6 @@ class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListener>{
 
   String wrapToString(ArrayBuffer buf) {
     Uint8Array arr = new Uint8Array.fromBuffer(buf);
-    //StringBuffer sb = new StringBuffer();
-    //sb.write("S($sequence)($total)");
-    //sb.write(new String.fromCharCodes(arr.toList()));
-    //sb.write("E($sequence)");
     return new String.fromCharCodes(arr.toList());
   }
 
@@ -190,5 +178,30 @@ class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListener>{
     }
 
     return writer.buffer;
+  }
+}
+
+class StoreEntry implements Comparable{
+  int time;
+  int sequence;
+  bool sent = false;
+  ArrayBuffer buffer;
+
+  StoreEntry(this.sequence, this.buffer) {
+    time = new DateTime.now().millisecondsSinceEpoch;
+  }
+
+  int compareTo(StoreEntry e) {
+    if (!sent && e.sent)
+      return -1;
+
+    if (sent && e.sent)
+      return 0;
+
+    if (!sent && !e.sent)
+      return 0;
+
+    if (sent && !e.sent)
+      return 1;
   }
 }

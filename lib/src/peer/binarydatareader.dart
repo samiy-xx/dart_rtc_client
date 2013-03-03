@@ -21,6 +21,7 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
   int _signature;
   /* Buffer for unfinished data */
   List<int> _buffer;
+  List<ArrayBuffer> _received;
 
   /** Currently buffered unfinished data */
   int get buffered => _buffer.length;
@@ -41,18 +42,19 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
    * da mighty constructor
    */
   BinaryDataReader(RtcDataChannel c) : super() {
-    new Logger().Debug("Binarydatareader.dart constructor, assigning channel on message");
+    //new Logger().Debug("Binarydatareader.dart constructor, assigning channel on message");
     _channel = c;
     _channel.onMessage.listen(_onChannelMessage);
     _length = 0;
     _buffer = new List<int>();
     _sequencer = new Map<int, Map<int, ArrayBuffer>>();
-    _timer = new Timer.repeating(const Duration(milliseconds: 10), timerTick);
+    _timer = new Timer.repeating(const Duration(milliseconds: 1), timerTick);
     _lastProcessed = new DateTime.now().millisecondsSinceEpoch;
+    _received = new List<ArrayBuffer>();
   }
 
   void _onChannelMessage(MessageEvent e) {
-    new Logger().Debug("(binarydatareader.dart) _onChannelMessage");
+    //new Logger().Debug("(binarydatareader.dart) _onChannelMessage");
     if (e.data is Blob) {
       throw new NotImplementedException("Blob is not implemented");
     }
@@ -66,14 +68,15 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
     }
 
     else {
-      new Logger().Debug("(binarydatareader.dart) reading string");
+      //new Logger().Debug("(binarydatareader.dart) reading string");
       readChunkString(e.data);
     }
   }
 
   void readChunkString(String s) {
-    new Logger().Debug("Read chunk string");
-    readChunk(BinaryData.bufferFromString(s));
+    //new Logger().Debug("Read chunk string");
+    _received.addLast(BinaryData.bufferFromString(s));
+    //readChunk(BinaryData.bufferFromString(s));
   }
 
   /**
@@ -83,12 +86,12 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
   void readChunk(ArrayBuffer buf) {
     _lastProcessed = new DateTime.now().millisecondsSinceEpoch;
 
-    new Logger().Debug("Read chunk");
+    //new Logger().Debug("Read chunk");
 
     int i = 0;
-    if (!BinaryData.isValid(buf)) {
-      new Logger().Debug("Data not valid");
-    }
+    //if (!BinaryData.isValid(buf)) {
+    //  new Logger().Debug("Data not valid");
+    //}
 
     if (BinaryData.isCommand(buf)) {
       _process_command(BinaryData.getCommand(buf), buf);
@@ -154,22 +157,18 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
   }
 
   void timerTick(Timer t) {
-    int now = new DateTime.now().millisecondsSinceEpoch;
-    if (now > _lastProcessed + 1000) {
-
+    if (_received.length > 0) {
+      readChunk(_received.removeAt(0));
     }
   }
 
   void addToSequencer(ArrayBuffer buffer, int signature, int sequence) {
-    new Logger().Debug("add to sequencer");
     if (!_sequencer.containsKey(signature)) {
       _sequencer[signature] = new Map<int, ArrayBuffer>();
-      new Logger().Debug("Created sequencer entry for $signature");
     }
 
     if (!_sequencer[signature].containsKey(sequence)) {
       _sequencer[signature][sequence] = buffer;
-      new Logger().Debug("Created entry for $sequence");
     }
   }
 
@@ -208,11 +207,8 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
    * Read the 0xFF byte and switch state
    */
   void _process_init_read(int b) {
-
-    new Logger().Debug("_process_init_read");
     if (b == FULL_BYTE) {
       _currentReadState = BinaryReadState.READ_TYPE;
-      new Logger().Debug("_process_init_read set state READ_TYPE");
     }
   }
 
@@ -222,19 +218,19 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
   void _process_read_type(int b) {
     _packetType = b;
     _currentReadState = BinaryReadState.READ_SEQUENCE;
-    new Logger().Debug("_process_read_type $b set state READ_SEQUENCE");
+    //new Logger().Debug("_process_read_type $b set state READ_SEQUENCE");
   }
 
   void _process_read_sequence(int b) {
     _currentChunkSequence = b;
     _currentReadState = BinaryReadState.READ_TOTAL_SEQUENCES;
-    new Logger().Debug("_process_read_sequence $b set state READ_TOTAL_SEQUENCES");
+    //new Logger().Debug("_process_read_sequence $b set state READ_TOTAL_SEQUENCES");
   }
 
   void _process_read_total_sequences(int b) {
     _totalSequences = b;
     _currentReadState = BinaryReadState.READ_LENGTH;
-    new Logger().Debug("_process_read_total_sequences $b set state RrEAD_LENGTH");
+    //new Logger().Debug("_process_read_total_sequences $b set state RrEAD_LENGTH");
   }
 
   void _process_read_length(int b) {
@@ -243,27 +239,32 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
     _latest = new ArrayBuffer(b);
     _latestView = new DataView(_latest);
     _currentReadState = BinaryReadState.READ_TOTAL_LENGTH;
-    new Logger().Debug("_process_read_length $b set state READ_TOTAL_LENGTH");
+    //new Logger().Debug("_process_read_length $b set state READ_TOTAL_LENGTH");
   }
 
   void _process_read_total_length(int b) {
     _contentTotalLength = b;
     _currentReadState = BinaryReadState.READ_SIGNATURE;
-    new Logger().Debug("_process_read_total_length $b set state READ_SIGNATURE");
+    //new Logger().Debug("_process_read_total_length $b set state READ_SIGNATURE");
   }
 
   void _process_read_signature(int b) {
     _signature = b;
     _currentReadState = BinaryReadState.READ_CONTENT;
-    new Logger().Debug("_process_read_signture $b set state READ_CONTENT");
+    //new Logger().Debug("_process_read_signture $b set state READ_CONTENT");
   }
 
   /*
    * Push data to buffer
    */
   void _process_content(int b, int index) {
-    //_buffer.add(b);
-    _latestView.setUint8(index, b);
+
+    try {
+      _latestView.setUint8(index, b);
+    } catch (e) {
+      new Logger().Error("Error at index $index setting byte $b : exception $e");
+    }
+
     _leftToRead -= SIZEOF8;
     _totalRead += SIZEOF8;
 
@@ -271,18 +272,18 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
       _currentReadState = BinaryReadState.FINISH_READ;
       _process_end();
     }
+
   }
 
   /*
    * Process end of read
    */
   void _process_end() {
-    new Logger().Debug("_process_end");
+
     _currentReadState = BinaryReadState.INIT_READ;
     addToSequencer(_latest, _signature, _currentChunkSequence);
     _signalReadChunk(_latest, _signature, _currentChunkSequence, _totalSequences, _currentChunkContentLength, _leftToRead);
 
-    new Logger().Debug("$_totalRead $_contentTotalLength");
     if (_totalRead == _contentTotalLength)
       _processBuffer();
   }
@@ -297,20 +298,23 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
     if (sequencerComplete(_signature)) {
       buffer = buildCompleteBuffer(_signature);
     }
+
     if (buffer != null) {
-
-
+      new Logger().Debug("Checking packet type");
       switch (_packetType) {
         case BINARY_TYPE_STRING:
+          new Logger().Debug("is string");
           String s = BinaryData.stringFromBuffer(buffer);
           _signalReadString(s);
           break;
         case BINARY_TYPE_PACKET:
+          new Logger().Debug("is packet");
           String s = BinaryData.stringFromBuffer(buffer);
           Packet p = PacketFactory.getPacketFromString(s);
           _signalReadPacket(p);
           break;
         case BINARY_TYPE_FILE:
+          new Logger().Debug("is file");
           _signalReadBuffer(buffer);
           break;
         default:
@@ -321,9 +325,12 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
   }
 
   void _process_command(int command, ArrayBuffer buffer) {
-    new Logger().Debug("(binarydatareader.dart) Processing command");
+    //new Logger().Debug("(binarydatareader.dart) Processing command");
     switch (command) {
       case BINARY_PACKET_ACK:
+        int signature = BinaryData.getSignature(buffer);
+        int sequence = BinaryData.getSequenceNumber(buffer);
+        _signalSendSuccess(signature, sequence);
         break;
       case BINARY_PACKET_RESEND:
         int signature = BinaryData.getSignature(buffer);
@@ -366,6 +373,12 @@ class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener> {
   void _signalResend(int signature, int sequence) {
     listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
       l.onLocalRequestResend(signature, sequence);
+    });
+  }
+
+  void _signalSendSuccess(int signature, int sequence) {
+    listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
+      l.onSendSuccess(signature, sequence);
     });
   }
   /*

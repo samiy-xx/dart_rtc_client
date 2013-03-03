@@ -17,6 +17,7 @@ abstract class BinaryDataReceivedEventListener extends BinaryDataEventListener {
   void onReadChunk(ArrayBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesLeft);
   void onRemoteRequestResend(int signature, int sequence);
   void onLocalRequestResend(int signature, int sequence);
+  void onSendSuccess(int signature, int sequence);
 }
 
 /**

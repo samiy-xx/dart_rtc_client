@@ -67,48 +67,52 @@ class BinaryData {
     PacketFactory.getPacketFromString(stringFromBuffer(buffer));
   }
 
-  static ArrayBuffer createAck(ArrayBuffer b) {
+  static ArrayBuffer createAck(int signature, int sequence) {
     ArrayBuffer ackBuffer = new ArrayBuffer(17);
-    DataView viewOriginal = new DataView(b, 0, 16);
+
     DataView viewAck = new DataView(ackBuffer);
+
 
     viewAck.setUint8(
         PROTOCOL_STARTBYTE_POSITION,
-        viewOriginal.getUint8(PROTOCOL_STARTBYTE_POSITION)
+        FULL_BYTE
     );
 
     viewAck.setUint8(
         PROTOCOL_PACKETTYPE_POSITION,
-        viewOriginal.getUint8(PROTOCOL_PACKETTYPE_POSITION)
+        0x00
     );
 
     viewAck.setUint16(
         PROTOCOL_SEQUENCE_POSITION,
-        viewOriginal.getUint16(PROTOCOL_SEQUENCE_POSITION)
+        sequence
     );
 
     viewAck.setUint16(
         PROTOCOL_TOTALSEQUENCE_POSITION,
-        viewOriginal.getUint16(PROTOCOL_TOTALSEQUENCE_POSITION)
+        sequence
     );
 
     viewAck.setUint16(
         PROTOCOL_BYTELENGTH_POSITION,
-        viewOriginal.getUint16(PROTOCOL_BYTELENGTH_POSITION)
+        1
     );
 
     viewAck.setUint32(
         PROTOCOL_TOTALBYTELENGTH_POSITION,
-        viewOriginal.getUint32(PROTOCOL_TOTALBYTELENGTH_POSITION)
+        1
     );
 
     viewAck.setUint32(
         PROTOCOL_SIGNATURE_POSITION,
-        viewOriginal.getUint32(PROTOCOL_SIGNATURE_POSITION)
+        signature
     );
 
     viewAck.setUint8(PROTOCOL_FIRST_CONTENT_POSITION, BINARY_PACKET_ACK);
 
+    if (!isValid(ackBuffer)) {
+      new Logger().Warning("Created nonvalid ack response");
+    }
     return ackBuffer;
   }
 

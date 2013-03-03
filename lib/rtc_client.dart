@@ -14,6 +14,11 @@ part 'src/peer/binarydata.dart';
 part 'src/peer/binaryreadstate.dart';
 part 'src/peer/binarydatareader.dart';
 part 'src/peer/binarydatawriter.dart';
+part 'src/peer/udpdatareader.dart';
+part 'src/peer/udpdatawriter.dart';
+part 'src/peer/tcpdatareader.dart';
+part 'src/peer/tcpdatawriter.dart';
+
 part 'src/peer/peerstate.dart';
 
 part 'src/event/peereventlistener.dart';

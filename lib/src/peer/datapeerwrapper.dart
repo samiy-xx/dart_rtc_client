@@ -29,8 +29,6 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
   DataPeerWrapper(PeerManager pm, RtcPeerConnection p) : super(pm, p) {
     _peer.onDataChannel.listen(_onNewDataChannelOpen);
     _peer.onStateChange.listen(_onStateChanged);
-
-
   }
 
   void _onStateChanged(Event e) {
@@ -67,10 +65,10 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
     _dataChannel.onOpen.listen(onDataChannelOpen);
     _dataChannel.onError.listen(onDataChannelError);
 
-    _binaryWriter = new BinaryDataWriter(_dataChannel);
+    _binaryWriter = new UDPDataWriter(_dataChannel);
     _binaryWriter.subscribe(this);
 
-    _binaryReader = new BinaryDataReader(_dataChannel);
+    _binaryReader = new UDPDataReader(_dataChannel);
     _binaryReader.subscribe(this);
   }
 
@@ -85,10 +83,10 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
     _dataChannel.onOpen.listen(onDataChannelOpen);
     _dataChannel.onError.listen(onDataChannelError);
 
-    _binaryWriter = new BinaryDataWriter(_dataChannel);
+    _binaryWriter = new UDPDataWriter(_dataChannel);
     _binaryWriter.subscribe(this);
 
-    _binaryReader = new BinaryDataReader(_dataChannel);
+    _binaryReader = new UDPDataReader(_dataChannel);
     _binaryReader.subscribe(this);
 
   }

@@ -2,12 +2,16 @@ part of rtc_client;
 
 abstract class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener>{
   RtcDataChannel _channel;
+  set dataChannel(RtcDataChannel c) => setChannel(c);
 
-  BinaryDataReader(RtcDataChannel c) : super() {
+  BinaryDataReader() : super() {
+
+  }
+
+  void setChannel(RtcDataChannel c) {
     _channel = c;
     _channel.onMessage.listen(_onChannelMessage);
   }
-
   void _onChannelMessage(MessageEvent e) {
     if (e.data is Blob) {
       throw new NotImplementedException("Blob is not implemented");

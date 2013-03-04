@@ -41,19 +41,20 @@ class UDPDataReader extends BinaryDataReader {
   /**
    * da mighty constructor
    */
-  UDPDataReader(RtcDataChannel c) : super(c) {
+  UDPDataReader() : super() {
     //new Logger().Debug("Binarydatareader.dart constructor, assigning channel on message");
 
     _length = 0;
     _buffer = new List<int>();
     _sequencer = new Map<int, Map<int, ArrayBuffer>>();
-    _timer = new Timer.repeating(const Duration(milliseconds: 1), timerTick);
+    //_timer = new Timer.repeating(const Duration(milliseconds: 1), timerTick);
     _lastProcessed = new DateTime.now().millisecondsSinceEpoch;
     _received = new List<ArrayBuffer>();
   }
 
   void readChunkString(String s) {
-    _received.addLast(BinaryData.bufferFromString(s));
+    //_received.addLast(BinaryData.bufferFromString(s));
+    readChunk(BinaryData.bufferFromString(s));
   }
 
   /**

@@ -1,7 +1,8 @@
 part of rtc_client;
 
 class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
-  PeerConnectionEventListener, PeerMediaEventListener, PeerDataEventListener {
+  PeerConnectionEventListener, PeerMediaEventListener, PeerDataEventListener,
+  BinaryDataReceivedEventListener {
 
   /* Keeps track of the initialization state of the client */
   InitializationState _currentState;
@@ -95,6 +96,9 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
   StreamController<PacketEvent> _packetController;
   Stream<PacketEvent> get onPacketEvent => _packetController.stream;
 
+  StreamController<RtcEvent> _binaryController;
+  Stream<RtcEvent> get onBinaryEvent => _binaryController.stream;
+
   ChannelClient(DataSource ds) {
     _ds = ds;
     _ds.subscribe(this);
@@ -121,6 +125,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     _dataSourceOpenController = new StreamController.broadcast();
     _dataSourceErrorController = new StreamController.broadcast();
     _packetController = new StreamController.broadcast();
+    _binaryController = new StreamController.broadcast();
 
     _sh.registerHandler(PacketType.JOIN, _joinPacketHandler);
     _sh.registerHandler(PacketType.ID, _idPacketHandler);
@@ -496,6 +501,13 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
    */
   void onPeerCreated(PeerWrapper pw) {
     if (pw is DataPeerWrapper) {
+      try {
+      DataPeerWrapper dpw = pw;
+      dpw.binaryReader.subscribe(this);
+      } catch(e) {
+        new Logger().Error("Error: $e");
+      }
+      //dpw.binaryWriter.subscribe(this);
       pw.subscribe(this);
     }
   }
@@ -554,5 +566,27 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
 
     if (_signalingErrorController.hasSubscribers)
       _signalingErrorController.add(new SignalingErrorEvent(e));
+  }
+
+  void onString(String s) {
+
+  }
+  void onBuffer(ArrayBuffer b) {
+    if (_binaryController.hasSubscribers)
+      _binaryController.add(new BinaryBufferComplete(b));
+  }
+  void onReadChunk(ArrayBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesLeft) {
+    if (_binaryController.hasSubscribers)
+      _binaryController.add(new BinaryChunkEvent(buffer, signature, sequence, totalSequences, bytes, bytesLeft));
+  }
+  void onRemoteRequestResend(int signature, int sequence) {
+
+  }
+  void onLocalRequestResend(int signature, int sequence) {
+
+  }
+  void onSendSuccess(int signature, int sequence) {
+    if (_binaryController.hasSubscribers)
+      _binaryController.add(new BinarySendCompleteEvent(signature, sequence));
   }
 }

@@ -23,12 +23,21 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
   BinaryDataWriter _binaryWriter;
   BinaryDataReader _binaryReader;
 
+  BinaryDataWriter get binaryWriter => _binaryWriter;
+  BinaryDataReader get binaryReader => _binaryReader;
+
   /**
    * Constructor
    */
   DataPeerWrapper(PeerManager pm, RtcPeerConnection p) : super(pm, p) {
     _peer.onDataChannel.listen(_onNewDataChannelOpen);
     _peer.onStateChange.listen(_onStateChanged);
+
+    _binaryWriter = new UDPDataWriter();
+    _binaryReader = new UDPDataReader();
+
+    _binaryWriter.subscribe(this);
+    _binaryReader.subscribe(this);
   }
 
   void _onStateChanged(Event e) {
@@ -65,11 +74,14 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
     _dataChannel.onOpen.listen(onDataChannelOpen);
     _dataChannel.onError.listen(onDataChannelError);
 
-    _binaryWriter = new UDPDataWriter(_dataChannel);
-    _binaryWriter.subscribe(this);
+    //_binaryWriter = new UDPDataWriter(_dataChannel);
+    //_binaryWriter.subscribe(this);
 
-    _binaryReader = new UDPDataReader(_dataChannel);
-    _binaryReader.subscribe(this);
+    //_binaryReader = new UDPDataReader(_dataChannel);
+    //_binaryReader.subscribe(this);
+
+    _binaryWriter.dataChannel = _dataChannel;
+    _binaryReader.dataChannel = _dataChannel;
   }
 
   /**
@@ -83,12 +95,14 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
     _dataChannel.onOpen.listen(onDataChannelOpen);
     _dataChannel.onError.listen(onDataChannelError);
 
-    _binaryWriter = new UDPDataWriter(_dataChannel);
-    _binaryWriter.subscribe(this);
+    //_binaryWriter = new UDPDataWriter(_dataChannel);
+    //_binaryWriter.subscribe(this);
 
-    _binaryReader = new UDPDataReader(_dataChannel);
-    _binaryReader.subscribe(this);
+    //_binaryReader = new UDPDataReader(_dataChannel);
+    //_binaryReader.subscribe(this);
 
+    binaryWriter.dataChannel = _dataChannel;
+    _binaryReader.dataChannel = _dataChannel;
   }
 
   /**
@@ -112,7 +126,7 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
   }
 
   Future<int> sendBufferAsync(ArrayBuffer buf, int packetType) {
-    return _binaryWriter.writeAsync(buf, packetType, true);
+    //return _binaryWriter.writeAsync(buf, packetType, true);
   }
 
   /**
@@ -149,7 +163,7 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
    * Implements BinaryDataReceivedEventListener onReadChunk
    */
   void onReadChunk(ArrayBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesLeft) {
-    new Logger().Debug("(datapeerwrapper.dart) received chunk $signature $sequence $totalSequences $bytes $bytesLeft");
+    //new Logger().Debug("(datapeerwrapper.dart) received chunk $signature $sequence $totalSequences $bytes $bytesLeft");
     //_binaryWriter.removeFromBuffer(signature, sequence);
 
    _binaryWriter.writeAck(signature, sequence, true);

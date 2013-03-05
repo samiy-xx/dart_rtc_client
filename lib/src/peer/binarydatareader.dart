@@ -26,10 +26,12 @@ abstract class BinaryDataReader extends GenericEventTarget<BinaryDataEventListen
     }
 
     else {
-      readChunkString(e.data);
+      Future f = readChunkString(e.data).then((_) {
+        new Logger().Debug("Read string chunk");
+      });
     }
   }
 
-  void readChunkString(String s);
+  Future readChunkString(String s);
   void readChunk(ArrayBuffer buffer);
 }

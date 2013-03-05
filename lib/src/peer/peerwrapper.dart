@@ -101,12 +101,8 @@ class PeerWrapper extends GenericEventTarget<PeerEventListener>{
     try {
     _peer.createOffer(
         _onOfferSuccess,
-        _onRTCError,{
-          'mandatory': {
-            'OfferToReceiveAudio':true,
-            'OfferToReceiveVideo':true
-          }
-       }
+        _onRTCError,null
+
     );
     } on DomException catch(e) {
       _log.Debug("(peerwrapper.dart) DomException on setting offer constraints, attempting without constraints");
@@ -123,12 +119,9 @@ class PeerWrapper extends GenericEventTarget<PeerEventListener>{
     try {
       _peer.createAnswer(
           _onAnswerSuccess,
-          _onRTCError,{
-            'mandatory': {
-              'OfferToReceiveAudio':true,
-              'OfferToReceiveVideo':true
-            }
-         }
+          _onRTCError,
+            null
+
       );
     } on DomException catch(e) {
       _log.Debug("(peerwrapper.dart) DomException on setting answer constraints, attempting without constraints");

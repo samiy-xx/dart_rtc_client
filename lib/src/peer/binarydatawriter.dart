@@ -17,8 +17,6 @@ abstract class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListen
 
   bool _wrapToString;
 
-  set wrapToString(bool v) => _wrapToString = v;
-
   set dataChannel(RtcDataChannel c) => _channel = c;
   BinaryDataWriter(int protocol) : super() {
     _binaryProtocol = protocol;
@@ -28,6 +26,7 @@ abstract class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListen
   }
 
   removeFromBuffer(int signature, int sequence);
+  receiveAck(int signature, int sequence);
   Future<int> writeAck(int signature, int sequence, [bool wrap]);
   void send(ArrayBuffer buffer, int packetType);
 

@@ -48,10 +48,14 @@ class UDPDataWriter extends BinaryDataWriter {
           new Logger().Debug("Sent chunk ${entry.sequence}");
           entry.markSent();
         } else {
-          if (entry.timeSent + currentLatency < now) {
+          if ((entry.timeReSent + currentLatency) < now) {
+            if (_currentSequence == entry.sequence)
+              _roundTripCalculator.addToLatency(50);
+
             _send(entry.buffer, true);
-            //new Logger().Debug("RE-Sent chunk ${entry.sequence}");
-            //entry.markSent();
+            new Logger().Debug("RE-Sent chunk ${entry.sequence}");
+            entry.markReSent();
+            _currentSequence = entry.sequence;
           }
         }
       }
@@ -157,6 +161,7 @@ class UDPDataWriter extends BinaryDataWriter {
 class StoreEntry implements Comparable{
   int timeStored;
   int timeSent;
+  int timeReSent;
   int sequence;
   bool sent = false;
   ArrayBuffer buffer;
@@ -168,8 +173,12 @@ class StoreEntry implements Comparable{
   void markSent() {
     sent = true;
     timeSent = new DateTime.now().millisecondsSinceEpoch;
+    timeReSent = new DateTime.now().millisecondsSinceEpoch;
   }
 
+  void markReSent() {
+    timeReSent = new DateTime.now().millisecondsSinceEpoch;
+  }
   int compareTo(StoreEntry e) {
     if (!sent && e.sent)
       return -1;

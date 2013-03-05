@@ -10,6 +10,10 @@ class RoundTripCalculator {
 
   RoundTripCalculator();
 
+  void addToLatency(int t) {
+    _currentLatency += t;
+  }
+
   void calculateLatency(int lastSent) {
     int now = new DateTime.now().millisecondsSinceEpoch;
     int diff = (now - lastSent) - _currentLatency;

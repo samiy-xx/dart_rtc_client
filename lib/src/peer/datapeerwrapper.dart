@@ -171,7 +171,8 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
 
   void onSendSuccess(int signature, int sequence) {
     //new Logger().Debug("Received ack for $signature $sequence");
-    _binaryWriter.removeFromBuffer(signature, sequence);
+    _binaryWriter.receiveAck(signature, sequence);
+    //_binaryWriter.removeFromBuffer(signature, sequence);
   }
 
   /**

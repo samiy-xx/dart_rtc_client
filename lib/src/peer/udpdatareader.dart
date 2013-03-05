@@ -52,9 +52,12 @@ class UDPDataReader extends BinaryDataReader {
     _received = new List<ArrayBuffer>();
   }
 
-  void readChunkString(String s) {
+  Future readChunkString(String s) {
+    Completer c = new Completer();
     //_received.addLast(BinaryData.bufferFromString(s));
     readChunk(BinaryData.bufferFromString(s));
+    c.complete();
+    return c.future;
   }
 
   /**
@@ -141,11 +144,12 @@ class UDPDataReader extends BinaryDataReader {
   }
 
   bool haveCurrentPart() {
-    if (_sequencer[_signature].containsKey(_currentChunkSequence)) {
-      return true;
-    }
-    return false;
+    if (!_sequencer.containsKey(_signature))
+      return false;
+
+    return (_sequencer[_signature].containsKey(_currentChunkSequence));
   }
+
   void addToSequencer(ArrayBuffer buffer, int signature, int sequence) {
     if (!_sequencer.containsKey(signature)) {
       _sequencer[signature] = new Map<int, ArrayBuffer>();
@@ -299,7 +303,7 @@ class UDPDataReader extends BinaryDataReader {
           new Logger().Debug("is packet");
           String s = BinaryData.stringFromBuffer(buffer);
           Packet p = PacketFactory.getPacketFromString(s);
-          _signalReadPacket(p);
+          //_signalReadPacket(p);
           break;
         case BINARY_TYPE_FILE:
           new Logger().Debug("is file");
@@ -386,11 +390,11 @@ class UDPDataReader extends BinaryDataReader {
   /*
    * Packet has been read
    */
-  void _signalReadPacket(Packet p) {
-    listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
-      l.onPacket(p);
-    });
-  }
+  //void _signalReadPacket(Packet p) {
+  //  listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
+  //    l.onPacket(p);
+  //  });
+  //}
 
   void _signalReadString(String s) {
     listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {

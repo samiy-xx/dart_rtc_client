@@ -6,7 +6,6 @@ class UDPDataWriter extends BinaryDataWriter {
 
   Timer _sendTimer;
   int _currentSequence = 0;
-  int _currentLatency = 50;
   bool _canSend = true;
   int _lastSent = 0;
 
@@ -16,6 +15,7 @@ class UDPDataWriter extends BinaryDataWriter {
   }
 
   void send(ArrayBuffer buffer, int packetType) {
+    new Logger().Debug("Sending buffer of ${buffer.byteLength} bytes");
     int totalSequences = (buffer.byteLength ~/ _writeChunkSize) + 1;
     int sequence = 1;
     int read = 0;
@@ -39,24 +39,19 @@ class UDPDataWriter extends BinaryDataWriter {
 
   void _timerTick(Timer t) {
     int now = new DateTime.now().millisecondsSinceEpoch;
-
-    //if (_lastSent + (_currentLatency * 2) < now) {
-    //  _canSend = true;
-    //}
-
     _sentPackets.forEach((int key, List<StoreEntry> entries) {
 
       if (_channel.bufferedAmount == 0 && entries.length > 0) {
         StoreEntry entry = entries[0];
         if (!entry.sent) {
           _send(entry.buffer, true);
-          //new Logger().Debug("Sent chunk ${entry.sequence}");
+          new Logger().Debug("Sent chunk ${entry.sequence}");
           entry.markSent();
         } else {
-          if (entry.timeSent + (_currentLatency + 5) < now) {
+          if (entry.timeSent + currentLatency < now) {
             _send(entry.buffer, true);
-            //new Logger().Debug("Sent chunk ${entry.sequence}");
-            entry.markSent();
+            //new Logger().Debug("RE-Sent chunk ${entry.sequence}");
+            //entry.markSent();
           }
         }
       }
@@ -70,7 +65,6 @@ class UDPDataWriter extends BinaryDataWriter {
     completer.complete(buffer.byteLength);
     return completer.future;
   }
-
 
   ArrayBuffer findSentData(int signature, int sequence) {
     if (!_sentPackets.containsKey(signature));
@@ -98,12 +92,32 @@ class UDPDataWriter extends BinaryDataWriter {
     return c.future;
   }
 
+  void receiveAck(int signature, int sequence) {
+    StoreEntry se = findStoredBuffer(signature, sequence);
+    if (se != null) {
+      calculateLatency(se.timeSent);
+      new Logger().Debug("Adjusting latency, currently $currentLatency");
+      removeStoreEntryFromBuffer(signature, se);
+    }
+  }
+
+  void removeStoreEntryFromBuffer(int signature, StoreEntry se) {
+    if (!_sentPackets.containsKey(signature))
+      return;
+
+    int index = _sentPackets[signature].indexOf(se);
+    if (index >= 0) {
+      _sentPackets[signature].removeAt(index);
+    }
+  }
+
   void removeFromBuffer(int signature, int sequence) {
     StoreEntry se = findStoredBuffer(signature, sequence);
     int now = new DateTime.now().millisecondsSinceEpoch;
 
     if (se != null) {
-      _currentLatency = now - se.timeSent;
+
+      //_currentLatency = now - se.timeSent;
       //new Logger().Debug("Latency is $_currentLatency");
       //new Logger().Debug("Removing stored entry ${signature} $sequence");
       _sentPackets[signature].remove(se);

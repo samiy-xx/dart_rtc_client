@@ -35,7 +35,7 @@ class UDPDataReader extends BinaryDataReader {
   int get leftToRead => _leftToRead;
 
   Map<int, Map<int, ArrayBuffer>> _sequencer;
-
+  bool _haveThisPart = false;
   Timer _timer;
 
   /**
@@ -140,6 +140,12 @@ class UDPDataReader extends BinaryDataReader {
     }
   }
 
+  bool haveCurrentPart() {
+    if (_sequencer[_signature].containsKey(_currentChunkSequence)) {
+      return true;
+    }
+    return false;
+  }
   void addToSequencer(ArrayBuffer buffer, int signature, int sequence) {
     if (!_sequencer.containsKey(signature)) {
       _sequencer[signature] = new Map<int, ArrayBuffer>();
@@ -229,6 +235,7 @@ class UDPDataReader extends BinaryDataReader {
   void _process_read_signature(int b) {
     _signature = b;
     _currentReadState = BinaryReadState.READ_CONTENT;
+    _haveThisPart = haveCurrentPart();
     //new Logger().Debug("_process_read_signture $b set state READ_CONTENT");
   }
 
@@ -244,8 +251,10 @@ class UDPDataReader extends BinaryDataReader {
     }
 
     _leftToRead -= SIZEOF8;
-    _totalRead += SIZEOF8;
+    if (!_haveThisPart) {
 
+      _totalRead += SIZEOF8;
+    }
     if (_leftToRead == 0) {
       _currentReadState = BinaryReadState.FINISH_READ;
       _process_end();
@@ -262,6 +271,7 @@ class UDPDataReader extends BinaryDataReader {
     addToSequencer(_latest, _signature, _currentChunkSequence);
     _signalReadChunk(_latest, _signature, _currentChunkSequence, _totalSequences, _currentChunkContentLength, _leftToRead);
 
+    new Logger().Debug("Total read $_totalRead bytes");
     if (_totalRead == _contentTotalLength)
       _processBuffer();
   }

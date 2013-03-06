@@ -343,14 +343,14 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
   /**
    * Sends a message to a peer
    */
-  void sendPeerUserMessage(String peerId, String message) {
-    sendPeerPacket(peerId, new UserMessage.With(_myId, message));
-  }
+  //void sendPeerUserMessage(String peerId, String message) {
+  //  sendPeerPacket(peerId, new UserMessage.With(_myId, message));
+  //}
 
   /**
    * Sends a packet to peer
    */
-  void sendPeerPacket(String peerId, Packet p) {
+  void sendPeerPacket(String peerId, PeerPacket p) {
     PeerWrapper w = _pm.findWrapper(peerId);
     if (w is DataPeerWrapper) {
       DataPeerWrapper dpw = w as DataPeerWrapper;
@@ -502,8 +502,8 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
   void onPeerCreated(PeerWrapper pw) {
     if (pw is DataPeerWrapper) {
       try {
-      DataPeerWrapper dpw = pw;
-      dpw.binaryReader.subscribe(this);
+        DataPeerWrapper dpw = pw;
+        dpw.binaryReader.subscribe(this);
       } catch(e) {
         new Logger().Error("Error: $e");
       }
@@ -568,24 +568,27 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
       _signalingErrorController.add(new SignalingErrorEvent(e));
   }
 
-  void onString(String s) {
+  void onPeerPacket(PeerPacket p) {
+    if (_binaryController.hasSubscribers) {
+      _binaryController.add(new BinaryPeerPacketEvent(p));
+    }
+  }
+
+  void onPeerString(String s) {
 
   }
-  void onBuffer(ArrayBuffer b) {
+
+  void onPeerBuffer(ArrayBuffer b) {
     if (_binaryController.hasSubscribers)
-      _binaryController.add(new BinaryBufferComplete(b));
+      _binaryController.add(new BinaryBufferCompleteEvent(b));
   }
-  void onReadChunk(ArrayBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesLeft) {
+
+  void onPeerReadChunk(ArrayBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesLeft) {
     if (_binaryController.hasSubscribers)
       _binaryController.add(new BinaryChunkEvent(buffer, signature, sequence, totalSequences, bytes, bytesLeft));
   }
-  void onRemoteRequestResend(int signature, int sequence) {
 
-  }
-  void onLocalRequestResend(int signature, int sequence) {
-
-  }
-  void onSendSuccess(int signature, int sequence) {
+  void onPeerSendSuccess(int signature, int sequence) {
     if (_binaryController.hasSubscribers)
       _binaryController.add(new BinarySendCompleteEvent(signature, sequence));
   }

@@ -108,16 +108,15 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
   /**
    * Sends a packet trough the data channel
    */
-  void send(Packet p) {
-    String packet = PacketFactory.get(p);
-    //_dataChannel.send(packet);
+  void send(PeerPacket p) {
+    sendBuffer(p.toBuffer(), BINARY_TYPE_PACKET);
   }
 
   /**
    * Send blob
    */
   void sendBlob(Blob b) {
-    //_dataChannel.send(b);
+    throw new NotImplementedException("Sending blob is not implemented");
   }
 
   void sendBuffer(ArrayBuffer buf, int packetType) {
@@ -126,50 +125,41 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
   }
 
   Future<int> sendBufferAsync(ArrayBuffer buf, int packetType) {
-    //return _binaryWriter.writeAsync(buf, packetType, true);
+    throw new NotImplementedException("Sending buffer async is not implemented");
   }
 
   /**
    * Implements BinaryDataReceivedEventListener onPacket
    */
-  void onPacket(Packet p) {
-    print ("got packet ${p.packetType.toString()}");
+  void onPeerPacket(PeerPacket p) {
+
   }
 
   /**
    * Implements BinaryDataReceivedEventListener onString
    */
-  void onString(String s) {
+  void onPeerString(String s) {
     print("got string $s");
   }
 
   /**
    * Implements BinaryDataReceivedEventListener onBuffer
    */
-  void onBuffer(ArrayBuffer b) {
+  void onPeerBuffer(ArrayBuffer b) {
     print("got buffer, length ${b.byteLength}");
   }
-  /**
-   * Implements BinaryDataReceivedEventListener onRequestResend
-   */
-  void onRemoteRequestResend(int signature, int sequence) {
-    //_binaryWriter.rewrite(signature, sequence);
-  }
 
-  void onLocalRequestResend(int signature, int sequence) {
-    //_binaryWriter.rewrite(signature, sequence);
-  }
   /**
    * Implements BinaryDataReceivedEventListener onReadChunk
    */
-  void onReadChunk(ArrayBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesLeft) {
+  void onPeerReadChunk(ArrayBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesLeft) {
     //new Logger().Debug("(datapeerwrapper.dart) received chunk $signature $sequence $totalSequences $bytes $bytesLeft");
     //_binaryWriter.removeFromBuffer(signature, sequence);
 
    _binaryWriter.writeAck(signature, sequence, true);
   }
 
-  void onSendSuccess(int signature, int sequence) {
+  void onPeerSendSuccess(int signature, int sequence) {
     //new Logger().Debug("Received ack for $signature $sequence");
     _binaryWriter.receiveAck(signature, sequence);
     //_binaryWriter.removeFromBuffer(signature, sequence);

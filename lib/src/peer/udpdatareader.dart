@@ -301,9 +301,23 @@ class UDPDataReader extends BinaryDataReader {
           break;
         case BINARY_TYPE_PACKET:
           new Logger().Debug("is packet");
-          String s = BinaryData.stringFromBuffer(buffer);
-          Packet p = PacketFactory.getPacketFromString(s);
-          //_signalReadPacket(p);
+          Map m = json.parse(BinaryData.stringFromBuffer(buffer));
+          if (m.containsKey('packetType')) {
+            int packetType = m['packetType'];
+            PeerPacket p;
+            switch (packetType) {
+              case PeerPacket.TYPE_DIRECTORY_ENTRY:
+                p = DirectoryEntryPacket.fromMap(m);
+                break;
+              case PeerPacket.TYPE_REQUEST_FILE:
+                p = RequestFilePacket.fromMap(m);
+                break;
+              default:
+                p = null;
+                break;
+            }
+            _signalReadPacket(p);
+          }
           break;
         case BINARY_TYPE_FILE:
           new Logger().Debug("is file");
@@ -327,12 +341,12 @@ class UDPDataReader extends BinaryDataReader {
       case BINARY_PACKET_RESEND:
         int signature = BinaryData.getSignature(buffer);
         int sequence = BinaryData.getSequenceNumber(buffer);
-        _signalResend(signature, sequence);
+        //_signalResend(signature, sequence);
         break;
       case BINARY_PACKET_REQUEST_RESEND:
         int signature = BinaryData.getSignature(buffer);
         int sequence = BinaryData.getSequenceNumber(buffer);
-        _signalRequestResend(signature, sequence);
+        //_signalRequestResend(signature, sequence);
         break;
       default:
         break;
@@ -355,7 +369,7 @@ class UDPDataReader extends BinaryDataReader {
       });
     });
   }
-
+/*
   void _signalRequestResend(int signature, int sequence) {
     listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
       l.onRemoteRequestResend(signature, sequence);
@@ -367,10 +381,10 @@ class UDPDataReader extends BinaryDataReader {
       l.onLocalRequestResend(signature, sequence);
     });
   }
-
+*/
   void _signalSendSuccess(int signature, int sequence) {
     listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
-      l.onSendSuccess(signature, sequence);
+      l.onPeerSendSuccess(signature, sequence);
     });
   }
   /*
@@ -378,27 +392,27 @@ class UDPDataReader extends BinaryDataReader {
    */
   void _signalReadChunk(ArrayBuffer buf, int signature, int sequence, int totalSequences, int bytes, int bytesLeft) {
     listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
-      l.onReadChunk(buf, signature, sequence, totalSequences, bytes, bytesLeft);
+      l.onPeerReadChunk(buf, signature, sequence, totalSequences, bytes, bytesLeft);
     });
   }
 
   void _signalReadBuffer(ArrayBuffer buffer) {
     listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
-      l.onBuffer(buffer);
+      l.onPeerBuffer(buffer);
     });
   }
   /*
    * Packet has been read
    */
-  //void _signalReadPacket(Packet p) {
-  //  listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
-  //    l.onPacket(p);
-  //  });
-  //}
+  void _signalReadPacket(PeerPacket p) {
+    listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
+      l.onPeerPacket(p);
+    });
+  }
 
   void _signalReadString(String s) {
     listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
-      l.onString(s);
+      l.onPeerString(s);
     });
   }
   /**

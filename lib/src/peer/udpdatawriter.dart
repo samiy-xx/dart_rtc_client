@@ -36,7 +36,7 @@ class UDPDataWriter extends BinaryDataWriter {
       read += toRead;
     }
   }
-
+  
   void _timerTick(Timer t) {
     int now = new DateTime.now().millisecondsSinceEpoch;
     _sentPackets.forEach((int key, List<StoreEntry> entries) {

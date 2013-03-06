@@ -18,9 +18,15 @@ class BinarySendCompleteEvent extends RtcEvent {
   BinarySendCompleteEvent(this.signature, this.sequence);
 }
 
-class BinaryBufferComplete extends RtcEvent {
+class BinaryBufferCompleteEvent extends RtcEvent {
   ArrayBuffer buffer;
 
-  BinaryBufferComplete(this.buffer);
+  BinaryBufferCompleteEvent(this.buffer);
+}
+
+class BinaryPeerPacketEvent extends RtcEvent {
+  PeerPacket peerPacket;
+
+  BinaryPeerPacketEvent(this.peerPacket);
 }
 

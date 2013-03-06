@@ -8,6 +8,7 @@ class TCPDataReader extends BinaryDataReader {
   void readChunkString(String s) {
 
   }
+
   void readChunk(ArrayBuffer buffer) {
 
   }

@@ -58,7 +58,7 @@ abstract class RtcClient {
   /**
    * Sends a packet trough peer connection
    */
-  void sendPeerPacket(String peerId, Packet p);
+  void sendPeerPacket(String peerId, PeerPacket p);
 
   /**
    * Sends a blob trough peer connection

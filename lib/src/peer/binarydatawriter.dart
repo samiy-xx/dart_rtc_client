@@ -30,9 +30,22 @@ abstract class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListen
   Future<int> writeAck(int signature, int sequence, [bool wrap]);
   void send(ArrayBuffer buffer, int packetType);
 
-  Future<int> _send(ArrayBuffer buf, bool wrap) {
-    var toSend = wrap ? wrapToString(buf) : buf;
-    _channel.send(toSend);
+  
+  Future<bool> _send(ArrayBuffer buf, bool wrap) {
+    Completer completer = new Completer();
+    try {
+      var toSend = wrap ? wrapToString(buf) : buf;
+      _channel.send(toSend);
+      completer.complete(true);
+    } on DomException catch(e, s) {
+      new Logger().Error("Error $e");
+      new Logger().Error("Trace $s");
+      new Logger().Error("Attempted to send buffer of ${buf.byteLength} bytes");
+      new Logger().Error("Buffer valid = ${BinaryData.isValid(buf, _binaryProtocol)}");
+      new Logger().Error("Channel state = ${_channel.readyState}");
+      completer.complete(false);
+    }
+    return completer.future;
   }
 
   void calculateLatency(int time) {

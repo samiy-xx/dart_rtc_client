@@ -11,13 +11,12 @@ abstract class BinaryDataEventListener {
  * Interface for received binary data events
  */
 abstract class BinaryDataReceivedEventListener extends BinaryDataEventListener {
-  //void onPacket(Packet p);
-  void onString(String s);
-  void onBuffer(ArrayBuffer b);
-  void onReadChunk(ArrayBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesLeft);
-  void onRemoteRequestResend(int signature, int sequence);
-  void onLocalRequestResend(int signature, int sequence);
-  void onSendSuccess(int signature, int sequence);
+  void onPeerPacket(PeerPacket p);
+  void onPeerString(String s);
+  void onPeerBuffer(ArrayBuffer b);
+  void onPeerReadChunk(ArrayBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesLeft);
+
+  void onPeerSendSuccess(int signature, int sequence);
 }
 
 /**

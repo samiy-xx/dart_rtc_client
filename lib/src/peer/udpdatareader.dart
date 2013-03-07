@@ -55,8 +55,10 @@ class UDPDataReader extends BinaryDataReader {
   Future readChunkString(String s) {
     Completer c = new Completer();
     //_received.addLast(BinaryData.bufferFromString(s));
-    readChunk(BinaryData.bufferFromString(s));
-    c.complete();
+    window.setImmediate(() {
+      readChunk(BinaryData.bufferFromString(s));
+      c.complete();
+    });
     return c.future;
   }
 

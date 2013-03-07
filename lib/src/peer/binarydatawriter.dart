@@ -1,51 +1,45 @@
 part of rtc_client;
 
 abstract class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListener> {
-  RtcDataChannel _channel;
+  RtcDataChannel _writeChannel;
   RoundTripCalculator _roundTripCalculator;
 
+  // While Chrome hates binary
+  bool _wrapToString = true;
   int _binaryProtocol;
-
   int _writeChunkSize = 500;
 
+  /** Returns the current latency */
   int get currentLatency => _roundTripCalculator.currentLatency;
+
   /** Get the chunk size for writing */
   int get writeChunkSize => _writeChunkSize;
 
   /** Sets the chunk size for writing */
   set writeChunkSize(int i) => _writeChunkSize = i;
 
-  bool _wrapToString;
+  /** Sets the write data channel */
+  set dataChannel(RtcDataChannel c) => _writeChannel = c;
 
-  set dataChannel(RtcDataChannel c) => _channel = c;
   BinaryDataWriter(int protocol) : super() {
     _binaryProtocol = protocol;
     _roundTripCalculator = new RoundTripCalculator();
-    // while chrome doesnt support sending arraybuffer
-    _wrapToString = true;
   }
 
-  removeFromBuffer(int signature, int sequence);
-  receiveAck(int signature, int sequence);
-  Future<int> writeAck(int signature, int sequence, [bool wrap]);
-  void send(ArrayBuffer buffer, int packetType);
+  void writeAck(int signature, int sequence);
+  Future<bool> send(ArrayBuffer buffer, int packetType);
 
-  
-  Future<bool> _send(ArrayBuffer buf, bool wrap) {
-    Completer completer = new Completer();
+  void _send(ArrayBuffer buf, bool wrap) {
     try {
       var toSend = wrap ? wrapToString(buf) : buf;
-      _channel.send(toSend);
-      completer.complete(true);
+      _writeChannel.send(toSend);
     } on DomException catch(e, s) {
       new Logger().Error("Error $e");
       new Logger().Error("Trace $s");
       new Logger().Error("Attempted to send buffer of ${buf.byteLength} bytes");
       new Logger().Error("Buffer valid = ${BinaryData.isValid(buf, _binaryProtocol)}");
-      new Logger().Error("Channel state = ${_channel.readyState}");
-      completer.complete(false);
+      new Logger().Error("Channel state = ${_writeChannel.readyState}");
     }
-    return completer.future;
   }
 
   void calculateLatency(int time) {

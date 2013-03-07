@@ -14,8 +14,9 @@ class UDPDataWriter extends BinaryDataWriter {
     _sendTimer = new Timer.repeating(const Duration(milliseconds: 1), _timerTick);
   }
 
-  void send(ArrayBuffer buffer, int packetType) {
-    new Logger().Debug("Sending buffer of ${buffer.byteLength} bytes");
+  Future<bool> send(ArrayBuffer buffer, int packetType) {
+    Completer completer = new Completer();
+
     int totalSequences = (buffer.byteLength ~/ _writeChunkSize) + 1;
     int sequence = 1;
     int read = 0;
@@ -31,17 +32,18 @@ class UDPDataWriter extends BinaryDataWriter {
           signature,
           buffer.byteLength
       );
-      storeBuffer(b, signature, sequence);
+      _storeBufferWithCompleter(b, signature, sequence, completer);
       sequence++;
       read += toRead;
     }
+    return completer.future;
   }
-  
+
   void _timerTick(Timer t) {
     int now = new DateTime.now().millisecondsSinceEpoch;
     _sentPackets.forEach((int key, List<StoreEntry> entries) {
 
-      if (_channel.bufferedAmount == 0 && entries.length > 0) {
+      if (_writeChannel.bufferedAmount == 0 && entries.length > 0) {
         StoreEntry entry = entries[0];
         if (!entry.sent) {
           _send(entry.buffer, true);
@@ -58,16 +60,14 @@ class UDPDataWriter extends BinaryDataWriter {
             _currentSequence = entry.sequence;
           }
         }
+        new Logger().Debug("STOREENTRY RESEND = ${entry.resend} PACKETTYPE = ${BinaryData.getPacketType(entry.buffer)}");
+        if (!entry.resend) {
+          new Logger().Debug("Remove STOREENTRY");
+          removeStoreEntryFromBuffer(key, entry);
+        }
       }
     });
 
-  }
-
-  Future<int> writeAsync(ArrayBuffer buffer, int packetType, [bool wrapToString = false]) {
-    Completer completer = new Completer<int>();
-    //write(buffer, packetType, wrapToString);
-    completer.complete(buffer.byteLength);
-    return completer.future;
   }
 
   ArrayBuffer findSentData(int signature, int sequence) {
@@ -85,15 +85,8 @@ class UDPDataWriter extends BinaryDataWriter {
     return null;
   }
 
-  Future<int> writeAck(int signature, int sequence, [bool wrap = true]) {
-   Completer<int> c = new Completer<int>();
-    Object ack = BinaryData.createAck(signature, sequence);
-    if (wrap)
-      ack = wrapToString(ack);
-
-    _channel.send(ack);
-    c.complete(1);
-    return c.future;
+  void writeAck(int signature, int sequence) {
+    _storeBuffer(BinaryData.createAck(signature, sequence), signature, sequence, false);
   }
 
   void receiveAck(int signature, int sequence) {
@@ -102,43 +95,58 @@ class UDPDataWriter extends BinaryDataWriter {
       calculateLatency(se.timeSent);
       new Logger().Debug("Adjusting latency, currently $currentLatency");
       removeStoreEntryFromBuffer(signature, se);
+      if (se.completer != null)
+        se.completer.complete(true);
     }
   }
 
   void removeStoreEntryFromBuffer(int signature, StoreEntry se) {
-    if (!_sentPackets.containsKey(signature))
+    if (!_sentPackets.containsKey(signature)) {
+      new Logger().Warning("Attempted to remove store entry with signature $signature, Buffer not found.");
       return;
+    }
 
     int index = _sentPackets[signature].indexOf(se);
-    if (index >= 0) {
-      _sentPackets[signature].removeAt(index);
+    if (index < 0) {
+      new Logger().Warning("Attempted to remove store entry with signature $signature, Not found.");
+      return;
     }
+
+    _sentPackets[signature].removeAt(index);
   }
 
   void removeFromBuffer(int signature, int sequence) {
     StoreEntry se = findStoredBuffer(signature, sequence);
-    int now = new DateTime.now().millisecondsSinceEpoch;
 
     if (se != null) {
-
-      //_currentLatency = now - se.timeSent;
-      //new Logger().Debug("Latency is $_currentLatency");
-      //new Logger().Debug("Removing stored entry ${signature} $sequence");
       _sentPackets[signature].remove(se);
-      //new Logger().Debug("Removed stored entry ${signature} $sequence");
       if (_sentPackets[signature].length == 0) {
-        //new Logger().Debug("PAcket sent finished");
         _sentPackets.remove(signature);
       }
+    } else {
+      new Logger().Warning("(udpdatawriter.dart) removeFromBuffer: Attempted to remove non existing buffer");
     }
   }
 
-  void storeBuffer(ArrayBuffer buf, int signature, int sequence) {
+  void _storeBuffer(ArrayBuffer buf, int signature, int sequence, [bool resend]) {
+    var se = new StoreEntry(sequence, buf);
+    if (?resend)
+      se.resend = resend;
+    _store(signature, se);
+  }
+
+  void _storeBufferWithCompleter(ArrayBuffer buf, int signature, int sequence, Completer completer) {
+    var se = new StoreEntry(sequence, buf);
+    if (?completer)
+      se.completer = completer;
+
+    _store(signature, se);
+  }
+
+  void _store(int signature, StoreEntry se) {
     if (!_sentPackets.containsKey(signature))
       _sentPackets[signature] = new List<StoreEntry>();
 
-    var se = new StoreEntry(sequence, buf);
-    //new Logger().Debug("Storing buffer $signature $sequence with size ${buf.byteLength} and is valid ${isValid(buf)}");
     _sentPackets[signature].add(se);
   }
 
@@ -148,11 +156,9 @@ class UDPDataWriter extends BinaryDataWriter {
 
     for (int i = 0; i < _sentPackets[time].length; i++) {
       StoreEntry se = _sentPackets[time][i];
-
       if (se.sequence == sequence)
         return se;
     }
-
     return null;
   }
 
@@ -163,8 +169,10 @@ class StoreEntry implements Comparable{
   int timeSent;
   int timeReSent;
   int sequence;
+  bool resend = true;
   bool sent = false;
   ArrayBuffer buffer;
+  Completer completer;
 
   StoreEntry(this.sequence, this.buffer) {
     timeStored = new DateTime.now().millisecondsSinceEpoch;
@@ -179,6 +187,7 @@ class StoreEntry implements Comparable{
   void markReSent() {
     timeReSent = new DateTime.now().millisecondsSinceEpoch;
   }
+
   int compareTo(StoreEntry e) {
     if (!sent && e.sent)
       return -1;

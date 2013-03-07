@@ -112,6 +112,9 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
     sendBuffer(p.toBuffer(), BINARY_TYPE_PACKET);
   }
 
+  void sendString(String s) {
+    _dataChannel.send(s);
+  }
   /**
    * Send blob
    */
@@ -153,16 +156,13 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
    * Implements BinaryDataReceivedEventListener onReadChunk
    */
   void onPeerReadChunk(ArrayBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesLeft) {
-    //new Logger().Debug("(datapeerwrapper.dart) received chunk $signature $sequence $totalSequences $bytes $bytesLeft");
-    //_binaryWriter.removeFromBuffer(signature, sequence);
-
-   _binaryWriter.writeAck(signature, sequence, true);
+    if (_binaryWriter is UDPDataWriter)
+      (_binaryWriter as UDPDataWriter).writeAck(signature, sequence);
   }
 
   void onPeerSendSuccess(int signature, int sequence) {
-    //new Logger().Debug("Received ack for $signature $sequence");
-    _binaryWriter.receiveAck(signature, sequence);
-    //_binaryWriter.removeFromBuffer(signature, sequence);
+    if (_binaryWriter is UDPDataWriter)
+      (_binaryWriter as UDPDataWriter).receiveAck(signature, sequence);
   }
 
   /**

@@ -2,6 +2,7 @@ part of rtc_client;
 
 const int RTT_STARTING_LATENCY = 30;
 const double RTT_MULTIPLIER = 0.1;
+const int RTT_MAX_LATENCY = 500;
 
 class RoundTripCalculator {
 
@@ -10,8 +11,14 @@ class RoundTripCalculator {
 
   RoundTripCalculator();
 
+  void forceBelowMaxLimit() {
+    if (_currentLatency > RTT_MAX_LATENCY)
+      _currentLatency = RTT_MAX_LATENCY;
+  }
+
   void addToLatency(int t) {
     _currentLatency += t;
+    forceBelowMaxLimit();
   }
 
   void calculateLatency(int lastSent) {
@@ -19,6 +26,7 @@ class RoundTripCalculator {
     int diff = (now - lastSent) - _currentLatency;
     int increment = (diff * RTT_MULTIPLIER).toInt();
     _currentLatency += increment;
+    forceBelowMaxLimit();
   }
 }
 

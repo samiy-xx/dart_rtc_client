@@ -52,7 +52,7 @@ class QueueClient extends ChannelClient  {
   }
 
   void _queuePacketHandler(QueuePacket p) {
-    PeerWrapper pw = _pm.findWrapper(p.id);
+    PeerWrapper pw = _peerManager.findWrapper(p.id);
     if (_packetController.hasSubscribers)
       _packetController.add(new PacketEvent(p, pw));
 

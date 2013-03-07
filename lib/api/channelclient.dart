@@ -8,10 +8,10 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
   InitializationState _currentState;
 
   /* Signal handler. TODO: Might need to remove some of the unused signalhandlers */
-  StreamingSignalHandler _sh;
+  StreamingSignalHandler _signalHandler;
 
   /* Manages the creation of peer connections */
-  PeerManager _pm;
+  PeerManager _peerManager;
 
   /* Datasource, TODO: Rename maybe, Datasource sounds more like database */
   DataSource _ds;
@@ -40,12 +40,12 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
   /**
    * Signal handler
    */
-  StreamingSignalHandler get signalHandler => _sh;
+  StreamingSignalHandler get signalHandler => _signalHandler;
 
   /**
    * PeerManager
    */
-  PeerManager get peerManager => _pm;
+  PeerManager get peerManager => _peerManager;
 
   /**
    * My id
@@ -55,7 +55,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
   /**
    * Are you a channel owner
    */
-  bool get isChannelOwner => _sh.isChannelOwner;
+  bool get isChannelOwner => _signalHandler.isChannelOwner;
 
   StreamController<MediaStreamAvailableEvent> _mediaStreamAvailableStreamController;
   Stream<MediaStreamAvailableEvent> get onRemoteMediaStreamAvailableEvent  => _mediaStreamAvailableStreamController.stream;
@@ -103,10 +103,10 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     _ds = ds;
     _ds.subscribe(this);
 
-    _pm = new PeerManager();
-    _pm.subscribe(this);
+    _peerManager = new PeerManager();
+    _peerManager.subscribe(this);
 
-    _sh = new StreamingSignalHandler(ds);
+    _signalHandler = new StreamingSignalHandler(ds);
 
     _defaultGetUserMediaConstraints = new VideoConstraints();
     _defaultPeerCreationConstraints = new PeerConstraints();
@@ -127,13 +127,13 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     _packetController = new StreamController.broadcast();
     _binaryController = new StreamController.broadcast();
 
-    _sh.registerHandler(PacketType.JOIN, _joinPacketHandler);
-    _sh.registerHandler(PacketType.ID, _idPacketHandler);
-    _sh.registerHandler(PacketType.BYE, _byePacketHandler);
-    _sh.registerHandler(PacketType.CHANNEL, _channelPacketHandler);
-    _sh.registerHandler(PacketType.CONNECTED, _connectionSuccessPacketHandler);
-    _sh.registerHandler(PacketType.CHANNELMESSAGE, _defaultPacketHandler);
-    _sh.registerHandler(PacketType.CHANGENICK, _defaultPacketHandler);
+    _signalHandler.registerHandler(PacketType.JOIN, _joinPacketHandler);
+    _signalHandler.registerHandler(PacketType.ID, _idPacketHandler);
+    _signalHandler.registerHandler(PacketType.BYE, _byePacketHandler);
+    _signalHandler.registerHandler(PacketType.CHANNEL, _channelPacketHandler);
+    _signalHandler.registerHandler(PacketType.CONNECTED, _connectionSuccessPacketHandler);
+    _signalHandler.registerHandler(PacketType.CHANNELMESSAGE, _defaultPacketHandler);
+    _signalHandler.registerHandler(PacketType.CHANGENICK, _defaultPacketHandler);
   }
 
   /**
@@ -151,8 +151,8 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
         // TODO: Fix, this should take a map, but it's wrong in dartlang. https://code.google.com/p/dart/issues/detail?id=8061
         window.navigator.getUserMedia(audio: con.audio, video: con.video).then((LocalMediaStream stream) {
           _ms = stream;
-          _pm.setLocalStream(stream);
-          _sh.initialize();
+          _peerManager.setLocalStream(stream);
+          _signalHandler.initialize();
 
           _setState(InitializationState.MEDIA_READY);
           _mediaStreamAvailableStreamController.add(new MediaStreamAvailableEvent(stream, null, true));
@@ -162,11 +162,11 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
         return;
       }
     } else {
-      _sh.initialize();
+      _signalHandler.initialize();
     }
 
     window.onBeforeUnload.listen((event) {
-      _sh.dataSource.close();
+      _signalHandler.dataSource.close();
     });
   }
 
@@ -191,7 +191,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
    */
   ChannelClient setRequireDataChannel(bool b) {
     _defaultPeerCreationConstraints.dataChannelEnabled = b;
-    _sh.setDataChannelsEnabled(b);
+    _signalHandler.setDataChannelsEnabled(b);
     return this;
   }
 
@@ -200,7 +200,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
    */
   ChannelClient setChannel(String c) {
     _channelId = c;
-    _sh.channelId = c;
+    _signalHandler.channelId = c;
     return this;
   }
 
@@ -209,7 +209,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
    * When ever a channel is joined.
    */
   ChannelClient setAutoCreatePeer(bool v) {
-    _sh._createPeerOnJoin = v;
+    _signalHandler._createPeerOnJoin = v;
     return this;
   }
 
@@ -226,7 +226,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
    */
   ChannelClient setDefaultPeerConstraints(PeerConstraints pc) {
     _defaultPeerCreationConstraints = pc;
-    _pm.setPeerConstraints(pc);
+    _peerManager.setPeerConstraints(pc);
     return this;
   }
 
@@ -235,7 +235,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
    */
   ChannelClient setDefaultStreamConstraints(StreamConstraints sc) {
     _defaultStreamConstraints = sc;
-    _pm.setStreamConstraints(sc);
+    _peerManager.setStreamConstraints(sc);
     return this;
   }
 
@@ -243,7 +243,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
    * Clears all Stun and Turn server entries.
    */
   void clearStun() {
-    _pm._serverConstraints.clear();
+    _peerManager._serverConstraints.clear();
   }
 
   /**
@@ -253,7 +253,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     StunServer ss = new StunServer();
     ss.setAddress(address);
     ss.setPort(port);
-    _pm._serverConstraints.addStun(ss);
+    _peerManager._serverConstraints.addStun(ss);
     return ss;
   }
 
@@ -266,7 +266,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     ts.setPort(port);
     ts.setUserName(userName);
     ts.setPassword(password);
-    _pm._serverConstraints.addTurn(ts);
+    _peerManager._serverConstraints.addTurn(ts);
     return ts;
   }
 
@@ -274,14 +274,14 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
    * Requests to join a channel
    */
   void joinChannel(String name) {
-    _sh.sendPacket(new ChannelJoinCommand.With(_myId, name));
+    _signalHandler.sendPacket(new ChannelJoinCommand.With(_myId, name));
   }
 
   /**
    * Change your id (nick)
    */
   void changeId(String newId) {
-    _sh.sendPacket(new ChangeNickCommand.With(_myId, newId));
+    _signalHandler.sendPacket(new ChangeNickCommand.With(_myId, newId));
   }
 
   /*
@@ -303,7 +303,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
    */
   bool setChannelLimit(int l) {
     if (_channelId != null) {
-      _sh.sendPacket(new SetChannelVarsCommand.With(_myId, _channelId, l));
+      _signalHandler.sendPacket(new SetChannelVarsCommand.With(_myId, _channelId, l));
       return true;
     }
 
@@ -314,7 +314,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
    * Creates a peer connections and sets the creator as the host
    */
   void createPeerConnection(String id) {
-    PeerWrapper p = _pm.createPeer();
+    PeerWrapper p = _peerManager.createPeer();
     p.id = id;
     p.setAsHost(true);
   }
@@ -330,14 +330,23 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
    * Finds a peer connection with given id
    */
   PeerWrapper findPeer(String id) {
-    return _pm.findWrapper(id);
+    return _peerManager.findWrapper(id);
+  }
+
+  /**
+   * Request the server that users gets kicked out of channel
+   */
+  void disconnectUser() {
+    if (isChannelOwner && _otherId != null) {
+      _signalHandler.send(PacketFactory.get(new RemoveUserCommand.With(_otherId, _channelId)));
+    }
   }
 
   /**
    * Requests the server to transmit the message to all users in channel
    */
   void sendChannelMessage(String message) {
-    _sh.send(PacketFactory.get(new ChannelMessage.With(_myId, _channelId, message)));
+    _signalHandler.send(PacketFactory.get(new ChannelMessage.With(_myId, _channelId, message)));
   }
 
   /**
@@ -347,23 +356,22 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
   //  sendPeerPacket(peerId, new UserMessage.With(_myId, message));
   //}
 
-  /**
-   * Sends a packet to peer
-   */
-  void sendPeerPacket(String peerId, PeerPacket p) {
-    PeerWrapper w = _pm.findWrapper(peerId);
+  void sendString(String peerId, String message) {
+    PeerWrapper w = _peerManager.findWrapper(peerId);
     if (w is DataPeerWrapper) {
       DataPeerWrapper dpw = w as DataPeerWrapper;
-      dpw.send(p);
+      dpw.sendString(message);
     }
   }
 
   /**
-   * Request the server that users gets kicked out of channel
+   * Sends a packet to peer
    */
-  void disconnectUser() {
-    if (isChannelOwner && _otherId != null) {
-      _sh.send(PacketFactory.get(new RemoveUserCommand.With(_otherId, _channelId)));
+  void sendPeerPacket(String peerId, PeerPacket p) {
+    PeerWrapper w = _peerManager.findWrapper(peerId);
+    if (w is DataPeerWrapper) {
+      DataPeerWrapper dpw = w as DataPeerWrapper;
+      dpw.send(p);
     }
   }
 
@@ -379,7 +387,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
    */
   void sendArrayBuffer(String peerId, ArrayBuffer data) {
     new Logger().Debug("(channelclient.dart) sending arraybuffer");
-    PeerWrapper w = _pm.findWrapper(peerId);
+    PeerWrapper w = _peerManager.findWrapper(peerId);
     if (w == null)
       new Logger().Error("wrapper not found with id $peerId");
     if (w is DataPeerWrapper) {
@@ -394,12 +402,12 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
    * Sends an arraybufferview to peer
    */
   void sendArrayBufferView(String peerId, ArrayBufferView data) {
-    throw new UnsupportedError("sendArrayBufferView is a work in progress");
+    sendArrayBuffer(peerId, data.buffer);
   }
 
 
   void _defaultPacketHandler(Packet p) {
-    PeerWrapper pw = _pm.findWrapper(p.id);
+    PeerWrapper pw = _peerManager.findWrapper(p.id);
     if (_packetController.hasSubscribers)
       _packetController.add(new PacketEvent(p, pw));
   }
@@ -415,7 +423,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
    * TODO: Needs a stream controller and event
    */
   void _channelPacketHandler(ChannelPacket p) {
-    PeerWrapper pw = _pm.findWrapper(p.id);
+    PeerWrapper pw = _peerManager.findWrapper(p.id);
     if (_packetController.hasSubscribers)
       _packetController.add(new PacketEvent(p, pw));
 
@@ -428,7 +436,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
   void _joinPacketHandler(JoinPacket p) {
     new Logger().Debug("channelclient.dart Joinpackethandler received ${p.id}");
     _otherId = p.id;
-    PeerWrapper pw = _pm.findWrapper(p.id);
+    PeerWrapper pw = _peerManager.findWrapper(p.id);
     if (_packetController.hasSubscribers)
       _packetController.add(new PacketEvent(p, pw));
   }
@@ -438,7 +446,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
    */
   void _idPacketHandler(IdPacket p) {
     _otherId = p.id;
-    PeerWrapper pw = _pm.findWrapper(p.id);
+    PeerWrapper pw = _peerManager.findWrapper(p.id);
     if (_packetController.hasSubscribers)
       _packetController.add(new PacketEvent(p, pw));
   }
@@ -447,7 +455,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
    * TODO: Needs a stream controller and event
    */
   void _byePacketHandler(ByePacket p) {
-    PeerWrapper pw = _pm.findWrapper(p.id);
+    PeerWrapper pw = _peerManager.findWrapper(p.id);
     if (_packetController.hasSubscribers)
       _packetController.add(new PacketEvent(p, pw));
 

@@ -8,9 +8,10 @@ const int SIZEOF_TCP_HEADER = 12;
 
 const int NULL_BYTE = 0x00;
 const int FULL_BYTE = 0xFF;
-const int BINARY_TYPE_STRING = 0x10;
-const int BINARY_TYPE_PACKET = 0x11;
-const int BINARY_TYPE_FILE = 0x12;
+
+const int BINARY_TYPE_STRING = 1;
+const int BINARY_TYPE_PACKET = 2;
+const int BINARY_TYPE_FILE = 3;
 
 const int BINARY_PROTOCOL_UDP = 1;
 const int BINARY_PROTOCOL_TCP = 2;
@@ -161,6 +162,11 @@ class BinaryData {
   static int getSequenceNumber(ArrayBuffer buffer) {
     DataView view = new DataView(buffer, 0, 16);
     return view.getUint16(UDP_PROTOCOL_SEQUENCE_POSITION);
+  }
+
+  static int getPacketType(ArrayBuffer buffer) {
+    DataView view = new DataView(buffer, 0, 2);
+    return view.getUint8(PROTOCOL_PACKETTYPE_POSITION);
   }
 
   static ArrayBuffer writeUdpHeader(ArrayBuffer buf, int packetType, int sequenceNumber, int totalSequences, int signature, int total) {

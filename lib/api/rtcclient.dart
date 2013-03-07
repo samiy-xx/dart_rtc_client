@@ -53,7 +53,7 @@ abstract class RtcClient {
   /**
    * Sends a string trough peer connection
    */
-  void sendPeerUserMessage(String peerId, String message);
+  void sendString(String peerId, String message);
 
   /**
    * Sends a packet trough peer connection

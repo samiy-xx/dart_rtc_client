@@ -128,6 +128,7 @@ abstract class RtcClient {
    */
   Stream<IceGatheringStateChangedEvent> get onIceGatheringStateChangeEvent;
 
+  Stream<DataChannelStateChangedEvent> get onDataChannelStateChangeEvent;
   /**
    * Message has arrived via data source
    */

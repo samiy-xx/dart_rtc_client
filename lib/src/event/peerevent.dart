@@ -10,6 +10,12 @@ class PeerStateChangedEvent extends RtcEvent {
   }
 }
 
+class DataChannelStateChangedEvent extends RtcEvent {
+  String state;
+  PeerWrapper peerwrapper;
+  DataChannelStateChangedEvent(this.peerwrapper, this.state);
+}
+
 class IceGatheringStateChangedEvent extends RtcEvent {
   PeerWrapper peerwrapper;
   String state;

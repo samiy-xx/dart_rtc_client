@@ -3,7 +3,8 @@ part of rtc_client;
 class UDPDataWriter extends BinaryDataWriter {
 
   Map<int, List<StoreEntry>> _sentPackets;
-
+  Map<int, Completer> _completers;
+  
   Timer _sendTimer;
   int _currentSequence = 0;
   bool _canSend = true;
@@ -11,17 +12,18 @@ class UDPDataWriter extends BinaryDataWriter {
 
   UDPDataWriter() : super(BINARY_PROTOCOL_UDP) {
     _sentPackets = new Map<int, List<StoreEntry>>();
+    _completers = new Map<int, Completer>();
     _sendTimer = new Timer.repeating(const Duration(milliseconds: 1), _timerTick);
   }
 
   Future<bool> send(ArrayBuffer buffer, int packetType) {
     Completer completer = new Completer();
-
+    
     int totalSequences = (buffer.byteLength ~/ _writeChunkSize) + 1;
     int sequence = 1;
     int read = 0;
     int signature = new DateTime.now().millisecondsSinceEpoch  ~/1000;
-
+    _completers[signature] = completer;
     while (read < buffer.byteLength) {
       int toRead = buffer.byteLength > _writeChunkSize ? _writeChunkSize : buffer.byteLength;
       ArrayBuffer b = addUdpHeader(
@@ -32,7 +34,7 @@ class UDPDataWriter extends BinaryDataWriter {
           signature,
           buffer.byteLength
       );
-      _storeBufferWithCompleter(b, signature, sequence, completer);
+      _storeBuffer(b, signature, sequence);
       sequence++;
       read += toRead;
     }
@@ -41,6 +43,7 @@ class UDPDataWriter extends BinaryDataWriter {
 
   void _timerTick(Timer t) {
     int now = new DateTime.now().millisecondsSinceEpoch;
+    
     _sentPackets.forEach((int key, List<StoreEntry> entries) {
 
       if (_writeChannel.bufferedAmount == 0 && entries.length > 0) {
@@ -97,8 +100,7 @@ class UDPDataWriter extends BinaryDataWriter {
       calculateLatency(se.timeSent);
       new Logger().Debug("Adjusting latency, currently $currentLatency");
       removeStoreEntryFromBuffer(signature, se);
-      if (se.completer != null)
-        se.completer.complete(true);
+      
     }
   }
 
@@ -114,34 +116,24 @@ class UDPDataWriter extends BinaryDataWriter {
       return;
     }
 
-    _sentPackets[signature].removeAt(index);
-  }
-
-  void removeFromBuffer(int signature, int sequence) {
-    StoreEntry se = findStoredBuffer(signature, sequence);
-
-    if (se != null) {
-      _sentPackets[signature].remove(se);
+    // Try if this helps for concurrent modification errors
+    // Should push the execution of this block to the end of event loops?
+    window.setImmediate(() {
+      _sentPackets[signature].removeAt(index);
       if (_sentPackets[signature].length == 0) {
         _sentPackets.remove(signature);
+        if (_completers.containsKey(signature)) {
+          _completers[signature].complete(true);
+          _completers.remove(signature);
+        }
       }
-    } else {
-      new Logger().Warning("(udpdatawriter.dart) removeFromBuffer: Attempted to remove non existing buffer");
-    }
+    });
   }
 
   void _storeBuffer(ArrayBuffer buf, int signature, int sequence, [bool resend]) {
     var se = new StoreEntry(sequence, buf);
     if (?resend)
       se.resend = resend;
-    _store(signature, se);
-  }
-
-  void _storeBufferWithCompleter(ArrayBuffer buf, int signature, int sequence, Completer completer) {
-    var se = new StoreEntry(sequence, buf);
-    if (?completer)
-      se.completer = completer;
-
     _store(signature, se);
   }
 
@@ -174,7 +166,6 @@ class StoreEntry implements Comparable{
   bool resend = true;
   bool sent = false;
   ArrayBuffer buffer;
-  Completer completer;
 
   StoreEntry(this.sequence, this.buffer) {
     timeStored = new DateTime.now().millisecondsSinceEpoch;

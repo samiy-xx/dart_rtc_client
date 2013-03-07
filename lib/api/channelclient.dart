@@ -80,7 +80,10 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
 
   StreamController<IceGatheringStateChangedEvent> _iceGatheringStateChangeController;
   Stream<IceGatheringStateChangedEvent> get onIceGatheringStateChangeEvent => _iceGatheringStateChangeController.stream;
-
+  
+  StreamController<DataChannelStateChangedEvent> _dataChannelStateChangeController;
+  Stream<DataChannelStateChangedEvent> get onDataChannelStateChangeEvent => _dataChannelStateChangeController.stream;
+  
   StreamController<DataSourceMessageEvent> _dataSourceMessageController;
   Stream<DataSourceMessageEvent> get onDataSourceMessageEvent => _dataSourceMessageController.stream;
 
@@ -99,6 +102,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
   StreamController<RtcEvent> _binaryController;
   Stream<RtcEvent> get onBinaryEvent => _binaryController.stream;
 
+  
   ChannelClient(DataSource ds) {
     _ds = ds;
     _ds.subscribe(this);
@@ -120,6 +124,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     _signalingErrorController = new StreamController.broadcast();
     _peerStateChangeController = new StreamController.broadcast();
     _iceGatheringStateChangeController = new StreamController.broadcast();
+    _dataChannelStateChangeController = new StreamController.broadcast();
     _dataSourceMessageController = new StreamController.broadcast();
     _dataSourceCloseController = new StreamController.broadcast();
     _dataSourceOpenController = new StreamController.broadcast();
@@ -473,10 +478,10 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
 
   /**
    * Implements PeerDataEventListener onChannelStateChanged
-   * TODO : Do something with this
    */
   void onChannelStateChanged(DataPeerWrapper p, String state){
-
+    if (_dataChannelStateChangeController.hasSubscribers)
+      _dataChannelStateChangeController.add(new DataChannelStateChangedEvent(p, state));
   }
 
   /**

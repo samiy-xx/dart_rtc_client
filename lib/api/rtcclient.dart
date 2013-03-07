@@ -68,7 +68,7 @@ abstract class RtcClient {
   /**
    * Sends an ArrayBuffer trough peer connection
    */
-  void sendArrayBuffer(String peerId, ArrayBuffer data);
+  Future<bool> sendArrayBuffer(String peerId, ArrayBuffer data);
 
   /**
    * Sends an ArraBufferView trough peer connection

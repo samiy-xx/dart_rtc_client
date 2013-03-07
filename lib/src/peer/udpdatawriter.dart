@@ -49,22 +49,23 @@ class UDPDataWriter extends BinaryDataWriter {
           _send(entry.buffer, true);
           new Logger().Debug("Sent chunk ${entry.sequence}");
           entry.markSent();
+          if (!entry.resend) {
+            new Logger().Debug("Remove STOREENTRY");
+            removeStoreEntryFromBuffer(key, entry);
+          }
         } else {
           if ((entry.timeReSent + currentLatency) < now) {
             if (_currentSequence == entry.sequence)
               _roundTripCalculator.addToLatency(50);
 
             _send(entry.buffer, true);
-            new Logger().Debug("RE-Sent chunk ${entry.sequence}");
+            new Logger().Debug("RE-Sent chunk ${entry.sequence} RESEND = ${entry.resend} PACKETTYPE = ${BinaryData.getPacketType(entry.buffer)}");
             entry.markReSent();
             _currentSequence = entry.sequence;
           }
         }
-        new Logger().Debug("STOREENTRY RESEND = ${entry.resend} PACKETTYPE = ${BinaryData.getPacketType(entry.buffer)}");
-        if (!entry.resend) {
-          new Logger().Debug("Remove STOREENTRY");
-          removeStoreEntryFromBuffer(key, entry);
-        }
+        
+        
       }
     });
 
@@ -86,6 +87,7 @@ class UDPDataWriter extends BinaryDataWriter {
   }
 
   void writeAck(int signature, int sequence) {
+    new Logger().Debug("WRITING ACK");
     _storeBuffer(BinaryData.createAck(signature, sequence), signature, sequence, false);
   }
 

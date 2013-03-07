@@ -385,14 +385,14 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
   /**
    * Sends an arraybuffer to peer
    */
-  void sendArrayBuffer(String peerId, ArrayBuffer data) {
+  Future<bool> sendArrayBuffer(String peerId, ArrayBuffer data) {
     new Logger().Debug("(channelclient.dart) sending arraybuffer");
     PeerWrapper w = _peerManager.findWrapper(peerId);
     if (w == null)
       new Logger().Error("wrapper not found with id $peerId");
     if (w is DataPeerWrapper) {
       DataPeerWrapper dpw = w as DataPeerWrapper;
-      dpw.sendBuffer(data, BINARY_TYPE_FILE);
+      return dpw.sendBuffer(data, BINARY_TYPE_FILE);
     } else {
       new Logger().Debug("(channelclient.dart) Peer wrapper is not data peer wrapper");
     }

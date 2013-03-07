@@ -38,23 +38,16 @@ class UDPDataReader extends BinaryDataReader {
   bool _haveThisPart = false;
   Timer _timer;
 
-  /**
-   * da mighty constructor
-   */
   UDPDataReader() : super() {
-    //new Logger().Debug("Binarydatareader.dart constructor, assigning channel on message");
-
     _length = 0;
     _buffer = new List<int>();
     _sequencer = new Map<int, Map<int, ArrayBuffer>>();
-    //_timer = new Timer.repeating(const Duration(milliseconds: 1), timerTick);
     _lastProcessed = new DateTime.now().millisecondsSinceEpoch;
     _received = new List<ArrayBuffer>();
   }
 
   Future readChunkString(String s) {
     Completer c = new Completer();
-    //_received.addLast(BinaryData.bufferFromString(s));
     window.setImmediate(() {
       readChunk(BinaryData.bufferFromString(s));
       c.complete();
@@ -69,13 +62,8 @@ class UDPDataReader extends BinaryDataReader {
   void readChunk(ArrayBuffer buf) {
     _lastProcessed = new DateTime.now().millisecondsSinceEpoch;
 
-    //new Logger().Debug("Read chunk");
-
     int i = 0;
-    //if (!BinaryData.isValid(buf)) {
-    //  new Logger().Debug("Data not valid");
-    //}
-
+    
     if (BinaryData.isCommand(buf)) {
       _process_command(BinaryData.getCommand(buf), buf);
       return;
@@ -135,8 +123,7 @@ class UDPDataReader extends BinaryDataReader {
       }
 
     }
-    //_latest = buf;
-    //_signalReadChunk(signature, chunkSequence, chunkTotalSequences, contentLength, contentTotalLength);
+   
   }
 
   void timerTick(Timer t) {
@@ -208,19 +195,16 @@ class UDPDataReader extends BinaryDataReader {
   void _process_read_type(int b) {
     _packetType = b;
     _currentReadState = BinaryReadState.READ_SEQUENCE;
-    //new Logger().Debug("_process_read_type $b set state READ_SEQUENCE");
   }
 
   void _process_read_sequence(int b) {
     _currentChunkSequence = b;
     _currentReadState = BinaryReadState.READ_TOTAL_SEQUENCES;
-    //new Logger().Debug("_process_read_sequence $b set state READ_TOTAL_SEQUENCES");
   }
 
   void _process_read_total_sequences(int b) {
     _totalSequences = b;
     _currentReadState = BinaryReadState.READ_LENGTH;
-    //new Logger().Debug("_process_read_total_sequences $b set state RrEAD_LENGTH");
   }
 
   void _process_read_length(int b) {
@@ -229,20 +213,17 @@ class UDPDataReader extends BinaryDataReader {
     _latest = new ArrayBuffer(b);
     _latestView = new DataView(_latest);
     _currentReadState = BinaryReadState.READ_TOTAL_LENGTH;
-    //new Logger().Debug("_process_read_length $b set state READ_TOTAL_LENGTH");
   }
 
   void _process_read_total_length(int b) {
     _contentTotalLength = b;
     _currentReadState = BinaryReadState.READ_SIGNATURE;
-    //new Logger().Debug("_process_read_total_length $b set state READ_SIGNATURE");
   }
 
   void _process_read_signature(int b) {
     _signature = b;
     _currentReadState = BinaryReadState.READ_CONTENT;
     _haveThisPart = haveCurrentPart();
-    //new Logger().Debug("_process_read_signture $b set state READ_CONTENT");
   }
 
   /*
@@ -294,15 +275,13 @@ class UDPDataReader extends BinaryDataReader {
     }
 
     if (buffer != null) {
-      new Logger().Debug("Checking packet type");
+      
       switch (_packetType) {
         case BINARY_TYPE_STRING:
-          new Logger().Debug("is string");
           String s = BinaryData.stringFromBuffer(buffer);
           _signalReadString(s);
           break;
         case BINARY_TYPE_PACKET:
-          new Logger().Debug("is packet");
           Map m = json.parse(BinaryData.stringFromBuffer(buffer));
           if (m.containsKey('packetType')) {
             int packetType = m['packetType'];
@@ -322,7 +301,6 @@ class UDPDataReader extends BinaryDataReader {
           }
           break;
         case BINARY_TYPE_FILE:
-          new Logger().Debug("is file");
           _signalReadBuffer(buffer);
           break;
         default:

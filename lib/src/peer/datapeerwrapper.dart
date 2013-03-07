@@ -122,9 +122,8 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
     throw new NotImplementedException("Sending blob is not implemented");
   }
 
-  void sendBuffer(ArrayBuffer buf, int packetType) {
-    new Logger().Debug("(datapeerwrapper.dart) sending arraybuffer");
-    _binaryWriter.send(buf, packetType);
+  Future<bool> sendBuffer(ArrayBuffer buf, int packetType) {
+    return _binaryWriter.send(buf, packetType);
   }
 
   Future<int> sendBufferAsync(ArrayBuffer buf, int packetType) {

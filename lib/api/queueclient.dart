@@ -26,7 +26,7 @@ class QueueClient extends ChannelClient  {
   QueueClient(DataSource ds) : super(ds){
     _queued = new List<QueueUser>();
     _queueController = new StreamController.broadcast();
-    _sh.registerHandler(PacketType.QUEUE, _queuePacketHandler);
+    _signalHandler.registerHandler(PacketType.QUEUE, _queuePacketHandler);
   }
 
   /**
@@ -45,7 +45,7 @@ class QueueClient extends ChannelClient  {
     if (isChannelOwner) {
       disconnectUser();
       new Timer(const Duration(milliseconds: 200), () {
-        _sh.send(PacketFactory.get(new NextPacket.With(_myId, _channelId)));
+        _signalHandler.send(PacketFactory.get(new NextPacket.With(_myId, _channelId)));
       });
 
     }

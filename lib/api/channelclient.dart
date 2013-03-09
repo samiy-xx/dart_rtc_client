@@ -596,9 +596,9 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
       _binaryController.add(new BinaryBufferCompleteEvent(b));
   }
 
-  void onPeerReadChunk(ArrayBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesLeft) {
+  void onPeerReadChunk(ArrayBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesTotal) {
     if (_binaryController.hasSubscribers)
-      _binaryController.add(new BinaryChunkEvent(buffer, signature, sequence, totalSequences, bytes, bytesLeft));
+      _binaryController.add(new BinaryChunkEvent(buffer, signature, sequence, totalSequences, bytes, bytesTotal));
   }
 
   void onPeerSendSuccess(int signature, int sequence) {

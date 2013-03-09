@@ -6,9 +6,9 @@ class BinaryChunkEvent extends RtcEvent {
   int sequence;
   int totalSequences;
   int bytes;
-  int bytesLeft;
+  int bytesTotal;
 
-  BinaryChunkEvent(this.buffer, this.signature, this.sequence, this.totalSequences, this.bytes, this.bytesLeft);
+  BinaryChunkEvent(this.buffer, this.signature, this.sequence, this.totalSequences, this.bytes, this.bytesTotal);
 }
 
 class BinarySendCompleteEvent extends RtcEvent {

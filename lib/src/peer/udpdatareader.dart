@@ -256,7 +256,7 @@ class UDPDataReader extends BinaryDataReader {
 
     _currentReadState = BinaryReadState.INIT_READ;
     addToSequencer(_latest, _signature, _currentChunkSequence);
-    _signalReadChunk(_latest, _signature, _currentChunkSequence, _totalSequences, _currentChunkContentLength, _leftToRead);
+    _signalReadChunk(_latest, _signature, _currentChunkSequence, _totalSequences, _currentChunkContentLength, _contentTotalLength);
 
     new Logger().Debug("Total read $_totalRead bytes");
     if (_totalRead == _contentTotalLength)
@@ -370,9 +370,9 @@ class UDPDataReader extends BinaryDataReader {
   /*
    * Signal listeners that a chunk has been read
    */
-  void _signalReadChunk(ArrayBuffer buf, int signature, int sequence, int totalSequences, int bytes, int bytesLeft) {
+  void _signalReadChunk(ArrayBuffer buf, int signature, int sequence, int totalSequences, int bytes, int bytesTotal) {
     listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
-      l.onPeerReadChunk(buf, signature, sequence, totalSequences, bytes, bytesLeft);
+      l.onPeerReadChunk(buf, signature, sequence, totalSequences, bytes, bytesTotal);
     });
   }
 

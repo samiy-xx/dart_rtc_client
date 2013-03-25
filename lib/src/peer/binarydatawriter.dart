@@ -26,7 +26,7 @@ abstract class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListen
     _roundTripCalculator = new RoundTripCalculator();
   }
 
-  void writeAck(int signature, int sequence);
+  void writeAck(int signature, int sequence, int total);
   Future<bool> send(ArrayBuffer buffer, int packetType);
 
   void _send(ArrayBuffer buf, bool wrap) {

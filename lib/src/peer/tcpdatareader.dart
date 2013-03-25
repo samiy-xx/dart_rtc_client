@@ -5,12 +5,17 @@ class TCPDataReader extends BinaryDataReader {
 
   }
 
-  void readChunkString(String s) {
-
+  Future readChunkString(String s) {
+    Completer c = new Completer();
+    window.setImmediate(() {
+      readChunk(BinaryData.bufferFromString(s));
+      c.complete();
+    });
+    return c.future;
   }
 
   void readChunk(ArrayBuffer buffer) {
-
+    
   }
 }
 

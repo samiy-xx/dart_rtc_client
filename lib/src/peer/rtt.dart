@@ -22,11 +22,19 @@ class RoundTripCalculator {
   }
 
   void calculateLatency(int lastSent) {
+    new Logger().Debug("Adjusting latency");
     int now = new DateTime.now().millisecondsSinceEpoch;
     int diff = (now - lastSent) - _currentLatency;
-    int increment = (diff * RTT_MULTIPLIER).toInt();
-    _currentLatency += increment;
+    
+    //if (diff < (_currentLatency ~/ 2)) {
+    //  _currentLatency += diff;
+    //} else {
+      
+      int increment = (diff * RTT_MULTIPLIER).toInt();
+      _currentLatency += increment;
+    //}
     forceBelowMaxLimit();
+    new Logger().Debug("latency is now $_currentLatency");
   }
 }
 

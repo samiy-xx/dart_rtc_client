@@ -71,7 +71,14 @@ class PeerWrapper extends GenericEventTarget<PeerEventListener>{
    */
   void setSessionDescription(RtcSessionDescription sdp) {
     _log.Debug("(peerwrapper.dart) Creating local description");
-    _peer.setLocalDescription(sdp, _onLocalDescriptionSuccess, _onRTCError);
+    //_peer.setLocalDescription(sdp, _onLocalDescriptionSuccess, _onRTCError);
+    _peer.setLocalDescription(sdp)
+      .then((val) {
+        _log.Debug("(peerwrapper.dart) Setting local description was success $val");
+      })
+      .catchError((AsyncError e) {
+        _log.Error("(peerwrapper.dart) setting local description failed ${e.error}");
+      });
   }
 
   /**
@@ -79,9 +86,16 @@ class PeerWrapper extends GenericEventTarget<PeerEventListener>{
    * if the type is offer, then a answer must be created
    */
   void setRemoteSessionDescription(RtcSessionDescription sdp) {
-      _log.Debug("(peerwrapper.dart) Setting remote description ${sdp.type}");
-      _peer.setRemoteDescription(sdp, _onRemoteDescriptionSuccess, _onRTCError);
-
+      //_log.Debug("(peerwrapper.dart) Setting remote description ${sdp.type}");
+      //_peer.setRemoteDescription(sdp, _onRemoteDescriptionSuccess, _onRTCError);
+      _peer.setRemoteDescription(sdp)
+      .then((val) {
+        _log.Debug("(peerwrapper.dart) Setting remote description was success $val");
+      })
+      .catchError((AsyncError e) {
+        _log.Error("(peerwrapper.dart) setting remote description failed ${e.error}");
+      });
+      
       if (sdp.type == SDP_OFFER)
         _sendAnswer();
   }
@@ -98,7 +112,12 @@ class PeerWrapper extends GenericEventTarget<PeerEventListener>{
    * Creates offer and calls callback
    */
   void _sendOffer() {
-    try {
+    _peer.createOffer()
+    .then(_onOfferSuccess)
+    .catchError((AsyncError e) {
+      _log.Error("(peerwrapper.dart) Error creating offer $e");
+    });
+    /*try {
     _peer.createOffer(
         _onOfferSuccess,
         _onRTCError,null
@@ -109,14 +128,19 @@ class PeerWrapper extends GenericEventTarget<PeerEventListener>{
       _peer.createOffer(_onOfferSuccess,_onRTCError,null);
     } catch (e) {
       _log.Error("(peerwrapper.dart) Error creating offer $e");
-    }
+    }*/
   }
 
   /*
    * Answer for offer
    */
   void _sendAnswer() {
-    try {
+    _peer.createAnswer()
+    .then(_onAnswerSuccess)
+    .catchError((AsyncError e) {
+      
+    });
+    /*try {
       _peer.createAnswer(
           _onAnswerSuccess,
           _onRTCError,
@@ -128,7 +152,7 @@ class PeerWrapper extends GenericEventTarget<PeerEventListener>{
       _peer.createAnswer(_onAnswerSuccess,_onRTCError, null);
     } catch (e) {
       _log.Error("(peerwrapper.dart) Error creating answer $e");
-    }
+    }*/
   }
 
   void _onStateChange(Event e) {
@@ -143,6 +167,7 @@ class PeerWrapper extends GenericEventTarget<PeerEventListener>{
    */
   void _onOfferSuccess(RtcSessionDescription sdp) {
     _log.Debug("(peerwrapper.dart) Offer created, sending");
+    sdp = hackTheSdp(sdp);
     setSessionDescription(sdp);
     _manager._sendPacket(PacketFactory.get(new DescriptionPacket.With(sdp.sdp, 'offer', _id, _channelId)));
     //_offerSent = true;
@@ -153,11 +178,24 @@ class PeerWrapper extends GenericEventTarget<PeerEventListener>{
    * and set it our local session description
    */
   void _onAnswerSuccess(RtcSessionDescription sdp) {
+    sdp = hackTheSdp(sdp);
     _log.Debug("(peerwrapper.dart) Answer created, sending");
     setSessionDescription(sdp);
     _manager._sendPacket(PacketFactory.get(new DescriptionPacket.With(sdp.sdp, 'answer', _id, _channelId)));
   }
+  
+  RtcSessionDescription hackTheSdp(RtcSessionDescription sd) {
+    _log.Debug("(peerwrapper.dart) Hacking created session description for more banswidth");
 
+    String hacked = sd.sdp.replaceFirst("b=AS:30", "b=AS:1638400");
+    
+    RtcSessionDescription newSdp = new RtcSessionDescription({
+      'sdp':hacked,
+      'type':sd.type
+    });
+    
+    return newSdp;
+  }
   /**
    * Ads a MediaStream to the peer connection
    * TODO: Find out why the constraints throw DOMException on chome 25. Works on dartium.
@@ -230,13 +268,13 @@ class PeerWrapper extends GenericEventTarget<PeerEventListener>{
     _log.Debug("(peerwrapper.dart) ICE Change ${c} (ice gathering state ${_peer.iceGatheringState}) (ice state ${_peer.iceConnectionState})");
   }
 
-  void _onLocalDescriptionSuccess() {
-    _log.Debug("(peerwrapper.dart) Setting local description was success");
-  }
+  //void _onLocalDescriptionSuccess(a) {
+  //  _log.Debug("(peerwrapper.dart) Setting local description was success");
+  //}
 
-  void _onRemoteDescriptionSuccess() {
-    _log.Debug("(peerwrapper.dart) Setting remote description was success");
-  }
+  //void _onRemoteDescriptionSuccess(a) {
+  //  _log.Debug("(peerwrapper.dart) Setting remote description was success");
+  //}
 
   void _onRTCError(String error) {
     _log.Error("(peerwrapper.dart) RTC ERROR : $error");

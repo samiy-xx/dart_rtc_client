@@ -20,6 +20,7 @@ part 'src/peer/tcpdatareader.dart';
 part 'src/peer/tcpdatawriter.dart';
 part 'src/peer/rtt.dart';
 part 'src/peer/peerstate.dart';
+part 'src/peer/sequencer.dart';
 part 'src/peer/packets/peerpacket.dart';
 
 part 'src/event/peereventlistener.dart';

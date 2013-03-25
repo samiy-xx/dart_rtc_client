@@ -6,8 +6,9 @@ class TCPDataWriter extends BinaryDataWriter {
 
   }
 
-  void send(ArrayBuffer buffer, int packetType) {
-
+  Future<bool>  send(ArrayBuffer buffer, int packetType) {
+    Completer completer = new Completer();
+    return completer.future;
   }
 }
 

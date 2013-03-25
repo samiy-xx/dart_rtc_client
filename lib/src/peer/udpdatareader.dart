@@ -20,11 +20,8 @@ class UDPDataReader extends BinaryDataReader {
   int _packetType;
   int _signature;
   /* Buffer for unfinished data */
-  List<int> _buffer;
+  
   List<ArrayBuffer> _received;
-
-  /** Currently buffered unfinished data */
-  int get buffered => _buffer.length;
 
   /* Current read state */
   BinaryReadState _currentReadState = BinaryReadState.INIT_READ;
@@ -40,7 +37,6 @@ class UDPDataReader extends BinaryDataReader {
 
   UDPDataReader() : super() {
     _length = 0;
-    _buffer = new List<int>();
     _sequencer = new Map<int, Map<int, ArrayBuffer>>();
     _lastProcessed = new DateTime.now().millisecondsSinceEpoch;
     _received = new List<ArrayBuffer>();
@@ -239,14 +235,13 @@ class UDPDataReader extends BinaryDataReader {
 
     _leftToRead -= SIZEOF8;
     if (!_haveThisPart) {
-
       _totalRead += SIZEOF8;
     }
+    
     if (_leftToRead == 0) {
       _currentReadState = BinaryReadState.FINISH_READ;
       _process_end();
     }
-
   }
 
   /*
@@ -272,6 +267,7 @@ class UDPDataReader extends BinaryDataReader {
     ArrayBuffer buffer;
     if (sequencerComplete(_signature)) {
       buffer = buildCompleteBuffer(_signature);
+      new Logger().Debug("(binarydatareader.dart) _processBuffer buffer complete");
     }
 
     if (buffer != null) {
@@ -282,15 +278,18 @@ class UDPDataReader extends BinaryDataReader {
           _signalReadString(s);
           break;
         case BINARY_TYPE_PACKET:
+          new Logger().Debug("(binarydatareader.dart) _processBuffer BINARY_TYPE_PACKET");
           Map m = json.parse(BinaryData.stringFromBuffer(buffer));
           if (m.containsKey('packetType')) {
             int packetType = m['packetType'];
             PeerPacket p;
             switch (packetType) {
               case PeerPacket.TYPE_DIRECTORY_ENTRY:
+                new Logger().Debug("(binarydatareader.dart) _processBuffer Directory entry packet");
                 p = DirectoryEntryPacket.fromMap(m);
                 break;
               case PeerPacket.TYPE_REQUEST_FILE:
+                new Logger().Debug("(binarydatareader.dart) _processBuffer Request file packet");
                 p = RequestFilePacket.fromMap(m);
                 break;
               default:
@@ -301,6 +300,7 @@ class UDPDataReader extends BinaryDataReader {
           }
           break;
         case BINARY_TYPE_FILE:
+          new Logger().Debug("(binarydatareader.dart) _processBuffer BINARY_TYPE_FILE");
           _signalReadBuffer(buffer);
           break;
         default:
@@ -311,14 +311,16 @@ class UDPDataReader extends BinaryDataReader {
   }
 
   void _process_command(int command, ArrayBuffer buffer) {
-    //new Logger().Debug("(binarydatareader.dart) Processing command");
+    new Logger().Debug("(binarydatareader.dart) Processing command");
     switch (command) {
       case BINARY_PACKET_ACK:
+        new Logger().Debug("(binarydatareader.dart) BINARY_PACKET_ACK");
         int signature = BinaryData.getSignature(buffer);
         int sequence = BinaryData.getSequenceNumber(buffer);
         _signalSendSuccess(signature, sequence);
         break;
       case BINARY_PACKET_RESEND:
+        new Logger().Debug("(binarydatareader.dart) BINARY_PACKET_RESEND");
         int signature = BinaryData.getSignature(buffer);
         int sequence = BinaryData.getSequenceNumber(buffer);
         //_signalResend(signature, sequence);
@@ -349,19 +351,7 @@ class UDPDataReader extends BinaryDataReader {
       });
     });
   }
-/*
-  void _signalRequestResend(int signature, int sequence) {
-    listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
-      l.onRemoteRequestResend(signature, sequence);
-    });
-  }
 
-  void _signalResend(int signature, int sequence) {
-    listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
-      l.onLocalRequestResend(signature, sequence);
-    });
-  }
-*/
   void _signalSendSuccess(int signature, int sequence) {
     listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
       l.onPeerSendSuccess(signature, sequence);
@@ -399,7 +389,6 @@ class UDPDataReader extends BinaryDataReader {
    * Resets the reader
    */
   void reset() {
-    _buffer.clear();
     _currentReadState = BinaryReadState.INIT_READ;
     _leftToRead = 0;
   }

@@ -171,7 +171,10 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     }
 
     window.onBeforeUnload.listen((event) {
-      _signalHandler.dataSource.close();
+      window.setImmediate(() {
+        _signalHandler.close();
+        _peerManager.closeAll();
+      });
     });
   }
 

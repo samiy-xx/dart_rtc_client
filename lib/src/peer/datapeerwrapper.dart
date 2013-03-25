@@ -156,7 +156,7 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
    */
   void onPeerReadChunk(ArrayBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesTotal) {
     if (_binaryWriter is UDPDataWriter)
-      (_binaryWriter as UDPDataWriter).writeAck(signature, sequence);
+      (_binaryWriter as UDPDataWriter).writeAck(signature, sequence, totalSequences);
   }
 
   void onPeerSendSuccess(int signature, int sequence) {

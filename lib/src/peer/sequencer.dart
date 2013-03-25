@@ -43,7 +43,7 @@ class Sequencer {
   }
   
   SequenceCollection createNewSequenceCollection(int signature, int size) {
-    new Logger().Debug("Creating new sequence collection of size $size for signature $signature");
+    //new Logger().Debug("Creating new sequence collection of size $size for signature $signature");
     var sequences = getSequenceCollection(signature);
     if (sequences == null) {
       sequences = new SequenceCollection(signature, size);
@@ -104,7 +104,7 @@ class SequenceCollection {
   }
   
   void setEntry(SequenceEntry entry) {
-    new Logger().Debug("Setting new entry ${entry.sequence} to slot ${entry.sequence - 1}");
+    //new Logger().Debug("Setting new entry ${entry.sequence} to slot ${entry.sequence - 1}");
     _sequences[entry.sequence - 1] = entry;
   }
   
@@ -140,10 +140,10 @@ class SequenceCollection {
     if (sequence > _total || sequence < 0)
       throw new RangeError("Attept to access array out of bounds");
     
-    new Logger().Debug("Removing $sequence");
+    //new Logger().Debug("Removing $sequence");
     SequenceEntry entry = _sequences[sequence - 1];
     if (entry != null) {
-      new Logger().Debug("Removing $sequence found");
+      //new Logger().Debug("Removing $sequence found");
       _sequences[sequence - 1] = null;
     }
     return entry;

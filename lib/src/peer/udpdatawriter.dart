@@ -49,20 +49,20 @@ class UDPDataWriter extends BinaryDataWriter {
   }
   
   int removeSequence(int signature, int sequence) {
-    new Logger().Debug("REMOVE sequence $signature $sequence");
+    //new Logger().Debug("REMOVE sequence $signature $sequence");
     
     SequenceCollection collection = _sequencer.getSequenceCollection(signature);
     if (collection == null) {
-      new Logger().Warning("REMOVE sequence $signature $sequence collection was null");
-      return;
+      //new Logger().Warning("REMOVE sequence $signature $sequence collection was null");
+      return null;
     }
     
     SendSequenceEntry sse = collection.getEntry(sequence);
     if (sse == null) {
-      new Logger().Warning("REMOVE sequence $signature $sequence entry was null");
-      return;
+      //new Logger().Warning("REMOVE sequence $signature $sequence entry was null");
+      return null;
     }
-    new Logger().Debug("REMOVE target sequence $signature $sequence found");
+    //new Logger().Debug("REMOVE target sequence $signature $sequence found");
     collection.removeEntry(sequence);
     return sse.timeSent;
   }
@@ -85,10 +85,10 @@ class UDPDataWriter extends BinaryDataWriter {
       if (sse != null) {
         if (!sse.sent) {
           _send(sse.data, true);
-          new Logger().Debug("Sent chunk ${collection.signature} ${sse.sequence}");
+          //new Logger().Debug("Sent chunk ${collection.signature} ${sse.sequence}");
           sse.markSent();
           if (!sse.resend) {
-            new Logger().Debug("Remove STOREENTRY");
+            //new Logger().Debug("Remove STOREENTRY");
             removeSequence(collection.signature, sse.sequence);
           }
         } else {

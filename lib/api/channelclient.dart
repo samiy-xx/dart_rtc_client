@@ -376,10 +376,12 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
    * Sends a packet to peer
    */
   void sendPeerPacket(String peerId, PeerPacket p) {
+    new Logger().Debug("Sending peer packet to $peerId");
     PeerWrapper w = _peerManager.findWrapper(peerId);
     if (w is DataPeerWrapper) {
       DataPeerWrapper dpw = w as DataPeerWrapper;
       dpw.send(p);
+      new Logger().Debug("Sent peer packet to $peerId");
     }
   }
 

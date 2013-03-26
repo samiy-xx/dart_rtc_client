@@ -7,16 +7,6 @@ class Sequencer {
     _sequenceCollections = new List<SequenceCollection>();
   }
   
-  /*List<SequenceEntry> getNext() {
-    List<SequenceEntry> entries = new List<SequenceEntry>(_sequenceCollection.length);
-    int i = 0;
-    _sequenceCollection.forEach((int k, SequenceCollection c) {
-      entries[i] = c.getFirst();
-    });
-    return entries;
-  }
-  */
-  
   List<SequenceCollection> getCollections() {
     return _sequenceCollections;
   }
@@ -92,6 +82,7 @@ class SequenceCollection {
   bool get isEmpty => _isEmpty();
   int get total => _total;
   int get signature => _signature;
+  List<SequenceEntry> get sequences => _sequences;
   
   SequenceCollection(int signature, int total) {
     _total = total;
@@ -99,12 +90,13 @@ class SequenceCollection {
     _sequences = new List<SequenceEntry>(total);
   }
   
-  void addCreateSequence(int sequence, ArrayBuffer buffer) {
-    _sequences[sequence - 1] = new SequenceEntry(sequence, buffer);
+  SequenceEntry addCreateSequence(int sequence, ArrayBuffer buffer) {
+    var se = new SequenceEntry(sequence, buffer);
+    _sequences[sequence - 1] = se;
+    return se;
   }
   
   void setEntry(SequenceEntry entry) {
-    //new Logger().Debug("Setting new entry ${entry.sequence} to slot ${entry.sequence - 1}");
     _sequences[entry.sequence - 1] = entry;
   }
   
@@ -140,10 +132,8 @@ class SequenceCollection {
     if (sequence > _total || sequence < 0)
       throw new RangeError("Attept to access array out of bounds");
     
-    //new Logger().Debug("Removing $sequence");
     SequenceEntry entry = _sequences[sequence - 1];
     if (entry != null) {
-      //new Logger().Debug("Removing $sequence found");
       _sequences[sequence - 1] = null;
     }
     return entry;
@@ -155,6 +145,12 @@ class SequenceCollection {
         return _sequences[i];
     }
     return null;
+  }
+  
+  void clear() {
+    for (int i = 0; i < _total; i++) {
+      _sequences[i] = null;
+    }
   }
   
   operator ==(Object o) {

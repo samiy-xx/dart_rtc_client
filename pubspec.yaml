@@ -3,6 +3,6 @@ version: 0.1.0
 author: Sami Ylonen <sami.ylonen@gmail.com>
 description: A Dart WebRTC Client library
 dependencies:
-  unittest: 0.3.7+6
+  unittest: 0.4.2
   dart_rtc_common:
     git: git://github.com/samiy-xx/dart_rtc_common.git

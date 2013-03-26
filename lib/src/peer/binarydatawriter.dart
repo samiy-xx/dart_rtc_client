@@ -1,12 +1,23 @@
 part of rtc_client;
 
+/**
+ * BinaryDataWriter
+ * Needs to be extended for udp and tcp
+ */
 abstract class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListener> {
+  // Datachannel where to write to
   RtcDataChannel _writeChannel;
+
+  // Keeps track of latency
   RoundTripCalculator _roundTripCalculator;
 
   // While Chrome hates binary
   bool _wrapToString = true;
+
+  // tcp udp
   int _binaryProtocol;
+
+  // write only max this size chunks to data channel
   int _writeChunkSize = 500;
 
   /** Returns the current latency */

@@ -82,9 +82,7 @@ class BinaryData {
 
   static ArrayBuffer createAck(int signature, int sequence) {
     ArrayBuffer ackBuffer = new ArrayBuffer(17);
-
     DataView viewAck = new DataView(ackBuffer);
-
 
     viewAck.setUint8(
         PROTOCOL_STARTBYTE_POSITION,

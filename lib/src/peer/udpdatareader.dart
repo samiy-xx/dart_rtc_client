@@ -20,7 +20,7 @@ class UDPDataReader extends BinaryDataReader {
   int _packetType;
   int _signature;
   /* Buffer for unfinished data */
-  
+
   List<ArrayBuffer> _received;
 
   /* Current read state */
@@ -59,7 +59,7 @@ class UDPDataReader extends BinaryDataReader {
     _lastProcessed = new DateTime.now().millisecondsSinceEpoch;
 
     int i = 0;
-    
+
     if (BinaryData.isCommand(buf)) {
       _process_command(BinaryData.getCommand(buf), buf);
       return;
@@ -119,7 +119,7 @@ class UDPDataReader extends BinaryDataReader {
       }
 
     }
-   
+
   }
 
   void timerTick(Timer t) {
@@ -237,7 +237,7 @@ class UDPDataReader extends BinaryDataReader {
     if (!_haveThisPart) {
       _totalRead += SIZEOF8;
     }
-    
+
     if (_leftToRead == 0) {
       _currentReadState = BinaryReadState.FINISH_READ;
       _process_end();
@@ -251,7 +251,8 @@ class UDPDataReader extends BinaryDataReader {
 
     _currentReadState = BinaryReadState.INIT_READ;
     addToSequencer(_latest, _signature, _currentChunkSequence);
-    _signalReadChunk(_latest, _signature, _currentChunkSequence, _totalSequences, _currentChunkContentLength, _contentTotalLength);
+    if (!_haveThisPart)
+      _signalReadChunk(_latest, _signature, _currentChunkSequence, _totalSequences, _currentChunkContentLength, _contentTotalLength);
 
     new Logger().Debug("Total read $_totalRead bytes");
     if (_totalRead == _contentTotalLength)
@@ -271,7 +272,7 @@ class UDPDataReader extends BinaryDataReader {
     }
 
     if (buffer != null) {
-      
+
       switch (_packetType) {
         case BINARY_TYPE_STRING:
           String s = BinaryData.stringFromBuffer(buffer);

@@ -68,6 +68,10 @@ class UDPDataWriter extends BinaryDataWriter {
   }
 
   void _process() {
+    if (_writeChannel.bufferedAmount > 0) {
+      setImmediate();
+      return;
+    }
     int now = new DateTime.now().millisecondsSinceEpoch;
     List<SequenceCollection> collections = _sequencer.getCollections();
 
@@ -98,12 +102,12 @@ class UDPDataWriter extends BinaryDataWriter {
   }
 
   void writeAck(int signature, int sequence, int total) {
-    new Logger().Debug("WRITING ACK for $signature $sequence");
+    //new Logger().Debug("WRITING ACK for $signature $sequence");
     addSequence(signature, sequence, total, BinaryData.createAck(signature, sequence), false);
   }
 
   void receiveAck(int signature, int sequence) {
-    new Logger().Debug("RECEIVE ACK for $signature $sequence");
+    //new Logger().Debug("RECEIVE ACK for $signature $sequence");
     int timeSent = removeSequence(signature, sequence);
     if (timeSent != null)
       calculateLatency(timeSent);

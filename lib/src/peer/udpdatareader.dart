@@ -312,16 +312,14 @@ class UDPDataReader extends BinaryDataReader {
   }
 
   void _process_command(int command, ArrayBuffer buffer) {
-    new Logger().Debug("(binarydatareader.dart) Processing command");
+
     switch (command) {
       case BINARY_PACKET_ACK:
-        new Logger().Debug("(binarydatareader.dart) BINARY_PACKET_ACK");
         int signature = BinaryData.getSignature(buffer);
         int sequence = BinaryData.getSequenceNumber(buffer);
         _signalSendSuccess(signature, sequence);
         break;
       case BINARY_PACKET_RESEND:
-        new Logger().Debug("(binarydatareader.dart) BINARY_PACKET_RESEND");
         int signature = BinaryData.getSignature(buffer);
         int sequence = BinaryData.getSequenceNumber(buffer);
         //_signalResend(signature, sequence);

@@ -20,7 +20,7 @@ class UDPDataReader extends BinaryDataReader {
   int _packetType;
   int _signature;
   /* Buffer for unfinished data */
-
+  int _startMs;
   List<ArrayBuffer> _received;
 
   /* Current read state */
@@ -45,6 +45,7 @@ class UDPDataReader extends BinaryDataReader {
   Future readChunkString(String s) {
     Completer c = new Completer();
     window.setImmediate(() {
+      _startMs = new DateTime.now().millisecondsSinceEpoch;
       readChunk(BinaryData.bufferFromString(s));
       c.complete();
     });
@@ -254,7 +255,9 @@ class UDPDataReader extends BinaryDataReader {
     if (!_haveThisPart)
       _signalReadChunk(_latest, _signature, _currentChunkSequence, _totalSequences, _currentChunkContentLength, _contentTotalLength);
 
-    new Logger().Debug("Total read $_totalRead bytes");
+    //new Logger().Debug("Total read $_totalRead bytes");
+    //int tookTime = new DateTime.now().millisecondsSinceEpoch - _startMs;
+    //new Logger().Debug("Processing took $tookTime ms");
     if (_totalRead == _contentTotalLength)
       _processBuffer();
   }

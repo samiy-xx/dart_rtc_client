@@ -38,7 +38,7 @@ class Sequencer {
     if (sequences == null) {
       sequences = new SequenceCollection(signature, size);
       _sequenceCollections.add(sequences);
-      new Logger().Debug("Created new sequence collection of size $size for signature $signature");
+      //new Logger().Debug("Created new sequence collection of size $size for signature $signature");
     }
     return sequences;
   }
@@ -52,6 +52,7 @@ class Sequencer {
   }
   
   void removeSequence(int signature, int sequence) {
+    
     if (!hasSequence(signature, sequence))
       return;
     
@@ -62,6 +63,7 @@ class Sequencer {
       if (sequences.isEmpty)
         _sequenceCollections.remove(sequences);
     }
+    
   }
   
   void clear() {
@@ -137,6 +139,15 @@ class SequenceCollection {
       _sequences[sequence - 1] = null;
     }
     return entry;
+  }
+  
+  List<SequenceEntry> getFirstThree() {
+    int count = _sequences.length > 2 ? 3 : _sequences.length;
+    List<SequenceEntry> l = new List<SequenceEntry>(count);
+    for (int i = 0; i < count; i++) {
+      l[i] = _sequences[i];
+    }
+    return l;
   }
   
   SequenceEntry getFirst() {

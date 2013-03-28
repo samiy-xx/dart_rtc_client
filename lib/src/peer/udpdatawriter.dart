@@ -63,47 +63,56 @@ class UDPDataWriter extends BinaryDataWriter {
       return null;
     }
     //new Logger().Debug("REMOVE target sequence $signature $sequence found");
-    collection.removeEntry(sequence);
+    //collection.removeEntry(sequence);
+    _sequencer.removeSequence(signature, sequence);
     return sse.timeSent;
   }
 
   void _process() {
-    if (_writeChannel.bufferedAmount > 0) {
+    //new Logger().Debug("_process loop");
+    /*if (_writeChannel.bufferedAmount > 0) {
       setImmediate();
       return;
-    }
+    }*/
     int now = new DateTime.now().millisecondsSinceEpoch;
     List<SequenceCollection> collections = _sequencer.getCollections();
 
     for (int i = 0; i < collections.length; i++) {
       SequenceCollection collection = collections[i];
       SendSequenceEntry sse = collection.getFirst();
-
-      if (sse == null)
-        continue;
-
-      if (!sse.sent) {
-        _send(sse.data, true);
-        sse.markSent();
-        if (!sse.resend)
-          removeSequence(collection.signature, sse.sequence);
-      } else {
-        if ((sse.timeReSent + currentLatency) < now) {
-          _roundTripCalculator.addToLatency(50);
+      //List<SequenceEntry> entries = collection.getFirstThree();
+      //for (int j = 0; j < entries.length; j++) {
+        //SendSequenceEntry sse = entries[j];
+        
+        if (sse == null)
+          continue;
+  
+        if (!sse.sent) {
           _send(sse.data, true);
-          new Logger().Debug("RE-Sent chunk ${collection.signature} ${sse.sequence} RESEND = ${sse.resend} PACKETTYPE = ${BinaryData.getPacketType(sse.data)}");
-          sse.markReSent();
+          //new Logger().Debug("Sent chunk ${collection.signature} ${sse.sequence} RESEND = ${sse.resend} PACKETTYPE = ${BinaryData.getPacketType(sse.data)}");
+          sse.markSent();
+          if (!sse.resend)
+            removeSequence(collection.signature, sse.sequence);
+        } else {
+          if ((sse.timeReSent + currentLatency) < now) {
+            _roundTripCalculator.addToLatency(50);
+            _send(sse.data, true);
+            new Logger().Debug("RE-Sent chunk ${collection.signature} ${sse.sequence} RESEND = ${sse.resend} PACKETTYPE = ${BinaryData.getPacketType(sse.data)}");
+            sse.markReSent();
+          }
         }
-      }
+      //}
     }
 
-    if (_sequencer.hasMore() && _canLoop)
+    if (_sequencer.hasMore() && _canLoop) {
+      //new Logger().Debug("Has more");
       setImmediate();
+    }
   }
 
   void writeAck(int signature, int sequence, int total) {
     //new Logger().Debug("WRITING ACK for $signature $sequence");
-    addSequence(signature, sequence, total, BinaryData.createAck(signature, sequence), false);
+    addSequence(signature, 1, 1, BinaryData.createAck(signature, sequence), false);
   }
 
   void receiveAck(int signature, int sequence) {

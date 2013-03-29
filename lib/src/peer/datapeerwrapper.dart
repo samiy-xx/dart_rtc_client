@@ -56,7 +56,6 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
   void initialize() {
     if (_isHost) {
       _log.Debug("Is Host");
-
       _sendOffer();
     }
 
@@ -74,12 +73,6 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
     _dataChannel.onOpen.listen(onDataChannelOpen);
     _dataChannel.onError.listen(onDataChannelError);
 
-    //_binaryWriter = new UDPDataWriter(_dataChannel);
-    //_binaryWriter.subscribe(this);
-
-    //_binaryReader = new UDPDataReader(_dataChannel);
-    //_binaryReader.subscribe(this);
-
     _binaryWriter.dataChannel = _dataChannel;
     _binaryReader.dataChannel = _dataChannel;
   }
@@ -95,19 +88,15 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
     _dataChannel.onOpen.listen(onDataChannelOpen);
     _dataChannel.onError.listen(onDataChannelError);
 
-    //_binaryWriter = new UDPDataWriter(_dataChannel);
-    //_binaryWriter.subscribe(this);
-
-    //_binaryReader = new UDPDataReader(_dataChannel);
-    //_binaryReader.subscribe(this);
-
-    binaryWriter.dataChannel = _dataChannel;
+    _binaryWriter.dataChannel = _dataChannel;
     _binaryReader.dataChannel = _dataChannel;
   }
 
   /**
    * Sends a packet trough the data channel
+   * deprecate -- PeerPacket is something that should be implemented on application level
    */
+  @deprecated
   void send(PeerPacket p) {
     sendBuffer(p.toBuffer(), BINARY_TYPE_PACKET);
   }
@@ -115,6 +104,7 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
   void sendString(String s) {
     _dataChannel.send(s);
   }
+  
   /**
    * Send blob
    */
@@ -122,12 +112,8 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
     throw new NotImplementedException("Sending blob is not implemented");
   }
 
-  Future<bool> sendBuffer(ArrayBuffer buf, int packetType) {
-    return _binaryWriter.send(buf, packetType);
-  }
-
-  Future<int> sendBufferAsync(ArrayBuffer buf, int packetType) {
-    throw new NotImplementedException("Sending buffer async is not implemented");
+  Future<bool> sendBuffer(ArrayBuffer buf, int packetType, bool reliable) {
+    return _binaryWriter.send(buf, packetType, reliable);
   }
 
   /**

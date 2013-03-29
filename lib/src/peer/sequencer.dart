@@ -179,6 +179,7 @@ class SendSequenceEntry extends SequenceEntry {
   int timeReSent;
   bool resend;
   bool sent;
+  Completer completer;
   
   SendSequenceEntry(int sequence, ArrayBuffer data) : super(sequence, data) {
     timeStored = new DateTime.now().millisecondsSinceEpoch;

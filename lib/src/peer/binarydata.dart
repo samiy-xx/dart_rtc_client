@@ -9,9 +9,11 @@ const int SIZEOF_TCP_HEADER = 12;
 const int NULL_BYTE = 0x00;
 const int FULL_BYTE = 0xFF;
 
+const int BINARY_TYPE_COMMAND = 0;
 const int BINARY_TYPE_STRING = 1;
 const int BINARY_TYPE_PACKET = 2;
 const int BINARY_TYPE_FILE = 3;
+const int BINARY_TYPE_CUSTOM = 4;
 
 const int BINARY_PROTOCOL_UDP = 1;
 const int BINARY_PROTOCOL_TCP = 2;

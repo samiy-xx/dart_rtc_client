@@ -271,7 +271,6 @@ class UDPDataReader extends BinaryDataReader {
     ArrayBuffer buffer;
     if (sequencerComplete(_signature)) {
       buffer = buildCompleteBuffer(_signature);
-      new Logger().Debug("(binarydatareader.dart) _processBuffer buffer complete");
     }
 
     if (buffer != null) {
@@ -282,7 +281,6 @@ class UDPDataReader extends BinaryDataReader {
           _signalReadString(s);
           break;
         case BINARY_TYPE_PACKET:
-          new Logger().Debug("(binarydatareader.dart) _processBuffer BINARY_TYPE_PACKET");
           Map m = json.parse(BinaryData.stringFromBuffer(buffer));
           if (m.containsKey('packetType')) {
             int packetType = m['packetType'];
@@ -303,8 +301,8 @@ class UDPDataReader extends BinaryDataReader {
             _signalReadPacket(p);
           }
           break;
+        case BINARY_TYPE_CUSTOM:
         case BINARY_TYPE_FILE:
-          new Logger().Debug("(binarydatareader.dart) _processBuffer BINARY_TYPE_FILE");
           _signalReadBuffer(buffer);
           break;
         default:

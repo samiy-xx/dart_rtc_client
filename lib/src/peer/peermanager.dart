@@ -57,7 +57,7 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
    * Set data channels reliable = tcp or unreliable = udp
    */
   set reliableDataChannels(bool value) => _reliableDataChannels = value;
-
+  bool get reliableDataChannels => _reliableDataChannels;
   /**
    * singleton constructor
    */

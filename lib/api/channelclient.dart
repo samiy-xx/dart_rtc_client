@@ -203,6 +203,10 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     return this;
   }
 
+  ChannelClient setReliableDataChannel(bool b) {
+    _peerManager.reliableDataChannels = b;
+    return this;
+  }
   /**
    * Implements RtcClient setChannel
    */
@@ -392,17 +396,31 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     throw new UnsupportedError("sendBlob is a work in progress");
   }
 
-  /**
-   * Sends an arraybuffer to peer
-   */
-  Future<bool> sendArrayBuffer(String peerId, ArrayBuffer data) {
-    new Logger().Debug("(channelclient.dart) sending arraybuffer");
+  Future<bool> sendFile(String peerId, ArrayBuffer data) {
     PeerWrapper w = _peerManager.findWrapper(peerId);
     if (w == null)
       new Logger().Error("wrapper not found with id $peerId");
     if (w is DataPeerWrapper) {
       DataPeerWrapper dpw = w as DataPeerWrapper;
       return dpw.sendBuffer(data, BINARY_TYPE_FILE);
+    } else {
+      new Logger().Debug("(channelclient.dart) Peer wrapper is not data peer wrapper");
+    }
+  }
+  
+  /**
+   * Sends an arraybuffer to peer
+   */
+  Future<bool> sendArrayBuffer(String peerId, ArrayBuffer data, [bool reliable = false]) {
+    if (_peerManager.reliableDataChannels && !reliable)
+      throw new Exception("Can not send unreliable data with reliable channel");
+    
+    PeerWrapper w = _peerManager.findWrapper(peerId);
+    if (w == null)
+      new Logger().Error("wrapper not found with id $peerId");
+    if (w is DataPeerWrapper) {
+      DataPeerWrapper dpw = w as DataPeerWrapper;
+      return dpw.sendBuffer(data, BINARY_TYPE_CUSTOM, reliable);
     } else {
       new Logger().Debug("(channelclient.dart) Peer wrapper is not data peer wrapper");
     }

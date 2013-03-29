@@ -38,11 +38,11 @@ abstract class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListen
   }
 
   void writeAck(int signature, int sequence, int total);
-  Future<bool> send(ArrayBuffer buffer, int packetType);
+  Future<bool> send(ArrayBuffer buffer, int packetType, bool reliable);
 
-  void _send(ArrayBuffer buf, bool wrap) {
+  void _send(ArrayBuffer buf) {
     try {
-      var toSend = wrap ? wrapToString(buf) : buf;
+      var toSend = _wrapToString ? wrapToString(buf) : buf;
       _writeChannel.send(toSend);
     } on DomException catch(e, s) {
       new Logger().Error("Error $e");

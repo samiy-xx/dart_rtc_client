@@ -33,3 +33,5 @@ const String PEER_HAVE_REMOTE_PRANSWER = "have-remote-pranswer";
  */
 const String PEER_CLOSED = "closed";
 
+const String DATACHANNEL_OPEN = "open";
+const String DATACHANNEL_CLOSED = "closed";

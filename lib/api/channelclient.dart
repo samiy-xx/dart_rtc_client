@@ -80,10 +80,10 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
 
   StreamController<IceGatheringStateChangedEvent> _iceGatheringStateChangeController;
   Stream<IceGatheringStateChangedEvent> get onIceGatheringStateChangeEvent => _iceGatheringStateChangeController.stream;
-  
+
   StreamController<DataChannelStateChangedEvent> _dataChannelStateChangeController;
   Stream<DataChannelStateChangedEvent> get onDataChannelStateChangeEvent => _dataChannelStateChangeController.stream;
-  
+
   StreamController<DataSourceMessageEvent> _dataSourceMessageController;
   Stream<DataSourceMessageEvent> get onDataSourceMessageEvent => _dataSourceMessageController.stream;
 
@@ -102,7 +102,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
   StreamController<RtcEvent> _binaryController;
   Stream<RtcEvent> get onBinaryEvent => _binaryController.stream;
 
-  
+
   ChannelClient(DataSource ds) {
     _ds = ds;
     _ds.subscribe(this);
@@ -132,13 +132,13 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     _packetController = new StreamController.broadcast();
     _binaryController = new StreamController.broadcast();
 
-    _signalHandler.registerHandler(PacketType.JOIN, _joinPacketHandler);
-    _signalHandler.registerHandler(PacketType.ID, _idPacketHandler);
-    _signalHandler.registerHandler(PacketType.BYE, _byePacketHandler);
-    _signalHandler.registerHandler(PacketType.CHANNEL, _channelPacketHandler);
-    _signalHandler.registerHandler(PacketType.CONNECTED, _connectionSuccessPacketHandler);
-    _signalHandler.registerHandler(PacketType.CHANNELMESSAGE, _defaultPacketHandler);
-    _signalHandler.registerHandler(PacketType.CHANGENICK, _defaultPacketHandler);
+    _signalHandler.registerHandler(PACKET_TYPE_JOIN, _joinPacketHandler);
+    _signalHandler.registerHandler(PACKET_TYPE_ID, _idPacketHandler);
+    _signalHandler.registerHandler(PACKET_TYPE_BYE, _byePacketHandler);
+    _signalHandler.registerHandler(PACKET_TYPE_CHANNEL, _channelPacketHandler);
+    _signalHandler.registerHandler(PACKET_TYPE_CONNECTED, _connectionSuccessPacketHandler);
+    _signalHandler.registerHandler(PACKET_TYPE_CHANNELMESSAGE, _defaultPacketHandler);
+    _signalHandler.registerHandler(PACKET_TYPE_CHANGENICK, _defaultPacketHandler);
   }
 
   /**
@@ -408,14 +408,14 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
       new Logger().Debug("(channelclient.dart) Peer wrapper is not data peer wrapper");
     }
   }
-  
+
   /**
    * Sends an arraybuffer to peer
    */
   Future<int> sendArrayBuffer(String peerId, ArrayBuffer data, [bool reliable = false]) {
     if (_peerManager.reliableDataChannels && !reliable)
       throw new Exception("Can not send unreliable data with reliable channel");
-    
+
     PeerWrapper w = _peerManager.findWrapper(peerId);
     if (w == null)
       new Logger().Error("wrapper not found with id $peerId");

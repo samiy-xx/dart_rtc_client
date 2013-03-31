@@ -1,11 +1,12 @@
 part of rtc_client;
 
 abstract class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener>{
+  PeerWrapper _wrapper;
   RtcDataChannel _channel;
   set dataChannel(RtcDataChannel c) => setChannel(c);
 
-  BinaryDataReader() : super() {
-
+  BinaryDataReader(PeerWrapper wrapper) : super() {
+    _wrapper = wrapper;
   }
 
   void setChannel(RtcDataChannel c) {

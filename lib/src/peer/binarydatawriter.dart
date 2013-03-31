@@ -5,6 +5,8 @@ part of rtc_client;
  * Needs to be extended for udp and tcp
  */
 abstract class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListener> {
+  PeerWrapper _wrapper;
+  
   // Datachannel where to write to
   RtcDataChannel _writeChannel;
 
@@ -32,13 +34,14 @@ abstract class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListen
   /** Sets the write data channel */
   set dataChannel(RtcDataChannel c) => _writeChannel = c;
 
-  BinaryDataWriter(int protocol) : super() {
+  BinaryDataWriter(int protocol, PeerWrapper wrapper) : super() {
     _binaryProtocol = protocol;
+    _wrapper = wrapper;
     _roundTripCalculator = new RoundTripCalculator();
   }
 
   void writeAck(int signature, int sequence, int total);
-  Future<bool> send(ArrayBuffer buffer, int packetType, bool reliable);
+  Future<int> send(ArrayBuffer buffer, int packetType, bool reliable);
 
   void _send(ArrayBuffer buf) {
     try {

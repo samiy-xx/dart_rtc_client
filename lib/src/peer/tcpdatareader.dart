@@ -1,7 +1,7 @@
 part of rtc_client;
 
 class TCPDataReader extends BinaryDataReader {
-  TCPDataReader() : super() {
+  TCPDataReader(PeerWrapper wrapper) : super(wrapper) {
 
   }
 

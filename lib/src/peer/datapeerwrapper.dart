@@ -33,13 +33,17 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
     _peer.onDataChannel.listen(_onNewDataChannelOpen);
     _peer.onStateChange.listen(_onStateChanged);
 
-    _binaryWriter = new UDPDataWriter();
-    _binaryReader = new UDPDataReader();
+    _binaryWriter = new UDPDataWriter(this);
+    _binaryReader = new UDPDataReader(this);
 
     _binaryWriter.subscribe(this);
     _binaryReader.subscribe(this);
   }
 
+  void subscribeToBinaryEvents(BinaryDataEventListener l) {
+    _binaryWriter.subscribe(l);
+  }
+  
   void _onStateChanged(Event e) {
     if (_peer.readyState == PEER_STABLE) {
       //initChannel();
@@ -98,7 +102,7 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
    */
   @deprecated
   void send(PeerPacket p) {
-    sendBuffer(p.toBuffer(), BINARY_TYPE_PACKET);
+    sendBuffer(p.toBuffer(), BINARY_TYPE_PACKET, false);
   }
 
   void sendString(String s) {
@@ -112,35 +116,35 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
     throw new NotImplementedException("Sending blob is not implemented");
   }
 
-  Future<bool> sendBuffer(ArrayBuffer buf, int packetType, bool reliable) {
+  Future<int> sendBuffer(ArrayBuffer buf, int packetType, bool reliable) {
     return _binaryWriter.send(buf, packetType, reliable);
   }
 
   /**
    * Implements BinaryDataReceivedEventListener onPacket
    */
-  void onPeerPacket(PeerPacket p) {
+  void onPeerPacket(PeerWrapper pw, PeerPacket p) {
 
   }
 
   /**
    * Implements BinaryDataReceivedEventListener onString
    */
-  void onPeerString(String s) {
+  void onPeerString(PeerWrapper pw, String s) {
     print("got string $s");
   }
 
   /**
    * Implements BinaryDataReceivedEventListener onBuffer
    */
-  void onPeerBuffer(ArrayBuffer b) {
+  void onPeerBuffer(PeerWrapper pw, ArrayBuffer b) {
     print("got buffer, length ${b.byteLength}");
   }
 
   /**
    * Implements BinaryDataReceivedEventListener onReadChunk
    */
-  void onPeerReadChunk(ArrayBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesTotal) {
+  void onPeerReadChunk(PeerWrapper pw, ArrayBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesTotal) {
     if (_binaryWriter is UDPDataWriter)
       (_binaryWriter as UDPDataWriter).writeAck(signature, sequence, totalSequences);
   }

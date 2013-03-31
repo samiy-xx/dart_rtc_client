@@ -286,6 +286,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
    * Requests to join a channel
    */
   void joinChannel(String name) {
+    _channelId = name;
     _signalHandler.sendPacket(new ChannelJoinCommand.With(_myId, name));
   }
 
@@ -396,13 +397,13 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     throw new UnsupportedError("sendBlob is a work in progress");
   }
 
-  Future<bool> sendFile(String peerId, ArrayBuffer data) {
+  Future<int> sendFile(String peerId, ArrayBuffer data) {
     PeerWrapper w = _peerManager.findWrapper(peerId);
     if (w == null)
       new Logger().Error("wrapper not found with id $peerId");
     if (w is DataPeerWrapper) {
       DataPeerWrapper dpw = w as DataPeerWrapper;
-      return dpw.sendBuffer(data, BINARY_TYPE_FILE);
+      return dpw.sendBuffer(data, BINARY_TYPE_FILE, true);
     } else {
       new Logger().Debug("(channelclient.dart) Peer wrapper is not data peer wrapper");
     }
@@ -411,7 +412,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
   /**
    * Sends an arraybuffer to peer
    */
-  Future<bool> sendArrayBuffer(String peerId, ArrayBuffer data, [bool reliable = false]) {
+  Future<int> sendArrayBuffer(String peerId, ArrayBuffer data, [bool reliable = false]) {
     if (_peerManager.reliableDataChannels && !reliable)
       throw new Exception("Can not send unreliable data with reliable channel");
     
@@ -604,24 +605,24 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
       _signalingErrorController.add(new SignalingErrorEvent(e));
   }
 
-  void onPeerPacket(PeerPacket p) {
+  void onPeerPacket(PeerWrapper pw, PeerPacket p) {
     if (_binaryController.hasSubscribers) {
-      _binaryController.add(new BinaryPeerPacketEvent(p));
+      _binaryController.add(new BinaryPeerPacketEvent(pw, p));
     }
   }
 
-  void onPeerString(String s) {
+  void onPeerString(PeerWrapper pw, String s) {
 
   }
 
-  void onPeerBuffer(ArrayBuffer b) {
+  void onPeerBuffer(PeerWrapper pw, ArrayBuffer b) {
     if (_binaryController.hasSubscribers)
-      _binaryController.add(new BinaryBufferCompleteEvent(b));
+      _binaryController.add(new BinaryBufferCompleteEvent(pw, b));
   }
 
-  void onPeerReadChunk(ArrayBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesTotal) {
+  void onPeerReadChunk(PeerWrapper pw, ArrayBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesTotal) {
     if (_binaryController.hasSubscribers)
-      _binaryController.add(new BinaryChunkEvent(buffer, signature, sequence, totalSequences, bytes, bytesTotal));
+      _binaryController.add(new BinaryChunkEvent(pw, buffer, signature, sequence, totalSequences, bytes, bytesTotal));
   }
 
   void onPeerSendSuccess(int signature, int sequence) {

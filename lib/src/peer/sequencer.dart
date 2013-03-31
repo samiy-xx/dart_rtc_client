@@ -60,8 +60,10 @@ class Sequencer {
     if (sequences != null) {
       sequences.removeEntry(sequence);
     
-      if (sequences.isEmpty)
+      if (sequences.isEmpty) {
         _sequenceCollections.remove(sequences);
+        sequences.complete();
+      }
     }
     
   }
@@ -78,18 +80,27 @@ class Sequencer {
 class SequenceCollection {
   int _signature;
   int _total;
+  Completer _completer;
   List<SequenceEntry> _sequences;
+  DateTime _created;
   
   bool get isComplete => _isComplete();
   bool get isEmpty => _isEmpty();
   int get total => _total;
   int get signature => _signature;
   List<SequenceEntry> get sequences => _sequences;
+  set completer(Completer c) => _completer = c;
   
   SequenceCollection(int signature, int total) {
     _total = total;
     _signature = signature;
     _sequences = new List<SequenceEntry>(total);
+    _created = new DateTime.now();
+  }
+  
+  void complete() {
+    if (_completer != null && !_completer.isCompleted)
+      _completer.complete(new DateTime.now().millisecondsSinceEpoch - _created.millisecondsSinceEpoch);
   }
   
   SequenceEntry addCreateSequence(int sequence, ArrayBuffer buffer) {

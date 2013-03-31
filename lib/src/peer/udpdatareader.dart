@@ -1,7 +1,7 @@
 part of rtc_client;
 
 class UDPDataReader extends BinaryDataReader {
-
+  
   ArrayBuffer _latest;
   DataView _latestView;
 
@@ -35,7 +35,7 @@ class UDPDataReader extends BinaryDataReader {
   bool _haveThisPart = false;
   Timer _timer;
 
-  UDPDataReader() : super() {
+  UDPDataReader(PeerWrapper wrapper) : super(wrapper) {
     _length = 0;
     _sequencer = new Map<int, Map<int, ArrayBuffer>>();
     _lastProcessed = new DateTime.now().millisecondsSinceEpoch;
@@ -362,13 +362,13 @@ class UDPDataReader extends BinaryDataReader {
    */
   void _signalReadChunk(ArrayBuffer buf, int signature, int sequence, int totalSequences, int bytes, int bytesTotal) {
     listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
-      l.onPeerReadChunk(buf, signature, sequence, totalSequences, bytes, bytesTotal);
+      l.onPeerReadChunk(_wrapper, buf, signature, sequence, totalSequences, bytes, bytesTotal);
     });
   }
 
   void _signalReadBuffer(ArrayBuffer buffer) {
     listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
-      l.onPeerBuffer(buffer);
+      l.onPeerBuffer(_wrapper, buffer);
     });
   }
   /*
@@ -376,13 +376,13 @@ class UDPDataReader extends BinaryDataReader {
    */
   void _signalReadPacket(PeerPacket p) {
     listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
-      l.onPeerPacket(p);
+      l.onPeerPacket(_wrapper, p);
     });
   }
 
   void _signalReadString(String s) {
     listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
-      l.onPeerString(s);
+      l.onPeerString(_wrapper, s);
     });
   }
   /**

@@ -1,6 +1,7 @@
 part of rtc_client;
 
 class BinaryChunkEvent extends RtcEvent {
+  PeerWrapper peer;
   ArrayBuffer buffer;
   int signature;
   int sequence;
@@ -8,7 +9,7 @@ class BinaryChunkEvent extends RtcEvent {
   int bytes;
   int bytesTotal;
 
-  BinaryChunkEvent(this.buffer, this.signature, this.sequence, this.totalSequences, this.bytes, this.bytesTotal);
+  BinaryChunkEvent(this.peer, this.buffer, this.signature, this.sequence, this.totalSequences, this.bytes, this.bytesTotal);
 }
 
 class BinarySendCompleteEvent extends RtcEvent {
@@ -19,14 +20,16 @@ class BinarySendCompleteEvent extends RtcEvent {
 }
 
 class BinaryBufferCompleteEvent extends RtcEvent {
+  PeerWrapper peer;
   ArrayBuffer buffer;
 
-  BinaryBufferCompleteEvent(this.buffer);
+  BinaryBufferCompleteEvent(this.peer, this.buffer);
 }
 
 class BinaryPeerPacketEvent extends RtcEvent {
+  PeerWrapper peer;
   PeerPacket peerPacket;
 
-  BinaryPeerPacketEvent(this.peerPacket);
+  BinaryPeerPacketEvent(this.peer, this.peerPacket);
 }
 

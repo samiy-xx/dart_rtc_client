@@ -615,6 +615,11 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
 
   }
 
+  void onPeerFile(PeerWrapper pw, Blob b) {
+    if (_binaryController.hasSubscribers)
+      _binaryController.add(new BinaryFileCompleteEvent(pw, b));
+  }
+  
   void onPeerBuffer(PeerWrapper pw, ArrayBuffer b) {
     if (_binaryController.hasSubscribers)
       _binaryController.add(new BinaryBufferCompleteEvent(pw, b));

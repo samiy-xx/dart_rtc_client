@@ -138,7 +138,11 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
    * Implements BinaryDataReceivedEventListener onBuffer
    */
   void onPeerBuffer(PeerWrapper pw, ArrayBuffer b) {
-    print("got buffer, length ${b.byteLength}");
+    new Logger().Debug("(datapeerwrapper.dart) got buffer, length ${b.byteLength}");
+  }
+  
+  void onPeerFile(PeerWrapper pw, Blob b) {
+    new Logger().Debug("(datapeerwrapper.dart) got blob, ${b.size} bytes");
   }
 
   /**

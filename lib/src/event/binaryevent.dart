@@ -26,6 +26,13 @@ class BinaryBufferCompleteEvent extends RtcEvent {
   BinaryBufferCompleteEvent(this.peer, this.buffer);
 }
 
+class BinaryFileCompleteEvent extends RtcEvent {
+  PeerWrapper peer;
+  Blob blob;
+
+  BinaryFileCompleteEvent(this.peer, this.blob);
+}
+
 class BinaryPeerPacketEvent extends RtcEvent {
   PeerWrapper peer;
   PeerPacket peerPacket;

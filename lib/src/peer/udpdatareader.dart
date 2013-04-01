@@ -302,8 +302,10 @@ class UDPDataReader extends BinaryDataReader {
           }
           break;
         case BINARY_TYPE_CUSTOM:
-        case BINARY_TYPE_FILE:
           _signalReadBuffer(buffer);
+          break;
+        case BINARY_TYPE_FILE:
+          _signalReadFile(buffer);
           break;
         default:
           break;
@@ -371,6 +373,13 @@ class UDPDataReader extends BinaryDataReader {
       l.onPeerBuffer(_wrapper, buffer);
     });
   }
+  
+  void _signalReadFile(ArrayBuffer buffer) {
+    listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
+      l.onPeerFile(_wrapper, new Blob([new Uint8Array.fromBuffer(buffer)]));
+    });
+
+ }
   /*
    * Packet has been read
    */
@@ -392,5 +401,4 @@ class UDPDataReader extends BinaryDataReader {
     _currentReadState = BinaryReadState.INIT_READ;
     _leftToRead = 0;
   }
-
 }

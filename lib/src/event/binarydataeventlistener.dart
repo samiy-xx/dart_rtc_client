@@ -14,6 +14,7 @@ abstract class BinaryDataReceivedEventListener extends BinaryDataEventListener {
   void onPeerPacket(PeerWrapper pw, PeerPacket p);
   void onPeerString(PeerWrapper pw, String s);
   void onPeerBuffer(PeerWrapper pw, ArrayBuffer b);
+  void onPeerFile(PeerWrapper pw, Blob b);
   void onPeerReadChunk(PeerWrapper pw, ArrayBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesTotal);
 
   void onPeerSendSuccess(int signature, int sequence);

@@ -43,7 +43,7 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
   void subscribeToBinaryEvents(BinaryDataEventListener l) {
     _binaryWriter.subscribe(l);
   }
-  
+
   void _onStateChanged(Event e) {
     if (_peer.readyState == PEER_STABLE) {
       //initChannel();
@@ -100,7 +100,6 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
    * Sends a packet trough the data channel
    * deprecate -- PeerPacket is something that should be implemented on application level
    */
-  @deprecated
   void send(PeerPacket p) {
     sendBuffer(p.toBuffer(), BINARY_TYPE_PACKET, false);
   }
@@ -108,7 +107,7 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
   void sendString(String s) {
     _dataChannel.send(s);
   }
-  
+
   /**
    * Send blob
    */

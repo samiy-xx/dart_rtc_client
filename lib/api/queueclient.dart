@@ -26,7 +26,7 @@ class QueueClient extends ChannelClient  {
   QueueClient(DataSource ds) : super(ds){
     _queued = new List<QueueUser>();
     _queueController = new StreamController.broadcast();
-    _signalHandler.registerHandler(PacketType.QUEUE, _queuePacketHandler);
+    _signalHandler.registerHandler(PACKET_TYPE_QUEUE, _queuePacketHandler);
   }
 
   /**

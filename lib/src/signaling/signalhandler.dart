@@ -55,27 +55,27 @@ class SignalHandler extends PacketHandler implements PeerPacketEventListener, Da
     _peerManager.subscribe(this);
 
     /* listen to ping, and respond with pong */
-    registerHandler(PacketType.PING, handlePing);
+    registerHandler(PACKET_TYPE_PING, handlePing);
 
     /* Listen for ice, required to create the peer connection */
-    registerHandler(PacketType.ICE, handleIce);
+    registerHandler(PACKET_TYPE_ICE, handleIce);
 
     /* Listen for sdp packets */
-    registerHandler(PacketType.DESC, handleDescription);
+    registerHandler(PACKET_TYPE_DESC, handleDescription);
 
     /* Listen for bye packets, when other user closes browser etc */
-    registerHandler(PacketType.BYE, handleBye);
+    registerHandler(PACKET_TYPE_BYE, handleBye);
 
     /* Connect success to server */
-    registerHandler(PacketType.CONNECTED, handleConnectionSuccess);
+    registerHandler(PACKET_TYPE_CONNECTED, handleConnectionSuccess);
 
     /* Listen for join, when someone joins same channel as you are */
-    registerHandler(PacketType.JOIN, handleJoin);
+    registerHandler(PACKET_TYPE_JOIN, handleJoin);
 
     /* Listen for id, all users in channel you joined */
-    registerHandler(PacketType.ID, handleId);
+    registerHandler(PACKET_TYPE_ID, handleId);
 
-    registerHandler(PacketType.CHANGENICK, handleIdChange);
+    registerHandler(PACKET_TYPE_CHANGENICK, handleIdChange);
   }
 
   /**

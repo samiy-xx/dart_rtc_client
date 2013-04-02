@@ -51,6 +51,12 @@ class Sequencer {
     sequences.setEntry(se);
   }
   
+  void removeCollection(int signature) {
+    var sequences = getSequenceCollection(signature);
+    if (sequences != null)
+      _sequenceCollections.remove(sequences);
+  }
+  
   void removeSequence(int signature, int sequence) {
     
     if (!hasSequence(signature, sequence))

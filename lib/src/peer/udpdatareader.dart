@@ -266,6 +266,7 @@ class UDPDataReader extends BinaryDataReader {
           String s = BinaryData.stringFromBuffer(buffer);
           _signalReadString(s);
           break;
+        // TODO: BINARY_TYPE_PACKET should be somethign that application implements. remove 
         case BINARY_TYPE_PACKET:
           Map m = json.parse(BinaryData.stringFromBuffer(buffer));
           if (m.containsKey('packetType')) {

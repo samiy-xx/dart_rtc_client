@@ -11,7 +11,7 @@ abstract class BinaryDataEventListener {
  * Interface for received binary data events
  */
 abstract class BinaryDataReceivedEventListener extends BinaryDataEventListener {
-  void onPeerPacket(PeerWrapper pw, PeerPacket p);
+  //void onPeerPacket(PeerWrapper pw, PeerPacket p);
   void onPeerString(PeerWrapper pw, String s);
   void onPeerBuffer(PeerWrapper pw, ArrayBuffer b);
   void onPeerFile(PeerWrapper pw, Blob b);

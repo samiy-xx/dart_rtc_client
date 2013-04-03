@@ -367,19 +367,6 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
   }
 
   /**
-   * Sends a packet to peer
-   */
-  void sendPeerPacket(String peerId, PeerPacket p) {
-    new Logger().Debug("Sending peer packet to $peerId");
-    PeerWrapper w = _peerManager.findWrapper(peerId);
-    if (w is DataPeerWrapper) {
-      DataPeerWrapper dpw = w as DataPeerWrapper;
-      dpw.send(p);
-      new Logger().Debug("Sent peer packet to $peerId");
-    }
-  }
-
-  /**
    * Sends a blob to peer
    */
   void sendBlob(String peerId, Blob data) {
@@ -607,11 +594,11 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
       _signalingErrorController.add(new SignalingErrorEvent(e));
   }
 
-  void onPeerPacket(PeerWrapper pw, PeerPacket p) {
-    if (_binaryController.hasSubscribers) {
-      _binaryController.add(new BinaryPeerPacketEvent(pw, p));
-    }
-  }
+  //void onPeerPacket(PeerWrapper pw, PeerPacket p) {
+  //  if (_binaryController.hasSubscribers) {
+  //    _binaryController.add(new BinaryPeerPacketEvent(pw, p));
+  //  }
+  //}
 
   void onPeerString(PeerWrapper pw, String s) {
 

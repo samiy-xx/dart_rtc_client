@@ -270,7 +270,7 @@ class UDPDataReader extends BinaryDataReader {
           _signalReadString(s);
           break;
         // TODO: BINARY_TYPE_PACKET should be somethign that application implements. remove
-        case BINARY_TYPE_PACKET:
+        /*case BINARY_TYPE_PACKET:
           Map m = json.parse(BinaryData.stringFromBuffer(buffer));
           if (m.containsKey('packetType')) {
             int packetType = m['packetType'];
@@ -290,7 +290,7 @@ class UDPDataReader extends BinaryDataReader {
             }
             _signalReadPacket(p);
           }
-          break;
+          break;*/
         case BINARY_TYPE_CUSTOM:
           _signalReadBuffer(buffer);
           break;
@@ -355,11 +355,11 @@ class UDPDataReader extends BinaryDataReader {
   /*
    * Packet has been read
    */
-  void _signalReadPacket(PeerPacket p) {
-    listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
-      l.onPeerPacket(_wrapper, p);
-    });
-  }
+  //void _signalReadPacket(PeerPacket p) {
+  //  listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
+  //    l.onPeerPacket(_wrapper, p);
+  //  });
+  //}
 
   void _signalReadString(String s) {
     listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {

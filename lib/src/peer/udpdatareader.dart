@@ -259,14 +259,17 @@ class UDPDataReader extends BinaryDataReader {
     }
     _contentTotalLength = 0;
     _totalRead = 0;
-    if (buffer != null) {
+    if (buffer != null)
+      _doSignalingBasedOnBufferType(buffer);
+  }
 
+  void _doSignalingBasedOnBufferType(ArrayBuffer buffer) {
       switch (_packetType) {
         case BINARY_TYPE_STRING:
           String s = BinaryData.stringFromBuffer(buffer);
           _signalReadString(s);
           break;
-        // TODO: BINARY_TYPE_PACKET should be somethign that application implements. remove 
+        // TODO: BINARY_TYPE_PACKET should be somethign that application implements. remove
         case BINARY_TYPE_PACKET:
           Map m = json.parse(BinaryData.stringFromBuffer(buffer));
           if (m.containsKey('packetType')) {
@@ -297,8 +300,6 @@ class UDPDataReader extends BinaryDataReader {
         default:
           break;
       }
-    }
-
   }
 
   void _process_command(int command, ArrayBuffer buffer) {

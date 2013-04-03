@@ -53,6 +53,7 @@ part 'src/datasource/datasource.dart';
 part 'src/datasource/websocketdatasource.dart';
 
 part 'src/exception/notimplementedexception.dart';
+part 'src/exception/wrapperexceptions.dart';
 
 part 'api/rtcclient.dart';
 part 'api/channelclient.dart';

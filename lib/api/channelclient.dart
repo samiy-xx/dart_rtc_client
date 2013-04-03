@@ -362,19 +362,8 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     _signalHandler.send(PacketFactory.get(new ChannelMessage.With(_myId, _channelId, message)));
   }
 
-  /**
-   * Sends a message to a peer
-   */
-  //void sendPeerUserMessage(String peerId, String message) {
-  //  sendPeerPacket(peerId, new UserMessage.With(_myId, message));
-  //}
-
   void sendString(String peerId, String message) {
-    PeerWrapper w = _peerManager.findWrapper(peerId);
-    if (w is DataPeerWrapper) {
-      DataPeerWrapper dpw = w as DataPeerWrapper;
-      dpw.sendString(message);
-    }
+    _getDataPeerWrapper(peerId).sendString(message);
   }
 
   /**
@@ -397,43 +386,56 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     throw new UnsupportedError("sendBlob is a work in progress");
   }
 
+
   Future<int> sendFile(String peerId, ArrayBuffer data) {
-    PeerWrapper w = _peerManager.findWrapper(peerId);
-    if (w == null)
-      new Logger().Error("wrapper not found with id $peerId");
-    if (w is DataPeerWrapper) {
-      DataPeerWrapper dpw = w as DataPeerWrapper;
-      return dpw.sendBuffer(data, BINARY_TYPE_FILE, true);
-    } else {
-      new Logger().Debug("(channelclient.dart) Peer wrapper is not data peer wrapper");
-    }
+      return _getDataPeerWrapper(peerId).sendBuffer(data, BINARY_TYPE_FILE, true);
   }
 
   /**
    * Sends an arraybuffer to peer
    */
-  Future<int> sendArrayBuffer(String peerId, ArrayBuffer data, [bool reliable = false]) {
-    if (_peerManager.reliableDataChannels && !reliable)
-      throw new Exception("Can not send unreliable data with reliable channel");
+  Future<int> sendArrayBufferReliable(String peerId, ArrayBuffer data) {
+      return _getDataPeerWrapper(peerId).sendBuffer(data, BINARY_TYPE_CUSTOM, true);
+  }
 
+  void sendArrayBufferUnReliable(String peerId, ArrayBuffer data) {
+    if (_peerManager.reliableDataChannels)
+      throw new Exception("Can not send unreliable data with reliable channel");
+    _getDataPeerWrapper(peerId).sendBuffer(data, BINARY_TYPE_CUSTOM, false);
+  }
+
+  PeerWrapper _getPeerWrapper(String peerId) {
     PeerWrapper w = _peerManager.findWrapper(peerId);
     if (w == null)
-      new Logger().Error("wrapper not found with id $peerId");
-    if (w is DataPeerWrapper) {
-      DataPeerWrapper dpw = w as DataPeerWrapper;
-      return dpw.sendBuffer(data, BINARY_TYPE_CUSTOM, reliable);
-    } else {
-      new Logger().Debug("(channelclient.dart) Peer wrapper is not data peer wrapper");
-    }
+      throw new PeerWrapperNullException("Peer wrapper null: $peerId");
+    return w;
   }
 
   /**
    * Sends an arraybufferview to peer
    */
-  void sendArrayBufferView(String peerId, ArrayBufferView data) {
-    sendArrayBuffer(peerId, data.buffer);
+  Future<int> sendArrayBufferViewReliable(String peerId, ArrayBufferView data) {
+    return sendArrayBufferReliable(peerId, data.buffer);
   }
 
+  void sendArrayBufferViewUnReliable(String peerId, ArrayBufferView data) {
+    sendArrayBufferUnReliable(peerId, data.buffer);
+  }
+
+  DataPeerWrapper _getDataPeerWrapper(String peerId) {
+    try {
+      PeerWrapper w = _getPeerWrapper(peerId);
+      if (!(w is DataPeerWrapper))
+        throw new PeerWrapperTypeException("Peer wrapper is not DataPeerWrapper type");
+      return w;
+    } on PeerWrapperNullException catch (e) {
+      new Logger().Error("$e");
+      throw e;
+    } on PeerWrapperTypeException catch (e) {
+      new Logger().Error("$e");
+      throw e;
+    }
+  }
 
   void _defaultPacketHandler(Packet p) {
     PeerWrapper pw = _peerManager.findWrapper(p.id);
@@ -619,7 +621,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     if (_binaryController.hasSubscribers)
       _binaryController.add(new BinaryFileCompleteEvent(pw, b));
   }
-  
+
   void onPeerBuffer(PeerWrapper pw, ArrayBuffer b) {
     if (_binaryController.hasSubscribers)
       _binaryController.add(new BinaryBufferCompleteEvent(pw, b));

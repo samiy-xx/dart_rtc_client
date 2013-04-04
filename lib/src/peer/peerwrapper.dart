@@ -49,15 +49,18 @@ class PeerWrapper extends GenericEventTarget<PeerEventListener>{
   bool get isOpen => _isOpen;
 
   /** returns current readystate */
-  String get state => _peer.readyState;
+  String get state => _peer.signalingState;
 
   PeerWrapper(PeerManager pm, RtcPeerConnection p) {
     _peer = p;
     _manager = pm;
     _peer.onIceCandidate.listen(_onIceCandidate);
-    _peer.onIceChange.listen(_onIceChange);
+    //_peer.onIceChange.listen(_onIceChange);
+    _peer.on['oniceconnectionstatechange'].listen(_onIceChange);
     _peer.onNegotiationNeeded.listen(_onNegotiationNeeded);
-    _peer.onStateChange.listen(_onStateChange);
+    //_peer.on
+    _peer.on['onsignalingstatechange'].listen(_onStateChange);
+    //_peer.onStateChange.listen(_onStateChange);
   }
 
   void setAsHost(bool value) {
@@ -156,7 +159,7 @@ class PeerWrapper extends GenericEventTarget<PeerEventListener>{
   }
 
   void _onStateChange(Event e) {
-    if (_peer.readyState == PEER_STABLE)
+    if (_peer.signalingState == PEER_STABLE)
       _isOpen = true;
     else
       _isOpen = false;
@@ -239,7 +242,7 @@ class PeerWrapper extends GenericEventTarget<PeerEventListener>{
     if (candidate == null)
       throw new Exception("RtcIceCandidate was null");
 
-    if (_peer.readyState != PEER_CLOSED) {
+    if (_peer.signalingState != PEER_CLOSED) {
       _log.Debug("(peerwrapper.dart) Receiving remote ICE Candidate ${candidate.candidate}");
       _peer.addIceCandidate(candidate);
     }
@@ -285,7 +288,7 @@ class PeerWrapper extends GenericEventTarget<PeerEventListener>{
    */
   void close() {
     _log.Error("(peerwrapper.dart) Closing peer");
-    if (_peer.readyState != PEER_CLOSED)
+    if (_peer.signalingState != PEER_CLOSED)
       _peer.close();
   }
 }

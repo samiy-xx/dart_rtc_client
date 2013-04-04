@@ -119,18 +119,19 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
    * Creates a new peer and wraps it in PeerWrapper
    */
   PeerWrapper createPeer() {
-
-    PeerWrapper wrapper = _createWrapper(
-        /*new RtcPeerConnection(
-            {'iceServers': [ {'url':'stun:stun.l.google.com:19302'}]},
-            _peerConstraints.toMap()
-        )*/
-        new RtcPeerConnection(
-            _serverConstraints.toMap(),
-            _peerConstraints.toMap()
-        )
-    );
-
+    PeerWrapper wrapper;
+    try {
+      wrapper = _createWrapper(
+          new RtcPeerConnection(
+              _serverConstraints.toMap(),
+              _peerConstraints.toMap()
+          )
+      );
+    } catch (e, s) {
+      new Logger().Error("$e");
+      new Logger().Error("$s");
+      throw e;
+    }
     _add(wrapper);
     return wrapper;
   }
@@ -159,7 +160,8 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
     p.onRemoveStream.listen(onRemoveStream);
 
     //p.onOpen.listen(onOpen);
-    p.onStateChange.listen(onStateChanged);
+    //p.onStateChange.listen(onStateChanged);
+    p.on['onsignalingstatechange'].listen(onStateChanged);
     p.onIceCandidate.listen(onIceCandidate);
 
     listeners.where((l) => l is PeerConnectionEventListener).forEach((PeerConnectionEventListener l) {

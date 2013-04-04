@@ -31,8 +31,8 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
    */
   DataPeerWrapper(PeerManager pm, RtcPeerConnection p) : super(pm, p) {
     _peer.onDataChannel.listen(_onNewDataChannelOpen);
-    _peer.onStateChange.listen(_onStateChanged);
-
+    //_peer.onStateChange.listen(_onStateChanged);
+    _peer.on['onsignalingstatechange'].listen(_onStateChanged);
     _binaryWriter = new UDPDataWriter(this);
     _binaryReader = new UDPDataReader(this);
 
@@ -170,7 +170,7 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
    */
   void onDataChannelOpen(Event e) {
     RtcDataChannel dc = e.target;
-    _signalStateChanged();
+    _signalChannelStateChanged();
     _log.Debug("(datapeerwrapper.dart) DataChannelOpen ${dc.label}");
   }
 
@@ -179,7 +179,7 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
    */
   void onDataChannelClose(Event e) {
     RtcDataChannel dc = e.target;
-    _signalStateChanged();
+    _signalChannelStateChanged();
     _log.Debug("(datapeerwrapper.dart) DataChannelClose ${dc.label}");
   }
 
@@ -210,7 +210,7 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
   /**
    * signal listeners that channel state has changed
    */
-  void _signalStateChanged() {
+  void _signalChannelStateChanged() {
 
     if (_dataChannel.readyState != _channelState) {
       listeners.where((l) => l is PeerDataEventListener).forEach((PeerDataEventListener l) {

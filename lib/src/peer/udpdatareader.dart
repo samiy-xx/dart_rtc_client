@@ -21,6 +21,7 @@ class UDPDataReader extends BinaryDataReader {
   int _signature;
   int _startMs;
 
+  Stopwatch _watch;
   /* Current read state */
   BinaryReadState _currentReadState = BinaryReadState.INIT_READ;
 
@@ -29,15 +30,14 @@ class UDPDataReader extends BinaryDataReader {
 
   int get leftToRead => _leftToRead;
 
-  Map<int, Map<int, ArrayBuffer>> _sequencer_;
   bool _haveThisPart = false;
   Timer _timer;
 
   UDPDataReader(PeerWrapper wrapper) : super(wrapper) {
     _length = 0;
-    _sequencer_ = new Map<int, Map<int, ArrayBuffer>>();
     _sequencer = new Sequencer();
     _lastProcessed = new DateTime.now().millisecondsSinceEpoch;
+    _watch = new Stopwatch();
   }
 
   Future readChunkString(String s) {
@@ -131,6 +131,8 @@ class UDPDataReader extends BinaryDataReader {
   }
 
   ArrayBuffer buildCompleteBuffer(int signature) {
+    _watch.reset();
+    _watch.start();
     SequenceCollection sc = _sequencer.getSequenceCollection(signature);
     ArrayBuffer complete = new ArrayBuffer(_contentTotalLength);
     DataView completeView = new DataView(complete);
@@ -144,8 +146,10 @@ class UDPDataReader extends BinaryDataReader {
         k++;
       }
     }
-
+    
     _sequencer.removeCollection(signature);
+    _watch.stop();
+    print("Built a buffer of ${complete.byteLength} bytes in ${_watch.elapsedMilliseconds} milliseconds");
     return complete;
   }
 
@@ -199,7 +203,7 @@ class UDPDataReader extends BinaryDataReader {
 
   void _process_read_signature(int b) {
     if (b != _signature) {
-      print("---------- SIGNATURE CHANGED --------------");
+      print("---------- SIGNATURE CHANGED -------------- $b");
       _totalRead = 0;
     }
     _signature = b;
@@ -238,6 +242,7 @@ class UDPDataReader extends BinaryDataReader {
     if (!_haveThisPart)
       _signalReadChunk(_latest, _signature, _currentChunkSequence, _totalSequences, _currentChunkContentLength, _contentTotalLength);
 
+    //new Logger().Debug("Processed $_totalRead of $_contentTotalLength");
     if (_totalRead == _contentTotalLength)
       _processBuffer();
 
@@ -269,28 +274,6 @@ class UDPDataReader extends BinaryDataReader {
           String s = BinaryData.stringFromBuffer(buffer);
           _signalReadString(s);
           break;
-        // TODO: BINARY_TYPE_PACKET should be somethign that application implements. remove
-        /*case BINARY_TYPE_PACKET:
-          Map m = json.parse(BinaryData.stringFromBuffer(buffer));
-          if (m.containsKey('packetType')) {
-            int packetType = m['packetType'];
-            PeerPacket p;
-            switch (packetType) {
-              case PeerPacket.TYPE_DIRECTORY_ENTRY:
-                new Logger().Debug("(binarydatareader.dart) _processBuffer Directory entry packet");
-                p = DirectoryEntryPacket.fromMap(m);
-                break;
-              case PeerPacket.TYPE_REQUEST_FILE:
-                new Logger().Debug("(binarydatareader.dart) _processBuffer Request file packet");
-                p = RequestFilePacket.fromMap(m);
-                break;
-              default:
-                p = null;
-                break;
-            }
-            _signalReadPacket(p);
-          }
-          break;*/
         case BINARY_TYPE_CUSTOM:
           _signalReadBuffer(buffer);
           break;
@@ -325,6 +308,7 @@ class UDPDataReader extends BinaryDataReader {
     }
   }
 
+  // TODO: Move to writer
   void _signalSendSuccess(int signature, int sequence) {
     listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
       l.onPeerSendSuccess(signature, sequence);
@@ -351,15 +335,6 @@ class UDPDataReader extends BinaryDataReader {
       l.onPeerFile(_wrapper, new Blob([new Uint8Array.fromBuffer(buffer)]));
     });
   }
-
-  /*
-   * Packet has been read
-   */
-  //void _signalReadPacket(PeerPacket p) {
-  //  listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
-  //    l.onPeerPacket(_wrapper, p);
-  //  });
-  //}
 
   void _signalReadString(String s) {
     listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {

@@ -11,9 +11,8 @@ const int FULL_BYTE = 0xFF;
 
 const int BINARY_TYPE_COMMAND = 0;
 const int BINARY_TYPE_STRING = 1;
-const int BINARY_TYPE_PACKET = 2;
-const int BINARY_TYPE_FILE = 3;
-const int BINARY_TYPE_CUSTOM = 4;
+const int BINARY_TYPE_FILE = 2;
+const int BINARY_TYPE_CUSTOM = 3;
 
 const int BINARY_PROTOCOL_UDP = 1;
 const int BINARY_PROTOCOL_TCP = 2;
@@ -36,6 +35,7 @@ const int TCP_PROTOCOL_BYTELENGTH_POSITION = 2;
 const int TCP_PROTOCOL_TOTALBYTELENGTH_POSITION = 4;
 const int TCP_PROTOCOL_SIGNATURE_POSITION = 8;
 const int TCP_PROTOCOL_FIRST_CONTENT_POSITION = 12;
+
 /**
  * Binary reader/writer for Datachannel
  */

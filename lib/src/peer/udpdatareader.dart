@@ -146,10 +146,10 @@ class UDPDataReader extends BinaryDataReader {
         k++;
       }
     }
-    
+
     _sequencer.removeCollection(signature);
     _watch.stop();
-    print("Built a buffer of ${complete.byteLength} bytes in ${_watch.elapsedMilliseconds} milliseconds");
+    //print("Built a buffer of ${complete.byteLength} bytes in ${_watch.elapsedMilliseconds} milliseconds");
     return complete;
   }
 
@@ -203,7 +203,7 @@ class UDPDataReader extends BinaryDataReader {
 
   void _process_read_signature(int b) {
     if (b != _signature) {
-      print("---------- SIGNATURE CHANGED -------------- $b");
+      //print("---------- SIGNATURE CHANGED -------------- $b");
       _totalRead = 0;
     }
     _signature = b;
@@ -256,10 +256,10 @@ class UDPDataReader extends BinaryDataReader {
   void _processBuffer() {
     _totalRead = 0;
     //_contentTotalLength = 0;
-    new Logger().Debug("Processing buffer");
+    //new Logger().Debug("Processing buffer");
     ArrayBuffer buffer;
     if (sequencerComplete(_signature)) {
-      new Logger().Debug("Sequence complete, building complete buffer");
+      //new Logger().Debug("Sequence complete, building complete buffer");
       buffer = buildCompleteBuffer(_signature);
     }
     _contentTotalLength = 0;

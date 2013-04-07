@@ -20,5 +20,17 @@ class InitializationStateEvent extends RtcEvent {
   }
 }
 
+class ChannelInitializationStateEvent extends InitializationStateEvent {
+  
+  InitializationState state;
+  String channel;
+  bool owner;
+  
+  ChannelInitializationStateEvent(InitializationState s, String c, bool o) : super(s) {
+    channel = c;
+    owner = o;
+  }
+}
+
 
 

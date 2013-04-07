@@ -310,6 +310,15 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
       _initializedController.add(new InitializationStateEvent(state));
   }
 
+  void _setStateWithChannelData(InitializationState state, ChannelPacket p) {
+    if (_currentState == state)
+      return;
+
+    _currentState = state;
+
+    if (_initializedController.hasSubscribers)
+      _initializedController.add(new ChannelInitializationStateEvent(state, p.channelId, p.owner));
+  }
   /**
    * Sets the userlimit on channel
    * The issuer has to be the channel owner
@@ -372,7 +381,6 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
   void sendBlob(String peerId, Blob data) {
     throw new UnsupportedError("sendBlob is a work in progress");
   }
-
 
   Future<int> sendFile(String peerId, ArrayBuffer data) {
       return _getDataPeerWrapper(peerId).sendBuffer(data, BINARY_TYPE_FILE, true);
@@ -445,7 +453,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     if (_packetController.hasSubscribers)
       _packetController.add(new PacketEvent(p, pw));
 
-    _setState(InitializationState.CHANNEL_READY);
+    _setStateWithChannelData(InitializationState.CHANNEL_READY, p);
   }
 
   /*

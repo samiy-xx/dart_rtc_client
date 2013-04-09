@@ -38,6 +38,7 @@ part 'src/event/packetevent.dart';
 part 'src/event/queueevent.dart';
 part 'src/event/binaryevent.dart';
 
+part 'src/signaling/signaler.dart';
 part 'src/signaling/signalhandler.dart';
 part 'src/signaling/channelsignalhandler.dart';
 part 'src/signaling/wheelsignalhandler.dart';

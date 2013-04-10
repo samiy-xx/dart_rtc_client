@@ -24,7 +24,14 @@ abstract class BinaryDataReceivedEventListener extends BinaryDataEventListener {
  * Interface for sent binary data events
  */
 abstract class BinaryDataSentEventListener extends BinaryDataEventListener {
+  /**
+   * Fires when data is written to the channel
+   */
   void onWriteChunk(PeerWrapper pw, int signature, int sequence, int totalSequences, int bytes);
+
+  /**
+   * Fires when data is arrived to opposite end of channel
+   */
   void onWroteChunk(PeerWrapper pw, int signature, int sequence, int totalSequences, int bytes);
 }
 

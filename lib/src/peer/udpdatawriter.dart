@@ -60,11 +60,9 @@ class UDPDataWriter extends BinaryDataWriter {
     if (sse == null)
       return null;
 
-    //if (sse.completer != null && !sse.completer.isCompleted)
-    //  sse.completer.complete(new DateTime.now().millisecondsSinceEpoch - sse.timeSent);
-
     _sequencer.removeSequence(signature, sequence);
-    _signalWroteChunk(collection.signature, sse.sequence, collection.total, sse.data.byteLength);
+    if (!BinaryData.isCommand(sse.data))
+      _signalWroteChunk(collection.signature, sse.sequence, collection.total, sse.data.byteLength);
     return sse.timeSent;
   }
 
@@ -99,23 +97,18 @@ class UDPDataWriter extends BinaryDataWriter {
     }
 
     if (_sequencer.hasMore() && _canLoop) {
-      //new Logger().Debug("Has more");
       setImmediate();
     }
   }
 
   void writeAck(int signature, int sequence, int total) {
-    //new Logger().Debug("WRITING ACK for $signature $sequence");
     addSequence(signature, 1, 1, BinaryData.createAck(signature, sequence), false);
   }
 
   void receiveAck(int signature, int sequence) {
-
-    //new Logger().Debug("RECEIVE ACK for $signature $sequence");
     int timeSent = removeSequence(signature, sequence);
     if (timeSent != null)
       calculateLatency(timeSent);
-
   }
 
   void _signalWriteChunk(int signature, int sequence, int totalSequences, int bytes) {

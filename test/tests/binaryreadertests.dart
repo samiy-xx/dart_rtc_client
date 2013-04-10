@@ -1,26 +1,22 @@
 part of rtc_client_tests;
 
 class BinaryReaderTests {
-  String packetId;
-  Packet defaultPacket;
+
   BinaryDataWriter writer;
   BinaryDataReader reader;
 
-  final int STRING_HEADER_BYTES = 4;
-  final int PACKET_HEADER_BYTES = 3;
-  final int FILE_HEADER_BYTES = 6;
 
   run() {
     group('BinaryReaderTests', () {
 
       setUp(() {
-        defaultPacket = new ByePacket.With(packetId);
+
         //writer = new BinaryDataWriter();
         //reader = new BinaryDataReader();
       });
 
       tearDown(() {
-        defaultPacket = null;
+
         //writer = null;
         //reader = null;
       });

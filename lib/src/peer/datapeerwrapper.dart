@@ -158,9 +158,16 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
   }
 
   /**
-   * Implements BinaryDataReceivedEventListener onWriteChunk
+   * Implements BinaryDataSentEventListener onWriteChunk
    */
-  void onWriteChunk(int signature, int sequence, int totalSequences, int bytes, int bytesLeft) {
+  void onWriteChunk(PeerWrapper pw, int signature, int sequence, int totalSequences, int bytes) {
+
+  }
+
+  /**
+   * Implements BinaryDataSentEventListener onWroteChunk
+   */
+  void onWroteChunk(PeerWrapper pw, int signature, int sequence, int totalSequences, int bytes) {
 
   }
 

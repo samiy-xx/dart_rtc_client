@@ -2,7 +2,7 @@ part of rtc_client;
 
 class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
   PeerConnectionEventListener, PeerMediaEventListener, PeerDataEventListener,
-  BinaryDataReceivedEventListener {
+  BinaryDataReceivedEventListener, BinaryDataSentEventListener {
 
   /* Keeps track of the initialization state of the client */
   InitializationState _currentState;
@@ -538,6 +538,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
       try {
         DataPeerWrapper dpw = pw;
         dpw.binaryReader.subscribe(this);
+        dpw.binaryWriter.subscribe(this);
       } catch(e) {
         new Logger().Error("Error: $e");
       }
@@ -608,25 +609,56 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
   //  }
   //}
 
+  /**
+   * Implements BinaryDataSentEventListener onWriteChunk
+   */
+  void onWriteChunk(PeerWrapper pw, int signature, int sequence, int totalSequences, int bytes) {
+    if (_binaryController.hasSubscribers)
+      _binaryController.add(new BinaryChunkWriteEvent(pw, signature, sequence, totalSequences, bytes));
+  }
+
+  /**
+   * Implements BinaryDataSentEventListener onWroteChunk
+   */
+  void onWroteChunk(PeerWrapper pw, int signature, int sequence, int totalSequences, int bytes) {
+    if (_binaryController.hasSubscribers)
+      _binaryController.add(new BinaryChunkWroteEvent(pw, signature, sequence, totalSequences, bytes));
+  }
+
+  /**
+   * Implements BinaryDataReceivedEventListener onPeerString
+   */
   void onPeerString(PeerWrapper pw, String s) {
 
   }
 
+  /**
+   * Implements BinaryDataReceivedEventListener onPeerFile
+   */
   void onPeerFile(PeerWrapper pw, Blob b) {
     if (_binaryController.hasSubscribers)
       _binaryController.add(new BinaryFileCompleteEvent(pw, b));
   }
 
+  /**
+   * Implements BinaryDataReceivedEventListener onPeerBuffer
+   */
   void onPeerBuffer(PeerWrapper pw, ArrayBuffer b) {
     if (_binaryController.hasSubscribers)
       _binaryController.add(new BinaryBufferCompleteEvent(pw, b));
   }
 
+  /**
+   * Implements BinaryDataReceivedEventListener onPeerReadChunk
+   */
   void onPeerReadChunk(PeerWrapper pw, ArrayBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesTotal) {
     if (_binaryController.hasSubscribers)
       _binaryController.add(new BinaryChunkEvent(pw, buffer, signature, sequence, totalSequences, bytes, bytesTotal));
   }
 
+  /**
+   * Implements BinaryDataReceivedEventListener onPeerSendSuccess
+   */
   void onPeerSendSuccess(int signature, int sequence) {
     if (_binaryController.hasSubscribers)
       _binaryController.add(new BinarySendCompleteEvent(signature, sequence));

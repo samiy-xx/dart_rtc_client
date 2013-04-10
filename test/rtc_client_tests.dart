@@ -16,6 +16,7 @@ part 'tests/binarywritertests.dart';
 part 'tests/binaryreadertests.dart';
 part 'tests/rtttests.dart';
 part 'tests/sequencertests.dart';
+part 'tests/udpreadertests.dart';
 
 void run() {
   useHtmlEnhancedConfiguration();
@@ -25,4 +26,5 @@ void run() {
   new BinaryReaderTests().run();
   new RoundTripTimerTests().run();
   new SequencerTests().run();
+  new UDPReaderTests().run();
 }

@@ -120,18 +120,6 @@ class PeerWrapper extends GenericEventTarget<PeerEventListener>{
     .catchError((AsyncError e) {
       _log.Error("(peerwrapper.dart) Error creating offer $e");
     });
-    /*try {
-    _peer.createOffer(
-        _onOfferSuccess,
-        _onRTCError,null
-
-    );
-    } on DomException catch(e) {
-      _log.Debug("(peerwrapper.dart) DomException on setting offer constraints, attempting without constraints");
-      _peer.createOffer(_onOfferSuccess,_onRTCError,null);
-    } catch (e) {
-      _log.Error("(peerwrapper.dart) Error creating offer $e");
-    }*/
   }
 
   /*
@@ -143,19 +131,6 @@ class PeerWrapper extends GenericEventTarget<PeerEventListener>{
     .catchError((AsyncError e) {
       
     });
-    /*try {
-      _peer.createAnswer(
-          _onAnswerSuccess,
-          _onRTCError,
-            null
-
-      );
-    } on DomException catch(e) {
-      _log.Debug("(peerwrapper.dart) DomException on setting answer constraints, attempting without constraints");
-      _peer.createAnswer(_onAnswerSuccess,_onRTCError, null);
-    } catch (e) {
-      _log.Error("(peerwrapper.dart) Error creating answer $e");
-    }*/
   }
 
   void _onStateChange(Event e) {

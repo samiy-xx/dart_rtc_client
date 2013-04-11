@@ -37,6 +37,7 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
   /* TODO: Ugh */
   String _otherId;
 
+  bool _muteLocalLoopback = true;
   /**
    * Signal handler
    */
@@ -178,6 +179,10 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
     });
   }
 
+  ChannelClient setMuteLocalLoopback(bool b) {
+    _muteLocalLoopback = b;
+    return this;
+  }
   /**
    * Implements RtcClient setRequireAudio
    */

@@ -162,6 +162,10 @@ class ChannelClient implements RtcClient, DataSourceConnectionEventListener,
 
           _setState(InitializationState.MEDIA_READY);
           _mediaStreamAvailableStreamController.add(new MediaStreamAvailableEvent(stream, null, true));
+        }).catchError((AsyncError e) {
+          if (e.error is NavigatorUserMediaError) {
+            window.alert("Unable to access user media. Is webcam or microphone used by another process?");
+          }
         });
       } else {
         _setState(InitializationState.NOT_READY);

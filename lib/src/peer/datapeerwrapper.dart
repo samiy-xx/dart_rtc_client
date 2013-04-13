@@ -45,7 +45,7 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
   }
 
   void _onStateChanged(Event e) {
-    if (_peer.readyState == PEER_STABLE) {
+    if (_peer.signalingState == PEER_STABLE) {
       //initChannel();
     }
   }

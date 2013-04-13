@@ -3,7 +3,7 @@ part of rtc_client;
 /**
  * SignalHandler
  */
-class SignalHandler extends PacketHandler implements PeerPacketEventListener, DataSourceConnectionEventListener {
+class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventListener, DataSourceConnectionEventListener {
   Logger _log = new Logger();
 
   /* Datasource */

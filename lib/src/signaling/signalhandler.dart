@@ -124,10 +124,10 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
    */
   void onOpenDataSource(String m) {
     if (_signalingStateController.hasListener)
-      _signalingStateController.add(new SignalingStateEvent(SIGNALING_STATE_OPEN));
+      _signalingStateController.add(new SignalingStateEvent(Signaler.SIGNALING_STATE_OPEN));
 
-    _log.Debug("Connection opened, sending HELO, ${_dataSource.readyState}");
-    _dataSource.send(PacketFactory.get(new HeloPacket.With("", "")));
+    //_log.Debug("Connection opened, sending HELO, ${_dataSource.readyState}");
+    //_dataSource.send(PacketFactory.get(new HeloPacket.With("", "")));
   }
 
   /**
@@ -135,8 +135,8 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
    */
   void onCloseDataSource(String m) {
     if (_signalingStateController.hasListener)
-      _signalingStateController.add(new SignalingStateEvent(SIGNALING_STATE_CLOSED));
-    _log.Debug("Connection closed ${m}");
+      _signalingStateController.add(new SignalingStateEvent(Signaler.SIGNALING_STATE_CLOSED));
+    //_log.Debug("Connection closed ${m}");
   }
 
   /**

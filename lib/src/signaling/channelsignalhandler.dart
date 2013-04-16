@@ -17,6 +17,7 @@ class ChannelSignalHandler extends SignalHandler{
    * Callback for websocket onopen
    */
   void onOpenDataSource(String e) {
+    super.onOpenDataSource(e);
     _log.Debug("(channelsignalhandler.dart) WebSocket connection opened, sending HELO, ${_dataSource.readyState}");
     _dataSource.send(PacketFactory.get(new HeloPacket.With(_channelId, "")));
   }

@@ -67,14 +67,14 @@ class ChannelClient implements RtcClient,
   StreamController<InitializationStateEvent> _initializedController;
   Stream<InitializationStateEvent> get onInitializationStateChangeEvent => _initializedController.stream;
 
-  StreamController<SignalingOpenEvent> _signalingOpenController;
-  Stream<SignalingOpenEvent> get onSignalingOpenEvent => _signalingOpenController.stream;
+  //StreamController<SignalingOpenEvent> _signalingOpenController;
+  //Stream<SignalingOpenEvent> get onSignalingOpenEvent => _signalingOpenController.stream;
 
-  StreamController<SignalingCloseEvent> _signalingCloseController;
-  Stream<SignalingCloseEvent> get onSignalingCloseEvent => _signalingCloseController.stream;
+  //StreamController<SignalingCloseEvent> _signalingCloseController;
+  //Stream<SignalingCloseEvent> get onSignalingCloseEvent => _signalingCloseController.stream;
 
-  StreamController<SignalingErrorEvent> _signalingErrorController;
-  Stream<SignalingErrorEvent> get onSignalingErrorEvent => _signalingErrorController.stream;
+  //StreamController<SignalingErrorEvent> _signalingErrorController;
+  //Stream<SignalingErrorEvent> get onSignalingErrorEvent => _signalingErrorController.stream;
 
   StreamController<PeerStateChangedEvent> _peerStateChangeController;
   Stream<PeerStateChangedEvent> get onPeerStateChangeEvent => _peerStateChangeController.stream;
@@ -121,9 +121,9 @@ class ChannelClient implements RtcClient,
     _initializedController = new StreamController<InitializationStateEvent>();
     _mediaStreamAvailableStreamController = new StreamController();
     _mediaStreamRemovedStreamController = new StreamController();
-    _signalingOpenController = new StreamController();
-    _signalingCloseController = new StreamController();
-    _signalingErrorController = new StreamController();
+    //_signalingOpenController = new StreamController();
+    //_signalingCloseController = new StreamController();
+    //_signalingErrorController = new StreamController();
     _peerStateChangeController = new StreamController();
     _iceGatheringStateChangeController = new StreamController();
     _dataChannelStateChangeController = new StreamController();

@@ -17,6 +17,11 @@ class SignalingCloseEvent extends RtcEvent {
   }
 }
 
+class SignalingStateEvent extends RtcEvent {
+  String state;
+  SignalingStateEvent(this.state);
+}
+
 class SignalingErrorEvent extends RtcEvent {
   String message;
   

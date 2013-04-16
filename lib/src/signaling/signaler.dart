@@ -1,8 +1,10 @@
 part of rtc_client;
 
 abstract class Signaler {
-
-  Stream<Object> get onSignalingStateChanged;
+  const String SIGNALING_STATE_CLOSED = "closed";
+  const String SIGNALING_STATE_OPEN = "open";
+  
+  Stream<SignalingStateEvent> get onSignalingStateChanged;
   Stream<Object> get onJoin;
   Stream<Object> get onParticipant;
   Stream<Object> get onParticipantStateChanged;

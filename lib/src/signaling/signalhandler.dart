@@ -38,6 +38,8 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
   /** Id of the user */
   String get id => _id;
 
+  StreamController<SignalingStateEvent> _signalingStateController;
+  Stream<SignalingStateEvent> get onSignalingStateChanged => _signalingStateController.stream;
   /**
    * Constructor
    */
@@ -47,35 +49,27 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
 
     /* Subscribe to datasource events */
     _dataSource.subscribe(this);
-
     /* Init peer manager */
     _peerManager = new PeerManager();
-
     /* Subscribe to peer manager events */
     _peerManager.subscribe(this);
-
     /* listen to ping, and respond with pong */
     registerHandler(PACKET_TYPE_PING, handlePing);
-
     /* Listen for ice, required to create the peer connection */
     registerHandler(PACKET_TYPE_ICE, handleIce);
-
     /* Listen for sdp packets */
     registerHandler(PACKET_TYPE_DESC, handleDescription);
-
     /* Listen for bye packets, when other user closes browser etc */
     registerHandler(PACKET_TYPE_BYE, handleBye);
-
     /* Connect success to server */
     registerHandler(PACKET_TYPE_CONNECTED, handleConnectionSuccess);
-
     /* Listen for join, when someone joins same channel as you are */
     registerHandler(PACKET_TYPE_JOIN, handleJoin);
-
     /* Listen for id, all users in channel you joined */
     registerHandler(PACKET_TYPE_ID, handleId);
-
     registerHandler(PACKET_TYPE_CHANGENICK, handleIdChange);
+
+    _signalingStateController = new StreamController<SignalingStateEvent>();
   }
 
   /**
@@ -129,6 +123,9 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
    * Implements DataSourceConnectionEventListener onOpen
    */
   void onOpenDataSource(String m) {
+    if (_signalingStateController.hasListener)
+      _signalingStateController.add(new SignalingStateEvent(SIGNALING_STATE_OPEN));
+
     _log.Debug("Connection opened, sending HELO, ${_dataSource.readyState}");
     _dataSource.send(PacketFactory.get(new HeloPacket.With("", "")));
   }
@@ -137,6 +134,8 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
    * Implements DataSourceConnectionEventListener onClose
    */
   void onCloseDataSource(String m) {
+    if (_signalingStateController.hasListener)
+      _signalingStateController.add(new SignalingStateEvent(SIGNALING_STATE_CLOSED));
     _log.Debug("Connection closed ${m}");
   }
 

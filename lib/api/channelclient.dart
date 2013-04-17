@@ -101,26 +101,23 @@ class ChannelClient implements RtcClient,
     _initializedController = new StreamController<InitializationStateEvent>();
     _mediaStreamAvailableStreamController = new StreamController();
     _mediaStreamRemovedStreamController = new StreamController();
-    //_signalingOpenController = new StreamController();
-    //_signalingCloseController = new StreamController();
-    //_signalingErrorController = new StreamController();
+
     _peerStateChangeController = new StreamController();
     _iceGatheringStateChangeController = new StreamController();
     _dataChannelStateChangeController = new StreamController();
-    //_dataSourceMessageController = new StreamController.broadcast();
-    //_dataSourceCloseController = new StreamController.broadcast();
-    //_dataSourceOpenController = new StreamController.broadcast();
-    //_dataSourceErrorController = new StreamController.broadcast();
+
     _packetController = new StreamController();
     _binaryController = new StreamController();
 
-    _signalHandler.registerHandler(PACKET_TYPE_JOIN, _joinPacketHandler);
-    _signalHandler.registerHandler(PACKET_TYPE_ID, _idPacketHandler);
-    _signalHandler.registerHandler(PACKET_TYPE_BYE, _byePacketHandler);
-    _signalHandler.registerHandler(PACKET_TYPE_CHANNEL, _channelPacketHandler);
+    //_signalHandler.registerHandler(PACKET_TYPE_JOIN, _joinPacketHandler);
+    //_signalHandler.registerHandler(PACKET_TYPE_ID, _idPacketHandler);
+    //_signalHandler.registerHandler(PACKET_TYPE_BYE, _byePacketHandler);
+    //_signalHandler.registerHandler(PACKET_TYPE_CHANNEL, _channelPacketHandler);
     _signalHandler.registerHandler(PACKET_TYPE_CONNECTED, _connectionSuccessPacketHandler);
     _signalHandler.registerHandler(PACKET_TYPE_CHANNELMESSAGE, _defaultPacketHandler);
     _signalHandler.registerHandler(PACKET_TYPE_CHANGENICK, _defaultPacketHandler);
+
+    onServerEvent.listen((ServerEvent e) => _serverEventHandler(e));
   }
 
   /**
@@ -300,14 +297,14 @@ class ChannelClient implements RtcClient,
       _initializedController.add(new InitializationStateEvent(state));
   }
 
-  void _setStateWithChannelData(InitializationState state, ChannelPacket p) {
+  void _setStateWithChannelData(InitializationState state, ServerJoinEvent e) {
     if (_currentState == state)
       return;
 
     _currentState = state;
 
     if (_initializedController.hasListener)
-      _initializedController.add(new ChannelInitializationStateEvent(state, p.channelId, p.owner));
+      _initializedController.add(new ChannelInitializationStateEvent(state, e.channel, e.isOwner));
   }
   /**
    * Sets the userlimit on channel
@@ -435,40 +432,63 @@ class ChannelClient implements RtcClient,
     _setState(InitializationState.REMOTE_READY);
   }
 
+  void _serverEventHandler(ServerEvent e) {
+    if (e is ServerJoinEvent) {
+      _setStateWithChannelData(InitializationState.CHANNEL_READY, e);
+    }
 
-  void _channelPacketHandler(ChannelPacket p) {
-    PeerWrapper pw = _peerManager.findWrapper(p.id);
-    if (_packetController.hasListener)
-      _packetController.add(new PacketEvent(p, pw));
+    else if (e is ServerParticipantJoinEvent) {
+      // TODO: Why do i even care about id's here
+      ServerParticipantJoinEvent p = e;
+      _otherId = p.id;
+    }
 
-    _setStateWithChannelData(InitializationState.CHANNEL_READY, p);
+    else if (e is ServerParticipantIdEvent) {
+    // TODO: Why do i even care about id's here
+      ServerParticipantIdEvent p = e;
+      _otherId = p.id;
+    }
+
+    else if (e is ServerParticipantLeftEvent) {
+      ServerParticipantLeftEvent p = e;
+      PeerWrapper pw = _peerManager.findWrapper(p.id);
+
+      if (_mediaStreamRemovedStreamController.hasListener)
+        _mediaStreamRemovedStreamController.add(new MediaStreamRemovedEvent(pw));
+    }
+
+    else if (e is ServerParticipantStatusEvent) {
+
+    }
   }
-
 
   /*
    * TODO: Needs a stream controller and event
    */
+  /*
   void _joinPacketHandler(JoinPacket p) {
     new Logger().Debug("channelclient.dart Joinpackethandler received ${p.id}");
     _otherId = p.id;
     PeerWrapper pw = _peerManager.findWrapper(p.id);
     if (_packetController.hasListener)
       _packetController.add(new PacketEvent(p, pw));
-  }
+  }*/
 
   /*
    * TODO: Needs a stream controller and event
    */
+  /*
   void _idPacketHandler(IdPacket p) {
     _otherId = p.id;
     PeerWrapper pw = _peerManager.findWrapper(p.id);
     if (_packetController.hasListener)
       _packetController.add(new PacketEvent(p, pw));
   }
-
+*/
   /*
    * TODO: Needs a stream controller and event
    */
+  /*
   void _byePacketHandler(ByePacket p) {
     PeerWrapper pw = _peerManager.findWrapper(p.id);
     if (_packetController.hasListener)
@@ -476,7 +496,7 @@ class ChannelClient implements RtcClient,
 
     if (_mediaStreamRemovedStreamController.hasListener)
       _mediaStreamRemovedStreamController.add(new MediaStreamRemovedEvent(pw));
-  }
+  }*/
 
   /**
    * Implements PeerDataEventListener onDateReceived

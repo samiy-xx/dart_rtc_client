@@ -1,6 +1,6 @@
 part of rtc_client;
 
-class StreamingSignalHandler extends ChannelSignalHandler {
+class StreamingSignalHandler extends SignalHandler {
   String other = null;
 
   StreamingSignalHandler(DataSource ds) : super(ds) {

@@ -67,15 +67,6 @@ class ChannelClient implements RtcClient,
   StreamController<InitializationStateEvent> _initializedController;
   Stream<InitializationStateEvent> get onInitializationStateChangeEvent => _initializedController.stream;
 
-  //StreamController<SignalingOpenEvent> _signalingOpenController;
-  //Stream<SignalingOpenEvent> get onSignalingOpenEvent => _signalingOpenController.stream;
-
-  //StreamController<SignalingCloseEvent> _signalingCloseController;
-  //Stream<SignalingCloseEvent> get onSignalingCloseEvent => _signalingCloseController.stream;
-
-  //StreamController<SignalingErrorEvent> _signalingErrorController;
-  //Stream<SignalingErrorEvent> get onSignalingErrorEvent => _signalingErrorController.stream;
-
   StreamController<PeerStateChangedEvent> _peerStateChangeController;
   Stream<PeerStateChangedEvent> get onPeerStateChangeEvent => _peerStateChangeController.stream;
 
@@ -85,18 +76,6 @@ class ChannelClient implements RtcClient,
   StreamController<DataChannelStateChangedEvent> _dataChannelStateChangeController;
   Stream<DataChannelStateChangedEvent> get onDataChannelStateChangeEvent => _dataChannelStateChangeController.stream;
 
-  //StreamController<DataSourceMessageEvent> _dataSourceMessageController;
-  //Stream<DataSourceMessageEvent> get onDataSourceMessageEvent => _dataSourceMessageController.stream;
-
-  //StreamController<DataSourceCloseEvent> _dataSourceCloseController;
-  //Stream<DataSourceCloseEvent> get onDataSourceCloseEvent => _dataSourceCloseController.stream;
-
-  //StreamController<DataSourceOpenEvent> _dataSourceOpenController;
-  //Stream<DataSourceOpenEvent> get onDataSourceOpenEvent => _dataSourceOpenController.stream;
-
-  //StreamController<DataSourceErrorEvent> _dataSourceErrorController;
-  //Stream<DataSourceErrorEvent> get onDataSourceErrorEvent => _dataSourceErrorController.stream;
-
   StreamController<PacketEvent> _packetController;
   Stream<PacketEvent> get onPacketEvent => _packetController.stream;
 
@@ -104,6 +83,7 @@ class ChannelClient implements RtcClient,
   Stream<RtcEvent> get onBinaryEvent => _binaryController.stream;
 
   Stream<SignalingStateEvent> get onSignalingStateChanged => _signalHandler.onSignalingStateChanged;
+  Stream<ServerEvent> get onServerEvent=> _signalHandler.onServerEvent;
 
   ChannelClient(DataSource ds) {
     _ds = ds;
@@ -455,9 +435,7 @@ class ChannelClient implements RtcClient,
     _setState(InitializationState.REMOTE_READY);
   }
 
-  /*
-   * TODO: Needs a stream controller and event
-   */
+
   void _channelPacketHandler(ChannelPacket p) {
     PeerWrapper pw = _peerManager.findWrapper(p.id);
     if (_packetController.hasListener)
@@ -465,6 +443,7 @@ class ChannelClient implements RtcClient,
 
     _setStateWithChannelData(InitializationState.CHANNEL_READY, p);
   }
+
 
   /*
    * TODO: Needs a stream controller and event

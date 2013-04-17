@@ -37,6 +37,7 @@ part 'src/event/initializationevent.dart';
 part 'src/event/packetevent.dart';
 part 'src/event/queueevent.dart';
 part 'src/event/binaryevent.dart';
+part 'src/event/serverevent.dart';
 
 part 'src/signaling/signaler.dart';
 part 'src/signaling/signalhandler.dart';

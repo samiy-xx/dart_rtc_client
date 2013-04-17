@@ -6,70 +6,55 @@ part of rtc_client;
 class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventListener, DataSourceConnectionEventListener {
   Logger _log = new Logger();
 
-  /* Datasource */
   DataSource _dataSource;
-
-  /* Peer manager */
   PeerManager _peerManager;
-
-  /* Id for the local user */
   String _id;
-
-  /* Enable datachannels */
+  String _channelId;
   bool _dataChannelsEnabled = false;
-
   bool _createPeerOnJoin = true;
-
   bool get createPeerOnJoin => _createPeerOnJoin;
+
+  String get channelId => _channelId;
+  set channelId(String value) => _channelId = value;
   set createPeerOnJoin(bool v) => _createPeerOnJoin = v;
-
-  /** Getter for PeerManager */
   PeerManager get peerManager => getPeerManager();
-
-  /** Getter for data source */
   DataSource get dataSource => _dataSource;
-
-  /** Setter for PeerManager*/
   set peerManager(PeerManager p) => setPeerManager(p);
-
-  /** Enable datachannels */
   set dataChannelsEnabled(bool value) => setDataChannelsEnabled(value);
-
-  /** Id of the user */
   String get id => _id;
+  bool _isChannelOwner = false;
+  bool get isChannelOwner => _isChannelOwner;
 
   StreamController<SignalingStateEvent> _signalingStateController;
-  Stream<SignalingStateEvent> get onSignalingStateChanged => _signalingStateController.stream;
-  /**
-   * Constructor
-   */
-  SignalHandler(DataSource ds) : super() {
-    /* Init the datasource */
-    _dataSource = ds;
+  Stream<SignalingStateEvent> _onSignalingStateChanged;
+  Stream<SignalingStateEvent> get onSignalingStateChanged => _onSignalingStateChanged;
 
-    /* Subscribe to datasource events */
+  StreamController<ServerEvent> _serverEventController;
+  Stream<ServerEvent> _onServerEvent;
+  Stream<ServerEvent> get onServerEvent=> _onServerEvent;
+
+  SignalHandler(DataSource ds) : super() {
+    _dataSource = ds;
     _dataSource.subscribe(this);
-    /* Init peer manager */
+
     _peerManager = new PeerManager();
-    /* Subscribe to peer manager events */
     _peerManager.subscribe(this);
-    /* listen to ping, and respond with pong */
+
     registerHandler(PACKET_TYPE_PING, handlePing);
-    /* Listen for ice, required to create the peer connection */
     registerHandler(PACKET_TYPE_ICE, handleIce);
-    /* Listen for sdp packets */
     registerHandler(PACKET_TYPE_DESC, handleDescription);
-    /* Listen for bye packets, when other user closes browser etc */
     registerHandler(PACKET_TYPE_BYE, handleBye);
-    /* Connect success to server */
     registerHandler(PACKET_TYPE_CONNECTED, handleConnectionSuccess);
-    /* Listen for join, when someone joins same channel as you are */
     registerHandler(PACKET_TYPE_JOIN, handleJoin);
-    /* Listen for id, all users in channel you joined */
     registerHandler(PACKET_TYPE_ID, handleId);
     registerHandler(PACKET_TYPE_CHANGENICK, handleIdChange);
+    registerHandler(PACKET_TYPE_CHANNEL, handleChannelInfo);
 
     _signalingStateController = new StreamController<SignalingStateEvent>();
+    _onSignalingStateChanged = _signalingStateController.stream.asBroadcastStream();
+
+    _serverEventController = new StreamController<ServerEvent>();
+    _onServerEvent = _serverEventController.stream.asBroadcastStream();
   }
 
   /**
@@ -126,8 +111,8 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
     if (_signalingStateController.hasListener)
       _signalingStateController.add(new SignalingStateEvent(Signaler.SIGNALING_STATE_OPEN));
 
-    //_log.Debug("Connection opened, sending HELO, ${_dataSource.readyState}");
-    //_dataSource.send(PacketFactory.get(new HeloPacket.With("", "")));
+    _log.Debug("(signalhandler.dart) WebSocket connection opened, sending HELO, ${_dataSource.readyState}");
+    _dataSource.send(PacketFactory.get(new HeloPacket.With(_channelId, "")));
   }
 
   /**
@@ -204,11 +189,14 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
    * Handle join packet
    */
   void handleJoin(JoinPacket packet) {
+    if (_serverEventController.hasListener)
+      _serverEventController.add(new ServerParticipantJoinEvent(packet.id, packet.channelId));
     try {
       _log.Debug("(signalhandler.dart) JoinPacket channel ${packet.channelId} user ${packet.id}");
       if (_createPeerOnJoin) {
         PeerWrapper p = createPeerWrapper();
         p.id = packet.id;
+        p.channel = packet.channelId;
         p.setAsHost(true);
       }
     } catch (e) {
@@ -220,13 +208,39 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
    * Handle id packet
    */
   void handleId(IdPacket id) {
+    if (_serverEventController.hasListener)
+      _serverEventController.add(new ServerParticipantJoinEvent(id.id, id.channelId));
     _log.Debug("(signalhandler.dart) ID packet: channel ${id.channelId} user ${id.id}");
     if (id.id != null && !id.id.isEmpty) {
       if (_createPeerOnJoin) {
         PeerWrapper p = createPeerWrapper();
         p.id = id.id;
+        p.channel = id.channelId;
       }
     }
+  }
+
+  /**
+   * Handles Bye packet
+   */
+  void handleBye(ByePacket p) {
+    if (_serverEventController.hasListener)
+      _serverEventController.add(new ServerParticipantLeftEvent(p.id));
+
+    _log.Debug("(signalhandler.dart) Received BYE from ${p.id}");
+    PeerWrapper peer = _peerManager.findWrapper(p.id);
+    if (peer != null) {
+      _log.Debug("(signalhandler.dart) Closing peer ${peer.id}");
+      peer.close();
+    }
+  }
+
+  void handleChannelInfo(ChannelPacket p) {
+    if (_serverEventController.hasListener)
+      _serverEventController.add(new ServerJoinEvent(p.channelId, p.owner, p.limit));
+
+    _log.Info("(signalhandler.dart) ChannelPacket owner=${p.owner}");
+    _isChannelOwner = p.owner;
   }
 
   void handleIdChange(ChangeNickCommand c) {
@@ -294,17 +308,7 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
     _dataSource.send(PacketFactory.get(new PongPacket()));
   }
 
-  /**
-   * Handles Bye packet
-   */
-  void handleBye(ByePacket p) {
-    _log.Debug("(signalhandler.dart) Received BYE from ${p.id}");
-    PeerWrapper peer = _peerManager.findWrapper(p.id);
-    if (peer != null) {
-      _log.Debug("(signalhandler.dart) Closing peer ${peer.id}");
-      peer.close();
-    }
-  }
+
 
   /**
    * Close the Web socket connection to the signaling server

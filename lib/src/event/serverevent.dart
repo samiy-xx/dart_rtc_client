@@ -39,3 +39,10 @@ class ServerParticipantStatusEvent extends ServerEvent {
   ServerParticipantStatusEvent(this.id, this.newId);
 }
 
+class ServerChannelMessageEvent extends ServerEvent {
+  String id;
+  String channel;
+  String message;
+  ServerChannelMessageEvent(this.id, this.channel, this.message);
+}
+

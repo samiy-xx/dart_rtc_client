@@ -49,7 +49,7 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
     registerHandler(PACKET_TYPE_ID, handleId);
     registerHandler(PACKET_TYPE_CHANGENICK, handleIdChange);
     registerHandler(PACKET_TYPE_CHANNEL, handleChannelInfo);
-
+    registerHandler(PACKET_TYPE_CHANNELMESSAGE, _handleChannelMessage);
     _signalingStateController = new StreamController<SignalingStateEvent>();
     _onSignalingStateChanged = _signalingStateController.stream.asBroadcastStream();
 
@@ -170,6 +170,25 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
     send(PacketFactory.get(p));
   }
 
+  void joinChannel(String id, String channelId) {
+    sendPacket(new ChannelJoinCommand.With(id, channelId));
+  }
+
+  void changeId(String id, String newId) {
+    sendPacket(new ChangeNickCommand.With(id, newId));
+  }
+
+  bool setChannelLimit(String id, String channelId, int l) {
+    try {
+      if (_channelId != null) {
+        sendPacket(new SetChannelVarsCommand.With(id, channelId, l));
+        return true;
+      }
+    } catch (e, s) {
+      new Logger().Error("Error: $e $s");
+    }
+    return false;
+  }
   // TODO: Need to be able to send arraybuffer to server
   /**
    * Sends an arraybuffer trough the datasource
@@ -185,6 +204,10 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
     send(p);
   }
 
+  void _handleChannelMessage(ChannelMessage p) {
+    if (_serverEventController.hasListener)
+      _serverEventController.add(new ServerChannelMessageEvent(p.id, p.channelId, p.message));
+  }
   /**
    * Handle join packet
    */
@@ -209,7 +232,7 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
    */
   void handleId(IdPacket id) {
     if (_serverEventController.hasListener)
-      _serverEventController.add(new ServerParticipantJoinEvent(id.id, id.channelId));
+      _serverEventController.add(new ServerParticipantIdEvent(id.id, id.channelId));
     _log.Debug("(signalhandler.dart) ID packet: channel ${id.channelId} user ${id.id}");
     if (id.id != null && !id.id.isEmpty) {
       if (_createPeerOnJoin) {
@@ -244,6 +267,8 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
   }
 
   void handleIdChange(ChangeNickCommand c) {
+    if (_serverEventController.hasListener)
+      _serverEventController.add(new ServerParticipantStatusEvent(c.id, c.newId));
     _log.Debug("(signalhandler.dart) CHANGEID packet: user ${c.id} to ${c.newId}");
     if (c.id == _id) {
       // t's me
@@ -260,6 +285,8 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
   void handleConnectionSuccess(ConnectionSuccessPacket p) {
     _log.Debug("(signalhandler.dart) Connection successfull user ${p.id}");
     _id = p.id;
+    //if (_signalingStateController.hasListener)
+    //  _signalingStateController.add(new SignalingReadyEvent(p.id, Signaler.SIGNALING_STATE_READY));
   }
 
   /**

@@ -3,7 +3,7 @@ part of rtc_client;
 
 class SignalingOpenEvent extends RtcEvent {
   String message;
-  
+
   SignalingOpenEvent(String m) {
     message = m;
   }
@@ -11,7 +11,7 @@ class SignalingOpenEvent extends RtcEvent {
 
 class SignalingCloseEvent extends RtcEvent {
   String message;
-  
+
   SignalingCloseEvent(String m) {
     message = m;
   }
@@ -22,9 +22,16 @@ class SignalingStateEvent extends RtcEvent {
   SignalingStateEvent(this.state);
 }
 
+class SignalingReadyEvent extends SignalingStateEvent {
+  String id;
+  SignalingReadyEvent(String myid, String state) : super(state) {
+    id = myid;
+  }
+}
+
 class SignalingErrorEvent extends RtcEvent {
   String message;
-  
+
   SignalingErrorEvent(String m) {
     message = m;
   }

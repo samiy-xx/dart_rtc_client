@@ -100,19 +100,11 @@ class ChannelClient implements RtcClient,
     _iceGatheringStateChangeController = new StreamController();
     _dataChannelStateChangeController = new StreamController();
 
-    //_packetController = new StreamController();
+
     _binaryController = new StreamController();
-    _signalHandler.registerHandler(PACKET_TYPE_CONNECTED, _connectionSuccessPacketHandler);
+
     onServerEvent.listen((ServerEvent e) => _serverEventHandler(e));
     onSignalingStateChanged.listen((SignalingStateEvent e) => _signalingEventHandler(e));
-    /*onSignalingStateChanged.listen((SignalingStateEvent e) {
-      if (e.state == Signaler.SIGNALING_STATE_READY && e is SignalingReadyEvent) {
-        SignalingReadyEvent p = e;
-        _myId = p.id;
-        _setState(InitializationState.REMOTE_READY);
-      }
-    });*/
-
   }
 
   /**
@@ -409,22 +401,13 @@ class ChannelClient implements RtcClient,
     }
   }
 
-  //void _defaultPacketHandler(Packet p) {
-  //  PeerWrapper pw = _peerManager.findWrapper(p.id);
-  //  if (_packetController.hasListener)
-  //    _packetController.add(new PacketEvent(p, pw));
-  //}
-
-  void _connectionSuccessPacketHandler(ConnectionSuccessPacket p) {
-    _myId = p.id;
-    if (_channelId != null)
-      joinChannel(_channelId);
-    _setState(InitializationState.REMOTE_READY);
-  }
-
   void _signalingEventHandler(SignalingStateEvent e) {
     if (e is SignalingReadyEvent) {
       SignalingReadyEvent p = e;
+      _myId = p.id;
+      if (_channelId != null)
+        joinChannel(_channelId);
+      _setState(InitializationState.REMOTE_READY);
     }
   }
 

@@ -285,8 +285,8 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
   void handleConnectionSuccess(ConnectionSuccessPacket p) {
     _log.Debug("(signalhandler.dart) Connection successfull user ${p.id}");
     _id = p.id;
-    //if (_signalingStateController.hasListener)
-    //  _signalingStateController.add(new SignalingReadyEvent(p.id, Signaler.SIGNALING_STATE_READY));
+    if (_signalingStateController.hasListener)
+      _signalingStateController.add(new SignalingReadyEvent(p.id, Signaler.SIGNALING_STATE_READY));
   }
 
   /**

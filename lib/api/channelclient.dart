@@ -104,6 +104,7 @@ class ChannelClient implements RtcClient,
     _binaryController = new StreamController();
     _signalHandler.registerHandler(PACKET_TYPE_CONNECTED, _connectionSuccessPacketHandler);
     onServerEvent.listen((ServerEvent e) => _serverEventHandler(e));
+    onSignalingStateChanged.listen((SignalingStateEvent e) => _signalingEventHandler(e));
     /*onSignalingStateChanged.listen((SignalingStateEvent e) {
       if (e.state == Signaler.SIGNALING_STATE_READY && e is SignalingReadyEvent) {
         SignalingReadyEvent p = e;
@@ -419,6 +420,12 @@ class ChannelClient implements RtcClient,
     if (_channelId != null)
       joinChannel(_channelId);
     _setState(InitializationState.REMOTE_READY);
+  }
+
+  void _signalingEventHandler(SignalingStateEvent e) {
+    if (e is SignalingReadyEvent) {
+      SignalingReadyEvent p = e;
+    }
   }
 
   void _serverEventHandler(ServerEvent e) {

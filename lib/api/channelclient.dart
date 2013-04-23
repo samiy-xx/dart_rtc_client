@@ -41,7 +41,7 @@ class ChannelClient implements RtcClient,
   /**
    * Signal handler
    */
-  StreamingSignalHandler get signalHandler => _signalHandler;
+  Signaler get signalHandler => _signalHandler;
 
   /**
    * PeerManager
@@ -412,7 +412,6 @@ class ChannelClient implements RtcClient,
   }
 
   void _serverEventHandler(ServerEvent e) {
-    print("SERVER EVENT $e");
     if (e is ServerJoinEvent) {
       _setStateWithChannelData(InitializationState.CHANNEL_READY, e);
     }

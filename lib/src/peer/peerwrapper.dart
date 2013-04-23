@@ -58,9 +58,8 @@ class PeerWrapper extends GenericEventTarget<PeerEventListener>{
     _manager = pm;
     _peer.onIceCandidate.listen(_onIceCandidate);
     _peer.onNegotiationNeeded.listen(_onNegotiationNeeded);
-    // These dont seem to have a getter
-    _peer.on['oniceconnectionstatechange'].listen(_onIceChange);
-    _peer.on['onsignalingstatechange'].listen(_onStateChange);
+    _peer.onIceConnectionStateChange.listen(_onIceChange);
+    _peer.onSignalingStateChange.listen(_onStateChange);
   }
 
   void setAsHost(bool value) {

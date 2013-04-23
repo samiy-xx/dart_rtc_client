@@ -1,7 +1,6 @@
 part of rtc_client;
 
 class UDPDataReader extends BinaryDataReader {
-
   ArrayBuffer _latest;
   DataView _latestView;
   Sequencer _sequencer;
@@ -12,7 +11,6 @@ class UDPDataReader extends BinaryDataReader {
   /* Left to read on current packet */
   int _leftToRead = 0;
   int _totalRead = 0;
-
   int _currentChunkContentLength;
   int _contentTotalLength;
   int _currentChunkSequence;
@@ -20,12 +18,8 @@ class UDPDataReader extends BinaryDataReader {
   int _packetType;
   int _signature;
   int _startMs;
-
   Stopwatch _watch;
-  /* Current read state */
   BinaryReadState _currentReadState = BinaryReadState.INIT_READ;
-
-  /** Current read state */
   BinaryReadState get currentReadState => _currentReadState;
 
   int get leftToRead => _leftToRead;
@@ -116,9 +110,7 @@ class UDPDataReader extends BinaryDataReader {
           i += SIZEOF8;
         }
       }
-
     }
-
   }
 
   bool haveCurrentPart() {
@@ -203,7 +195,6 @@ class UDPDataReader extends BinaryDataReader {
 
   void _process_read_signature(int b) {
     if (b != _signature) {
-      //print("---------- SIGNATURE CHANGED -------------- $b");
       _totalRead = 0;
     }
     _signature = b;
@@ -247,7 +238,6 @@ class UDPDataReader extends BinaryDataReader {
       _processBuffer();
 
     _currentReadState = BinaryReadState.INIT_READ;
-
   }
 
   /*
@@ -292,16 +282,6 @@ class UDPDataReader extends BinaryDataReader {
         int signature = BinaryData.getSignature(buffer);
         int sequence = BinaryData.getSequenceNumber(buffer);
         _signalSendSuccess(signature, sequence);
-        break;
-      case BINARY_PACKET_RESEND:
-        int signature = BinaryData.getSignature(buffer);
-        int sequence = BinaryData.getSequenceNumber(buffer);
-        //_signalResend(signature, sequence);
-        break;
-      case BINARY_PACKET_REQUEST_RESEND:
-        int signature = BinaryData.getSignature(buffer);
-        int sequence = BinaryData.getSequenceNumber(buffer);
-        //_signalRequestResend(signature, sequence);
         break;
       default:
         break;

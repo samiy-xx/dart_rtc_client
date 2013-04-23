@@ -4,7 +4,6 @@ part of rtc_client;
  * PeerManager creates and removes peer connections and assigns media streams to them
  */
 class PeerManager extends GenericEventTarget<PeerEventListener> {
-  /* instance */
   static PeerManager _instance;
 
   final Logger _log = new Logger();
@@ -31,7 +30,6 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
 
 
   PeerConstraints _peerConstraints;
-  /* Constraints for the stream */
   StreamConstraints _streamConstraints;
   ServerConstraints _serverConstraints;
 
@@ -58,9 +56,7 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
    */
   set reliableDataChannels(bool value) => _reliableDataChannels = value;
   bool get reliableDataChannels => _reliableDataChannels;
-  /**
-   * singleton constructor
-   */
+
   factory PeerManager() {
     if (_instance == null)
       _instance = new PeerManager._internal();
@@ -115,9 +111,6 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
     return _ms;
   }
 
-  /**
-   * Creates a new peer and wraps it in PeerWrapper
-   */
   PeerWrapper createPeer() {
     PeerWrapper wrapper;
     try {
@@ -159,9 +152,7 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
     p.onAddStream.listen(onAddStream);
     p.onRemoveStream.listen(onRemoveStream);
 
-    //p.onOpen.listen(onOpen);
-    //p.onStateChange.listen(onStateChanged);
-    p.on['onsignalingstatechange'].listen(onStateChanged);
+    p.onSignalingStateChange.listen(onStateChanged);
     p.onIceCandidate.listen(onIceCandidate);
 
     listeners.where((l) => l is PeerConnectionEventListener).forEach((PeerConnectionEventListener l) {
@@ -170,9 +161,6 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
     return wrapper;
   }
 
-  /**
-   * Gets a wrapper containing peer connection
-   */
   PeerWrapper getWrapperForPeer(RtcPeerConnection p) {
     for (int i = 0; i < _peers.length; i++) {
       PeerWrapper wrapper = _peers[i];
@@ -182,9 +170,6 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
     return null;
   }
 
-  /**
-   * Finds a wrapper by id
-   */
   PeerWrapper findWrapper(String id) {
     for (int i = 0; i < _peers.length; i++) {
       PeerWrapper wrapper = _peers[i];
@@ -275,13 +260,7 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
       if (index >= 0)
         _peers.removeAt(index);
     } else if (wrapper.peer.signalingState == PEER_STABLE) {
-      // PEER_STABLE is the initial state and should also be the state when things are setup?
-      // TODO: hook this up
-      _log.Debug("(peermanager.dart) Peer local and remote descriptions have been exchanged");
+
     }
   }
-
-
-
-
 }

@@ -148,6 +148,11 @@ class ChannelClient implements RtcClient,
     });
   }
 
+  void close() {
+    _signalHandler.close();
+    _peerManager.closeAll();
+  }
+
   ChannelClient setMuteLocalLoopback(bool b) {
     _muteLocalLoopback = b;
     return this;

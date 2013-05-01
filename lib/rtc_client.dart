@@ -60,7 +60,6 @@ part 'src/exception/wrapperexceptions.dart';
 
 part 'api/rtcclient.dart';
 part 'api/channelclient.dart';
-part 'api/queueclient.dart';
 
 const int CLOSE_NORMAL = 1000;
 const int CLOSE_GOING_AWAY = 1001;

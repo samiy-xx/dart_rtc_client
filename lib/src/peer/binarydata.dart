@@ -142,10 +142,9 @@ class BinaryData {
   }
 
   static bool isCommand(ByteBuffer buffer) {
-    if (buffer.lengthInBytes == 17)
-      return true;
-
-    return false;
+    if (!isValidUdp(buffer))
+      return buffer.lengthInBytes == SIZEOF_TCP_HEADER + 1;
+    return buffer.lengthInBytes == SIZEOF_UDP_HEADER + 1;
   }
 
   static int getCommand(ByteBuffer buffer) {
@@ -153,11 +152,18 @@ class BinaryData {
   }
 
   static int getSignature(ByteBuffer buffer) {
-    ByteData view = new ByteData.view(buffer, 0, 16);
+    ByteData view;
+    if (!isValidUdp(buffer)) {
+      view = new ByteData.view(buffer, 0, SIZEOF_TCP_HEADER);
+      return view.getUint32(TCP_PROTOCOL_SIGNATURE_POSITION);
+    }
+    view = new ByteData.view(buffer, 0, SIZEOF_UDP_HEADER);
     return view.getUint32(UDP_PROTOCOL_SIGNATURE_POSITION);
   }
 
   static int getSequenceNumber(ByteBuffer buffer) {
+    if (!isValidUdp(buffer))
+      return 0;
     ByteData view = new ByteData.view(buffer, 0, 16);
     return view.getUint16(UDP_PROTOCOL_SEQUENCE_POSITION);
   }
@@ -240,7 +246,7 @@ class BinaryData {
     }
 
     int signature = view.getUint32(TCP_PROTOCOL_SIGNATURE_POSITION); // 8
-    int current = new DateTime.now().millisecondsSinceEpoch;
+    //int current = new DateTime.now().millisecondsSinceEpoch;
     if (signature == null) {
       new Logger().Warning("binarydata.dart Failed checking signature");
       return false;

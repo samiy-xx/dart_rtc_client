@@ -1,6 +1,8 @@
 part of rtc_client_tests;
 
 class BinaryTests {
+  const String testString = "this is a string for test";
+  const int defaultSignature = 1337;
   run() {
     group('BinaryTests', () {
       setUp(() {
@@ -49,7 +51,62 @@ class BinaryTests {
         ByteBuffer udpBuffer = BinaryData.writeUdpHeader(buffer, 1, 1, 1, 1, buffer.lengthInBytes);
         expect(BinaryData.isValidUdp(udpBuffer), equals(true));
       });
+
+      test("BinaryData, hasHeader, retuns true if header is present", () {
+        ByteBuffer udpBuffer = getSimpleUdpPacket();
+        expect(BinaryData.hasHeader(udpBuffer), isTrue);
+
+        ByteBuffer tcpBuffer = getSimpleTcpPacket();
+        expect(BinaryData.hasHeader(tcpBuffer), isTrue);
+      });
+
+      test("BinaryData, isCommand, retuns true if data is command", () {
+        ByteBuffer ack = BinaryData.createAck(10, 10);
+        expect(BinaryData.isCommand(ack), isTrue);
+
+        ByteBuffer nonAck = getSimpleUdpPacket();
+        expect(BinaryData.isCommand(nonAck), isFalse);
+      });
+
+      test("BinaryData, getCommand, returns command type integer", () {
+        ByteBuffer ack = BinaryData.createAck(10, 10);
+        expect(BinaryData.getCommand(ack), equals(BINARY_PACKET_ACK));
+      });
+
+      test("BinaryData, getSignature, returns signature", () {
+        ByteBuffer udpBuffer = getSimpleUdpPacket();
+        expect(BinaryData.getSignature(udpBuffer), equals(defaultSignature));
+
+        ByteBuffer tcpBuffer = getSimpleTcpPacket();
+        expect(BinaryData.getSignature(tcpBuffer), equals(defaultSignature));
+      });
+
+      test("BinaryData, getSequenceNumber, returns sequence number", () {
+        ByteBuffer udpBuffer = getSimpleUdpPacket();
+        expect(BinaryData.getSequenceNumber(udpBuffer), equals(1));
+
+        ByteBuffer tcpBuffer = getSimpleTcpPacket();
+        expect(BinaryData.getSequenceNumber(tcpBuffer), equals(0));
+      });
+
+      test("BinaryData, getPacketType, returns the packet type integer", () {
+        ByteBuffer udpBuffer = getSimpleUdpPacket();
+        expect(BinaryData.getPacketType(udpBuffer), equals(BINARY_TYPE_CUSTOM));
+
+        ByteBuffer tcpBuffer = getSimpleTcpPacket();
+        expect(BinaryData.getPacketType(tcpBuffer), equals(BINARY_TYPE_CUSTOM));
+      });
     });
+  }
+
+  ByteBuffer getSimpleTcpPacket() {
+    return BinaryData.writeTcpHeader(
+        BinaryData.bufferFromString(testString), BINARY_TYPE_CUSTOM, defaultSignature, 4);
+  }
+
+  ByteBuffer getSimpleUdpPacket() {
+    return BinaryData.writeUdpHeader
+        (BinaryData.bufferFromString(testString), BINARY_TYPE_CUSTOM, 1, 1, defaultSignature, 4);
   }
 }
 

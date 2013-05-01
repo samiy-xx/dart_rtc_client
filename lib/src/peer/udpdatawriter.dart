@@ -27,8 +27,6 @@ class UDPDataWriter extends BinaryDataWriter {
 
     while (read < buffer.lengthInBytes) {
       int toRead = leftToRead > _writeChunkSize ? _writeChunkSize : leftToRead;
-      //print("$sequence $totalSequences");
-      //ByteBuffer toAdd = new Uint8List.view(buffer, read, toRead).buffer;
       ByteBuffer toAdd = new Uint8List.fromList(new Uint8List.view(buffer).sublist(read, read+toRead));
       ByteBuffer b = addUdpHeader(
           //buffer.slice(read, read + toRead),

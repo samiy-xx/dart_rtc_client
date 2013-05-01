@@ -1,6 +1,8 @@
 library rtc_client_tests;
 
 import 'dart:html';
+import 'dart:typed_data';
+
 import '../packages/unittest/unittest.dart';
 import '../packages/unittest/html_enhanced_config.dart';
 import '../packages/unittest/html_config.dart';

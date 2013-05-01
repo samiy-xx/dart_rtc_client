@@ -356,18 +356,18 @@ class ChannelClient implements RtcClient,
     throw new UnsupportedError("sendBlob is a work in progress");
   }
 
-  Future<int> sendFile(String peerId, ArrayBuffer data) {
+  Future<int> sendFile(String peerId, ByteBuffer data) {
       return _getDataPeerWrapper(peerId).sendBuffer(data, BINARY_TYPE_FILE, true);
   }
 
   /**
    * Sends an arraybuffer to peer
    */
-  Future<int> sendArrayBufferReliable(String peerId, ArrayBuffer data) {
+  Future<int> sendArrayBufferReliable(String peerId, ByteBuffer data) {
       return _getDataPeerWrapper(peerId).sendBuffer(data, BINARY_TYPE_CUSTOM, true);
   }
 
-  void sendArrayBufferUnReliable(String peerId, ArrayBuffer data) {
+  void sendArrayBufferUnReliable(String peerId, ByteBuffer data) {
     if (_peerManager.reliableDataChannels)
       throw new Exception("Can not send unreliable data with reliable channel");
     _getDataPeerWrapper(peerId).sendBuffer(data, BINARY_TYPE_CUSTOM, false);
@@ -383,13 +383,13 @@ class ChannelClient implements RtcClient,
   /**
    * Sends an arraybufferview to peer
    */
-  Future<int> sendArrayBufferViewReliable(String peerId, ArrayBufferView data) {
-    return sendArrayBufferReliable(peerId, data.buffer);
-  }
+  //Future<int> sendArrayBufferViewReliable(String peerId, ArrayBufferView data) {
+  //  return sendArrayBufferReliable(peerId, data.buffer);
+  //}
 
-  void sendArrayBufferViewUnReliable(String peerId, ArrayBufferView data) {
-    sendArrayBufferUnReliable(peerId, data.buffer);
-  }
+  //void sendArrayBufferViewUnReliable(String peerId, ArrayBufferView data) {
+  //  sendArrayBufferUnReliable(peerId, data.buffer);
+  //}
 
   DataPeerWrapper _getDataPeerWrapper(String peerId) {
     try {
@@ -549,7 +549,7 @@ class ChannelClient implements RtcClient,
   /**
    * Implements BinaryDataReceivedEventListener onPeerBuffer
    */
-  void onPeerBuffer(PeerWrapper pw, ArrayBuffer b) {
+  void onPeerBuffer(PeerWrapper pw, ByteBuffer b) {
     if (_binaryController.hasListener)
       _binaryController.add(new BinaryBufferCompleteEvent(pw, b));
   }
@@ -557,7 +557,7 @@ class ChannelClient implements RtcClient,
   /**
    * Implements BinaryDataReceivedEventListener onPeerReadChunk
    */
-  void onPeerReadChunk(PeerWrapper pw, ArrayBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesTotal) {
+  void onPeerReadChunk(PeerWrapper pw, ByteBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesTotal) {
     if (_binaryController.hasListener)
       _binaryController.add(new BinaryChunkEvent(pw, buffer, signature, sequence, totalSequences, bytes, bytesTotal));
   }

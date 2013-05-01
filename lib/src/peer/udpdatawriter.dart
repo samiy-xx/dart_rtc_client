@@ -12,12 +12,12 @@ class UDPDataWriter extends BinaryDataWriter {
     _last = new DateTime.now().millisecondsSinceEpoch;
   }
 
-  Future<int> send(ArrayBuffer buffer, int packetType, bool reliable) {
+  Future<int> send(ByteBuffer buffer, int packetType, bool reliable) {
     Completer completer = new Completer();
     if (!reliable)
       completer.complete(0);
 
-    int totalSequences = (buffer.byteLength ~/ _writeChunkSize) + 1;
+    int totalSequences = (buffer.lengthInBytes ~/ _writeChunkSize) + 1;
     int sequence = 1;
     int read = 0;
 
@@ -25,15 +25,16 @@ class UDPDataWriter extends BinaryDataWriter {
     SequenceCollection sc = _sequencer.createNewSequenceCollection(signature, totalSequences);
     sc.completer = completer;
 
-    while (read < buffer.byteLength) {
-      int toRead = buffer.byteLength > _writeChunkSize ? _writeChunkSize : buffer.byteLength;
-      ArrayBuffer b = addUdpHeader(
-          buffer.slice(read, read + toRead),
+    while (read < buffer.lengthInBytes) {
+      int toRead = buffer.lengthInBytes > _writeChunkSize ? _writeChunkSize : buffer.lengthInBytes;
+      ByteBuffer b = addUdpHeader(
+          //buffer.slice(read, read + toRead),
+          new Uint8List.view(buffer, read, read + toRead).buffer,
           packetType,
           sequence,
           totalSequences,
           signature,
-          buffer.byteLength
+          buffer.lengthInBytes
       );
       addSequence(signature, sequence, totalSequences, b, reliable);
       sequence++;
@@ -43,7 +44,7 @@ class UDPDataWriter extends BinaryDataWriter {
     return completer.future;
   }
 
-  void addSequence(int signature, int sequence, int total, ArrayBuffer buffer, bool resend) {
+  void addSequence(int signature, int sequence, int total, ByteBuffer buffer, bool resend) {
     var sse =  new SendSequenceEntry(sequence, buffer);
     sse.resend = resend;
 
@@ -62,7 +63,7 @@ class UDPDataWriter extends BinaryDataWriter {
 
     _sequencer.removeSequence(signature, sequence);
     if (!BinaryData.isCommand(sse.data))
-      _signalWroteChunk(collection.signature, sse.sequence, collection.total, sse.data.byteLength);
+      _signalWroteChunk(collection.signature, sse.sequence, collection.total, sse.data.lengthInBytes);
     return sse.timeSent;
   }
 
@@ -82,7 +83,7 @@ class UDPDataWriter extends BinaryDataWriter {
         _send(sse.data);
         //new Logger().Debug("Sent chunk ${collection.signature} ${sse.sequence} RESEND = ${sse.resend} PACKETTYPE = ${BinaryData.getPacketType(sse.data)}");
         sse.markSent();
-        _signalWriteChunk(collection.signature, sse.sequence, collection.total, sse.data.byteLength);
+        _signalWriteChunk(collection.signature, sse.sequence, collection.total, sse.data.lengthInBytes);
         if (!sse.resend)
           removeSequence(collection.signature, sse.sequence);
       } else {

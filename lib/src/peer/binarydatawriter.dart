@@ -6,7 +6,7 @@ part of rtc_client;
  */
 abstract class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListener> {
   PeerWrapper _wrapper;
-  
+
   // Datachannel where to write to
   RtcDataChannel _writeChannel;
 
@@ -41,16 +41,16 @@ abstract class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListen
   }
 
   void writeAck(int signature, int sequence, int total);
-  Future<int> send(ArrayBuffer buffer, int packetType, bool reliable);
+  Future<int> send(ByteBuffer buffer, int packetType, bool reliable);
 
-  void _send(ArrayBuffer buf) {
+  void _send(ByteBuffer buf) {
     try {
       var toSend = _wrapToString ? wrapToString(buf) : buf;
       _writeChannel.send(toSend);
     } on DomException catch(e, s) {
       new Logger().Error("Error $e");
       new Logger().Error("Trace $s");
-      new Logger().Error("Attempted to send buffer of ${buf.byteLength} bytes");
+      new Logger().Error("Attempted to send buffer of ${buf.lengthInBytes} bytes");
       new Logger().Error("Buffer valid = ${BinaryData.isValid(buf, _binaryProtocol)}");
       new Logger().Error("Channel state = ${_writeChannel.readyState}");
     }
@@ -60,20 +60,20 @@ abstract class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListen
     _roundTripCalculator.calculateLatency(time);
   }
 
-  bool isValid(ArrayBuffer buffer) {
+  bool isValid(ByteBuffer buffer) {
     return BinaryData.isValid(buffer, _binaryProtocol);
   }
 
-  String wrapToString(ArrayBuffer buf) {
-    Uint8Array arr = new Uint8Array.fromBuffer(buf);
-    return new String.fromCharCodes(arr.toList());
+  String wrapToString(ByteBuffer buf) {
+    //Uint8Array arr = new Uint8Array.fromBuffer(buf);
+    return new String.fromCharCodes(buf);
   }
 
-  ArrayBuffer addUdpHeader(ArrayBuffer buf, int packetType, int sequenceNumber, int totalSequences, int signature, int total) {
+  ByteBuffer addUdpHeader(ByteBuffer buf, int packetType, int sequenceNumber, int totalSequences, int signature, int total) {
     return BinaryData.writeUdpHeader(buf, packetType, sequenceNumber, totalSequences, signature, total);
   }
 
-  ArrayBuffer addTcpHeader(ArrayBuffer buf, int packetType, int signature, int total) {
+  ByteBuffer addTcpHeader(ByteBuffer buf, int packetType, int signature, int total) {
     return BinaryData.writeTcpHeader(buf, packetType, signature, total);
   }
 }

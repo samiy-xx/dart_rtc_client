@@ -26,7 +26,7 @@ class QueueClient extends ChannelClient  {
   QueueClient(DataSource ds) : super(ds){
     _queued = new List<QueueUser>();
     _queueController = new StreamController.broadcast();
-    _signalHandler.registerHandler(PACKET_TYPE_QUEUE, _queuePacketHandler);
+    //_signalHandler.registerHandler(PACKET_TYPE_QUEUE, _queuePacketHandler);
   }
 
   /**
@@ -53,8 +53,8 @@ class QueueClient extends ChannelClient  {
 
   void _queuePacketHandler(QueuePacket p) {
     PeerWrapper pw = _peerManager.findWrapper(p.id);
-    if (_packetController.hasListener)
-      _packetController.add(new PacketEvent(p, pw));
+    //if (_packetController.hasListener)
+    //  _packetController.add(new PacketEvent(p, pw));
 
     if (!_queueController.hasListener)
       return;

@@ -41,21 +41,19 @@ const int TCP_PROTOCOL_FIRST_CONTENT_POSITION = 12;
  */
 class BinaryData {
 
-  static ArrayBuffer bufferFromString(String s) {
-    ArrayBuffer buffer = new ArrayBuffer(s.length);
-    Uint8Array array = new Uint8Array.fromBuffer(buffer);
-
+  static ByteBuffer bufferFromString(String s) {
+    Uint8List array = new Uint8List(s.length);
     for (int i = 0; i < s.length; i++) {
       array[i] = s.codeUnitAt(i);
     }
 
-    return buffer;
+    return array.buffer;
   }
 
   /**
    * Creates ArrayBuffer from Packet
    */
-  static ArrayBuffer bufferFromPacket(Packet p) {
+  static ByteBuffer bufferFromPacket(Packet p) {
     String packet = PacketFactory.get(p);
     return bufferFromString(packet);
   }
@@ -70,21 +68,21 @@ class BinaryData {
   /**
    * Converts ArrayBuffer to string
    */
-  static String stringFromBuffer(ArrayBuffer buffer) {
-    Uint8Array view = new Uint8Array.fromBuffer(buffer);
-    return new String.fromCharCodes(view.toList());
+  static String stringFromBuffer(ByteBuffer buffer) {
+    return new String.fromCharCodes(buffer);
   }
 
   /**
    * Converts ArrayBuffer to Packet
    */
-  static Packet packetFromBuffer(ArrayBuffer buffer) {
+  static Packet packetFromBuffer(ByteBuffer buffer) {
     PacketFactory.getPacketFromString(stringFromBuffer(buffer));
   }
 
-  static ArrayBuffer createAck(int signature, int sequence) {
-    ArrayBuffer ackBuffer = new ArrayBuffer(17);
-    DataView viewAck = new DataView(ackBuffer);
+  static ByteBuffer createAck(int signature, int sequence) {
+    ByteBuffer ackBuffer = new Uint8List(17).buffer;
+    ByteData viewAck = new ByteData.view(ackBuffer);
+    //DataView viewAck = new DataView(ackBuffer);
 
     viewAck.setUint8(
         PROTOCOL_STARTBYTE_POSITION,
@@ -132,8 +130,8 @@ class BinaryData {
   /**
    * Needs a bit of tuning =)
    */
-  static bool hasHeader(ArrayBuffer buffer) {
-    DataView view = new DataView(buffer, 0, 1);
+  static bool hasHeader(ByteBuffer buffer) {
+    ByteData view = new ByteData.view(buffer, 0, 1);
     try {
       if (view.getUint8(PROTOCOL_STARTBYTE_POSITION) == 0xFF)
         return true;
@@ -143,42 +141,42 @@ class BinaryData {
 
   }
 
-  static bool isCommand(ArrayBuffer buffer) {
-    if (buffer.byteLength == 17)
+  static bool isCommand(ByteBuffer buffer) {
+    if (buffer.lengthInBytes == 17)
       return true;
 
     return false;
   }
 
-  static int getCommand(ArrayBuffer buffer) {
-    return new DataView(buffer).getUint8(16);
+  static int getCommand(ByteBuffer buffer) {
+    return new ByteData.view(buffer).getUint8(16);
   }
 
-  static int getSignature(ArrayBuffer buffer) {
-    DataView view = new DataView(buffer, 0, 16);
+  static int getSignature(ByteBuffer buffer) {
+    ByteData view = new ByteData.view(buffer, 0, 16);
     return view.getUint32(UDP_PROTOCOL_SIGNATURE_POSITION);
   }
 
-  static int getSequenceNumber(ArrayBuffer buffer) {
-    DataView view = new DataView(buffer, 0, 16);
+  static int getSequenceNumber(ByteBuffer buffer) {
+    ByteData view = new ByteData.view(buffer, 0, 16);
     return view.getUint16(UDP_PROTOCOL_SEQUENCE_POSITION);
   }
 
-  static int getPacketType(ArrayBuffer buffer) {
-    DataView view = new DataView(buffer, 0, 2);
+  static int getPacketType(ByteBuffer buffer) {
+    ByteData view = new ByteData.view(buffer, 0, 2);
     return view.getUint8(PROTOCOL_PACKETTYPE_POSITION);
   }
 
-  static ArrayBuffer writeUdpHeader(ArrayBuffer buf, int packetType, int sequenceNumber, int totalSequences, int signature, int total) {
-    Uint8Array content = new Uint8Array.fromBuffer(buf);
-    ArrayBuffer resultBuffer = new ArrayBuffer(buf.byteLength + SIZEOF_UDP_HEADER);
-    DataView writer = new DataView(resultBuffer);
+  static ByteBuffer writeUdpHeader(ByteBuffer buf, int packetType, int sequenceNumber, int totalSequences, int signature, int total) {
+    Uint8List content = new Uint8List.view(buf);
+    ByteBuffer resultBuffer = new Uint8List(buf.lengthInBytes + SIZEOF_UDP_HEADER).buffer;
+    ByteData writer = new ByteData.view(resultBuffer);
 
     writer.setUint8(PROTOCOL_STARTBYTE_POSITION, FULL_BYTE); // 0
     writer.setUint8(PROTOCOL_PACKETTYPE_POSITION, packetType); // 1
     writer.setUint16(UDP_PROTOCOL_SEQUENCE_POSITION, sequenceNumber); // 2
     writer.setUint16(UDP_PROTOCOL_TOTALSEQUENCE_POSITION, totalSequences); //4
-    writer.setUint16(UDP_PROTOCOL_BYTELENGTH_POSITION, buf.byteLength); //6
+    writer.setUint16(UDP_PROTOCOL_BYTELENGTH_POSITION, buf.lengthInBytes); //6
     writer.setUint32(UDP_PROTOCOL_TOTALBYTELENGTH_POSITION, total); //8
     writer.setUint32(UDP_PROTOCOL_SIGNATURE_POSITION, signature); //12
 
@@ -189,14 +187,14 @@ class BinaryData {
     return writer.buffer;
   }
 
-  static ArrayBuffer writeTcpHeader(ArrayBuffer buf, int packetType, int signature, int total) {
-    Uint8Array content = new Uint8Array.fromBuffer(buf);
-    ArrayBuffer resultBuffer = new ArrayBuffer(buf.byteLength + SIZEOF_TCP_HEADER);
-    DataView writer = new DataView(resultBuffer);
+  static ByteBuffer writeTcpHeader(ByteBuffer buf, int packetType, int signature, int total) {
+    Uint8List content = new Uint8List.view(buf);
+    ByteBuffer resultBuffer = new Uint8List(buf.lengthInBytes + SIZEOF_TCP_HEADER).buffer;
+    ByteData writer = new ByteData.view(resultBuffer);
 
     writer.setUint8(PROTOCOL_STARTBYTE_POSITION, FULL_BYTE); // 0
     writer.setUint8(PROTOCOL_PACKETTYPE_POSITION, packetType); // 1
-    writer.setUint16(TCP_PROTOCOL_BYTELENGTH_POSITION, buf.byteLength); // 2
+    writer.setUint16(TCP_PROTOCOL_BYTELENGTH_POSITION, buf.lengthInBytes); // 2
     writer.setUint32(TCP_PROTOCOL_TOTALBYTELENGTH_POSITION, total);
     writer.setUint32(TCP_PROTOCOL_SIGNATURE_POSITION, signature);
 
@@ -207,7 +205,7 @@ class BinaryData {
     return writer.buffer;
   }
 
-  static bool isValid(ArrayBuffer buffer, int protocol) {
+  static bool isValid(ByteBuffer buffer, int protocol) {
     if (protocol == BINARY_PROTOCOL_UDP){
       return isValidUdp(buffer);
     } else {
@@ -215,8 +213,8 @@ class BinaryData {
     }
   }
 
-  static bool isValidTcp(ArrayBuffer buf) {
-    DataView view = new DataView(buf, 0, SIZEOF_TCP_HEADER);
+  static bool isValidTcp(ByteBuffer buf) {
+    ByteData view = new ByteData.view(buf, 0, SIZEOF_TCP_HEADER);
 
     if (view.getUint8(PROTOCOL_STARTBYTE_POSITION) != FULL_BYTE) { // 0
       new Logger().Warning("binarydata.dart Failed checking start byte");
@@ -251,8 +249,8 @@ class BinaryData {
     return true;
   }
 
-  static bool isValidUdp(ArrayBuffer buf) {
-    DataView view = new DataView(buf, 0, SIZEOF_UDP_HEADER);
+  static bool isValidUdp(ByteBuffer buf) {
+    ByteData view = new ByteData.view(buf, 0, SIZEOF_UDP_HEADER);
     try {
       if (view.getUint8(PROTOCOL_STARTBYTE_POSITION) != FULL_BYTE) { // 0
         new Logger().Warning("binarydata.dart Failed checking start byte");

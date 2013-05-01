@@ -65,27 +65,27 @@ abstract class RtcClient {
   /**
    * Sends a file read as ArayBuffer trough peer connection
    */
-  Future<int> sendFile(String peerId, ArrayBuffer data);
+  Future<int> sendFile(String peerId, ByteBuffer data);
 
   /**
    * Sends an ArrayBuffer unreliably trough peer connection
    */
-  void sendArrayBufferUnReliable(String peerId, ArrayBuffer data);
+  void sendArrayBufferUnReliable(String peerId, ByteBuffer data);
 
   /**
    * Sends an ArrayBuffer reliably trough peer connection
    */
-  Future<int> sendArrayBufferReliable(String peerId, ArrayBuffer data);
+  Future<int> sendArrayBufferReliable(String peerId, ByteBuffer data);
 
   /**
    * Sends an ArraBufferView unreliably trough peer connection
    */
-  void sendArrayBufferViewUnReliable(String peerId, ArrayBufferView data);
+  //void sendArrayBufferViewUnReliable(String peerId, ArrayBufferView data);
 
   /**
    * Sends an ArraBufferView reliably trough peer connection
    */
-  Future<int>  sendArrayBufferViewReliable(String peerId, ArrayBufferView data);
+  //Future<int>  sendArrayBufferViewReliable(String peerId, ArrayBufferView data);
   /**
    * Event that fires when a remote peer offers an video or audio stream
    */

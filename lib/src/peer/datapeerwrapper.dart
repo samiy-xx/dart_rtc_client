@@ -115,7 +115,7 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
     throw new NotImplementedException("Sending blob is not implemented");
   }
 
-  Future<int> sendBuffer(ArrayBuffer buf, int packetType, bool reliable) {
+  Future<int> sendBuffer(ByteBuffer buf, int packetType, bool reliable) {
     return _binaryWriter.send(buf, packetType, reliable);
   }
 
@@ -136,7 +136,7 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
   /**
    * Implements BinaryDataReceivedEventListener onBuffer
    */
-  void onPeerBuffer(PeerWrapper pw, ArrayBuffer b) {
+  void onPeerBuffer(PeerWrapper pw, ByteBuffer b) {
     //new Logger().Debug("(datapeerwrapper.dart) got buffer, length ${b.byteLength}");
   }
 
@@ -147,7 +147,7 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
   /**
    * Implements BinaryDataReceivedEventListener onReadChunk
    */
-  void onPeerReadChunk(PeerWrapper pw, ArrayBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesTotal) {
+  void onPeerReadChunk(PeerWrapper pw, ByteBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesTotal) {
     if (_binaryWriter is UDPDataWriter)
       (_binaryWriter as UDPDataWriter).writeAck(signature, sequence, totalSequences);
   }

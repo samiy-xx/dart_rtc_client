@@ -1,8 +1,8 @@
 part of rtc_client;
 
 class UDPDataReader extends BinaryDataReader {
-  ArrayBuffer _latest;
-  DataView _latestView;
+  ByteBuffer _latest;
+  ByteData _latestView;
   Sequencer _sequencer;
   int _lastProcessed;
   /* Length of data for currently processed object */
@@ -48,7 +48,7 @@ class UDPDataReader extends BinaryDataReader {
    * Reads an ArrayBuffer
    * Can be whole packet or partial
    */
-  void readChunk(ArrayBuffer buf) {
+  void readChunk(ByteBuffer buf) {
     _lastProcessed = new DateTime.now().millisecondsSinceEpoch;
 
     int i = 0;
@@ -58,8 +58,9 @@ class UDPDataReader extends BinaryDataReader {
       return;
     }
 
-    DataView v = new DataView(buf);
-    int chunkLength = v.byteLength;
+    //DataView v = new DataView(buf);
+    ByteData v = new ByteData.view(buf);
+    int chunkLength = v.lengthInBytes;
     while (i < chunkLength) {
 
       if (_currentReadState == BinaryReadState.INIT_READ) {
@@ -117,23 +118,23 @@ class UDPDataReader extends BinaryDataReader {
     return _sequencer.hasSequence(_signature, _currentChunkSequence);
   }
 
-  void addToSequencer(ArrayBuffer buffer, int signature, int sequence) {
+  void addToSequencer(ByteBuffer buffer, int signature, int sequence) {
     SequenceCollection sc = _sequencer.createNewSequenceCollection(signature, _totalSequences);
     sc.setEntry(new SequenceEntry(sequence, buffer));
   }
 
-  ArrayBuffer buildCompleteBuffer(int signature) {
+  ByteBuffer buildCompleteBuffer(int signature) {
     _watch.reset();
     _watch.start();
     SequenceCollection sc = _sequencer.getSequenceCollection(signature);
-    ArrayBuffer complete = new ArrayBuffer(_contentTotalLength);
-    DataView completeView = new DataView(complete);
+    ByteBuffer complete = new Uint8List(_contentTotalLength).buffer;
+    ByteData completeView = new ByteData.view(complete);
     int k = 0;
     for (int i = 0; i < _totalSequences; i++) {
-      ArrayBuffer part = sc.getEntry(i + 1).data;
-      DataView partView = new DataView(part);
+      ByteBuffer part = sc.getEntry(i + 1).data;
+      ByteData partView = new ByteData.view(part);
 
-      for (int j = 0; j < part.byteLength; j++) {
+      for (int j = 0; j < part.lengthInBytes; j++) {
         completeView.setUint8(k, partView.getUint8(j));
         k++;
       }
@@ -149,7 +150,7 @@ class UDPDataReader extends BinaryDataReader {
     return _sequencer.getSequenceCollection(signature).isComplete;
   }
 
-  ArrayBuffer getLatestChunk() {
+  ByteBuffer getLatestChunk() {
     return _latest;
   }
 
@@ -183,8 +184,8 @@ class UDPDataReader extends BinaryDataReader {
   void _process_read_length(int b) {
     _currentChunkContentLength = b;
     _leftToRead = b;
-    _latest = new ArrayBuffer(b);
-    _latestView = new DataView(_latest);
+    _latest = new Uint8List(b).buffer;
+    _latestView = new ByteData.view(_latest);
     _currentReadState = BinaryReadState.READ_TOTAL_LENGTH;
   }
 
@@ -247,7 +248,7 @@ class UDPDataReader extends BinaryDataReader {
     _totalRead = 0;
     //_contentTotalLength = 0;
     //new Logger().Debug("Processing buffer");
-    ArrayBuffer buffer;
+    ByteBuffer buffer;
     if (sequencerComplete(_signature)) {
       //new Logger().Debug("Sequence complete, building complete buffer");
       buffer = buildCompleteBuffer(_signature);
@@ -258,7 +259,7 @@ class UDPDataReader extends BinaryDataReader {
       _doSignalingBasedOnBufferType(buffer);
   }
 
-  void _doSignalingBasedOnBufferType(ArrayBuffer buffer) {
+  void _doSignalingBasedOnBufferType(ByteBuffer buffer) {
       switch (_packetType) {
         case BINARY_TYPE_STRING:
           String s = BinaryData.stringFromBuffer(buffer);
@@ -275,7 +276,7 @@ class UDPDataReader extends BinaryDataReader {
       }
   }
 
-  void _process_command(int command, ArrayBuffer buffer) {
+  void _process_command(int command, ByteBuffer buffer) {
 
     switch (command) {
       case BINARY_PACKET_ACK:
@@ -298,21 +299,22 @@ class UDPDataReader extends BinaryDataReader {
   /*
    * Signal listeners that a chunk has been read
    */
-  void _signalReadChunk(ArrayBuffer buf, int signature, int sequence, int totalSequences, int bytes, int bytesTotal) {
+  void _signalReadChunk(ByteBuffer buf, int signature, int sequence, int totalSequences, int bytes, int bytesTotal) {
     listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
       l.onPeerReadChunk(_wrapper, buf, signature, sequence, totalSequences, bytes, bytesTotal);
     });
   }
 
-  void _signalReadBuffer(ArrayBuffer buffer) {
+  void _signalReadBuffer(ByteBuffer buffer) {
     listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
       l.onPeerBuffer(_wrapper, buffer);
     });
   }
 
-  void _signalReadFile(ArrayBuffer buffer) {
+  void _signalReadFile(ByteBuffer buffer) {
     listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
-      l.onPeerFile(_wrapper, new Blob([new Uint8Array.fromBuffer(buffer)]));
+      //l.onPeerFile(_wrapper, new Blob([new Uint8Array.fromBuffer(buffer)]));
+      l.onPeerFile(_wrapper, new Blob([buffer]));
     });
   }
 

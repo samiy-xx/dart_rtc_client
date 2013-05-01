@@ -1,7 +1,7 @@
 part of rtc_client_tests;
 
 class UDPReaderTests implements BinaryDataReceivedEventListener {
-  final int HEADER_SIZE = 16;
+
   final String testString = "0123456789";
   UDPDataReader reader;
   ByteBuffer result;
@@ -21,13 +21,15 @@ class UDPReaderTests implements BinaryDataReceivedEventListener {
       test("BinaryDataReader, readChunk, can read a chunk", () {
          //ArrayBuffer buffer = BinaryData.writeUdpHeader(genBufferOfSize(100), BINARY_TYPE_CUSTOM, 1, 1, 1, 100);
          ByteBuffer buffer = BinaryData.writeUdpHeader(BinaryData.bufferFromString(testString), BINARY_TYPE_CUSTOM, 1, 1, 1, 10);
-         reader.readChunk(buffer);
-         expect(result.lengthInBytes, equals(buffer.lengthInBytes - HEADER_SIZE));
-         print(result.lengthInBytes);
-         String out = BinaryData.stringFromBuffer(new Uint8List.view(result, 0, 9).buffer);
-         //String out = BinaryData.stringFromBuffer(result.slice(0, 19));
-         print(out);
-         expect(out, equals(testString));
+         String t = BinaryData.stringFromBuffer(buffer);
+         reader.readChunkString(t).then((a) {
+           expect(result.lengthInBytes, equals(buffer.lengthInBytes - SIZEOF_UDP_HEADER));
+           print(result.lengthInBytes);
+           String out = BinaryData.stringFromBuffer(new Uint8List.view(result, 0, 9).buffer);
+           //String out = BinaryData.stringFromBuffer(result.slice(0, 19));
+           print(out);
+           expect(out, equals(testString));
+         });
 
       });
     });

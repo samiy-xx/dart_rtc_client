@@ -20,16 +20,19 @@ class UDPDataWriter extends BinaryDataWriter {
     int totalSequences = (buffer.lengthInBytes ~/ _writeChunkSize) + 1;
     int sequence = 1;
     int read = 0;
-
+    int leftToRead = buffer.lengthInBytes;
     int signature = new Random().nextInt(100000000);
     SequenceCollection sc = _sequencer.createNewSequenceCollection(signature, totalSequences);
     sc.completer = completer;
 
     while (read < buffer.lengthInBytes) {
-      int toRead = buffer.lengthInBytes > _writeChunkSize ? _writeChunkSize : buffer.lengthInBytes;
+      int toRead = leftToRead > _writeChunkSize ? _writeChunkSize : leftToRead;
+      //print("$sequence $totalSequences");
+      //ByteBuffer toAdd = new Uint8List.view(buffer, read, toRead).buffer;
+      ByteBuffer toAdd = new Uint8List.fromList(new Uint8List.view(buffer).sublist(read, read+toRead));
       ByteBuffer b = addUdpHeader(
           //buffer.slice(read, read + toRead),
-          new Uint8List.view(buffer, read, read + toRead).buffer,
+          toAdd,
           packetType,
           sequence,
           totalSequences,
@@ -39,6 +42,8 @@ class UDPDataWriter extends BinaryDataWriter {
       addSequence(signature, sequence, totalSequences, b, reliable);
       sequence++;
       read += toRead;
+      leftToRead -= toRead;
+
     }
 
     return completer.future;

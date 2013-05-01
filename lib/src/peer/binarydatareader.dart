@@ -28,6 +28,7 @@ abstract class BinaryDataReader extends GenericEventTarget<BinaryDataEventListen
     }
 
     else {
+
       Future f = readChunkString(e.data).then((_) {
 
       });

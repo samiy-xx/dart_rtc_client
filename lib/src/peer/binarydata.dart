@@ -69,7 +69,7 @@ class BinaryData {
    * Converts ArrayBuffer to string
    */
   static String stringFromBuffer(ByteBuffer buffer) {
-    return new String.fromCharCodes(buffer);
+    return new String.fromCharCodes(new Uint8List.view(buffer));
   }
 
   /**

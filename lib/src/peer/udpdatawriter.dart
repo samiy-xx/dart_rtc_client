@@ -83,7 +83,7 @@ class UDPDataWriter extends BinaryDataWriter {
         continue;
 
       if (!sse.sent) {
-        _send(sse.data);
+        write(sse.data);
         //new Logger().Debug("Sent chunk ${collection.signature} ${sse.sequence} RESEND = ${sse.resend} PACKETTYPE = ${BinaryData.getPacketType(sse.data)}");
         sse.markSent();
         _signalWriteChunk(collection.signature, sse.sequence, collection.total, sse.data.lengthInBytes);
@@ -92,7 +92,7 @@ class UDPDataWriter extends BinaryDataWriter {
       } else {
         if ((sse.timeReSent + currentLatency) < now) {
           _roundTripCalculator.addToLatency(50);
-          _send(sse.data);
+          write(sse.data);
           new Logger().Debug("RE-Sent chunk ${collection.signature} ${sse.sequence} RESEND = ${sse.resend} PACKETTYPE = ${BinaryData.getPacketType(sse.data)}");
           sse.markReSent();
         }

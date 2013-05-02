@@ -5,7 +5,7 @@ class TCPDataWriter extends BinaryDataWriter {
 
   }
 
-  Future<int>  send(ByteBuffer buffer, int packetType, bool reliable) {
+  Future<int>  send(ByteBuffer buffer, int packetType) {
     Completer completer = new Completer();
     int signature = new Random().nextInt(100000000);
     int totalSequences = (buffer.lengthInBytes ~/ _writeChunkSize) + 1;
@@ -20,10 +20,11 @@ class TCPDataWriter extends BinaryDataWriter {
           signature,
           buffer.lengthInBytes
       );
-      _send(b);
+      write(b);
       read += toRead;
       leftToRead -= toRead;
     }
+    completer.complete(1);
     return completer.future;
   }
 }

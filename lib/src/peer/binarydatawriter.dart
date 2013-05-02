@@ -43,7 +43,7 @@ abstract class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListen
   void writeAck(int signature, int sequence, int total);
   Future<int> send(ByteBuffer buffer, int packetType, bool reliable);
 
-  void _send(ByteBuffer buf) {
+  void write(ByteBuffer buf) {
     try {
       var toSend = _wrapToString ? wrapToString(buf) : buf;
       _writeChannel.send(toSend);

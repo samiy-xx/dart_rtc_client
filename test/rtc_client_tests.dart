@@ -2,6 +2,7 @@ library rtc_client_tests;
 
 import 'dart:html';
 import 'dart:typed_data';
+import 'dart:math';
 
 import '../packages/unittest/unittest.dart';
 import '../packages/unittest/html_enhanced_config.dart';
@@ -23,6 +24,7 @@ part 'tests/sequencertests.dart';
 part 'tests/udpreadertests.dart';
 part 'tests/udpwritertests.dart';
 part 'tests/tcpwritertests.dart';
+part 'tests/testutils.dart';
 
 void run() {
   useHtmlEnhancedConfiguration();
@@ -32,4 +34,5 @@ void run() {
   new RoundTripTimerTests().run();
   new SequencerTests().run();
   new UDPReaderTests().run();
+  new TcpWriterTests().run();
 }

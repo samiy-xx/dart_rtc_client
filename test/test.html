@@ -12,6 +12,7 @@
       testRunner.waitUntilDone();
       window.addEventListener("message", receiveMessage, false);
       window.addEventListener('error', onError);
+      navigator.webkitStartDart();
     } else {
       navigator.webkitStartDart();
     }
@@ -22,6 +23,7 @@
 
     // if the test harness sends a done message, tell DRT we're done
     function receiveMessage(event) {
+      testRunner.notifyDone();
       if(event.data == 'unittest-suite-done') {
         testRunner.notifyDone();
       }

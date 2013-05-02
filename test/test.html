@@ -6,7 +6,26 @@
 
   <script type="text/javascript">
     // start dart
-    navigator.webkitStartDart();
+    //navigator.webkitStartDart();
+    if (window.testRunner) {
+      testRunner.dumpAsText();
+      testRunner.waitUntilDone();
+      window.addEventListener("message", receiveMessage, false);
+      window.addEventListener('error', onError);
+    } else {
+      navigator.webkitStartDart();
+    }
+
+    function onError(event) {
+      testRunner.notifyDone();
+    }
+
+    // if the test harness sends a done message, tell DRT we're done
+    function receiveMessage(event) {
+      if(event.data == 'unittest-suite-done') {
+        testRunner.notifyDone();
+      }
+    }
   </script>
 </head>
 

@@ -193,7 +193,7 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
   /**
    * Sends an arraybuffer trough the datasource
    */
-  void sendArrayBuffer(ArrayBuffer b) {
+  void sendArrayBuffer(ByteBuffer b) {
     throw new UnimplementedError("Sending ArrayBuffer is not implemented");
   }
 

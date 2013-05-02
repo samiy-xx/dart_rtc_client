@@ -10,16 +10,19 @@ class TCPDataWriter extends BinaryDataWriter {
     int signature = new Random().nextInt(100000000);
     int totalSequences = (buffer.lengthInBytes ~/ _writeChunkSize) + 1;
     int read = 0;
+    int leftToRead = buffer.lengthInBytes;
     while (read < buffer.lengthInBytes) {
-      int toRead = buffer.lengthInBytes > _writeChunkSize ? _writeChunkSize : buffer.lengthInBytes;
+      int toRead = leftToRead > _writeChunkSize ? _writeChunkSize : leftToRead;
+      ByteBuffer toAdd = new Uint8List.fromList(new Uint8List.view(buffer).sublist(read, read+toRead));
       ByteBuffer b = addTcpHeader(
-          //buffer.slice(read, read + toRead),
-          new Uint8List.view(buffer, read, read + toRead).buffer,
+          toAdd,
           packetType,
           signature,
           buffer.lengthInBytes
       );
       _send(b);
+      read += toRead;
+      leftToRead -= toRead;
     }
     return completer.future;
   }

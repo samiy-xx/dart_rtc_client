@@ -12,6 +12,8 @@ import 'package:dart_rtc_common/rtc_common.dart';
 
 part 'mocks/chunksender.dart';
 part 'mocks/binaryeventlistener.dart';
+part 'mocks/mockudpwriter.dart';
+part 'mocks/mocktcpwriter.dart';
 
 part 'tests/binarytests.dart';
 part 'tests/binarywritertests.dart';
@@ -19,10 +21,11 @@ part 'tests/binaryreadertests.dart';
 part 'tests/rtttests.dart';
 part 'tests/sequencertests.dart';
 part 'tests/udpreadertests.dart';
+part 'tests/udpwritertests.dart';
+part 'tests/tcpwritertests.dart';
 
 void run() {
   useHtmlEnhancedConfiguration();
-  //useHtmlConfiguration();
   new BinaryTests().run();
   new BinaryWriterTests().run();
   new BinaryReaderTests().run();

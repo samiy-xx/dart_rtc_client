@@ -65,8 +65,6 @@ abstract class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListen
   }
 
   String wrapToString(ByteBuffer buf) {
-    //Uint8Array arr = new Uint8Array.fromBuffer(buf);
-    //return new String.fromCharCodes(buf);
     return BinaryData.stringFromBuffer(buf);
   }
 

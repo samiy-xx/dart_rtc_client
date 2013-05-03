@@ -52,6 +52,7 @@ class BinaryTests {
         expect(BinaryData.isValidUdp(udpBuffer), equals(true));
       });
 
+
       test("BinaryData, hasHeader, retuns true if header is present", () {
         ByteBuffer udpBuffer = getSimpleUdpPacket();
         expect(BinaryData.hasHeader(udpBuffer), isTrue);

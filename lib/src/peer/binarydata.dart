@@ -223,32 +223,26 @@ class BinaryData {
     ByteData view = new ByteData.view(buf, 0, SIZEOF_TCP_HEADER);
 
     if (view.getUint8(PROTOCOL_STARTBYTE_POSITION) != FULL_BYTE) { // 0
-      new Logger().Warning("binarydata.dart Failed checking start byte");
       return false;
     }
 
     int packetType = view.getUint8(PROTOCOL_PACKETTYPE_POSITION); // 1
     if (packetType == null) {
-      new Logger().Warning("binarydata.dart Failed checking packetType");
       return false;
     }
 
     int byteLength = view.getUint16(TCP_PROTOCOL_BYTELENGTH_POSITION); // 2
     if (byteLength == null || byteLength <= 0) {
-      new Logger().Warning("binarydata.dart Failed checking byteLength");
       return false;
     }
 
     int totalBytes = view.getUint32(TCP_PROTOCOL_TOTALBYTELENGTH_POSITION); // 4
     if (totalBytes == null || totalBytes < byteLength) {
-      new Logger().Warning("binarydata.dart Failed checking totalBytes");
       return false;
     }
 
     int signature = view.getUint32(TCP_PROTOCOL_SIGNATURE_POSITION); // 8
-    //int current = new DateTime.now().millisecondsSinceEpoch;
     if (signature == null) {
-      new Logger().Warning("binarydata.dart Failed checking signature");
       return false;
     }
 
@@ -257,57 +251,42 @@ class BinaryData {
 
   static bool isValidUdp(ByteBuffer buf) {
     ByteData view = new ByteData.view(buf, 0, SIZEOF_UDP_HEADER);
-    try {
-      if (view.getUint8(PROTOCOL_STARTBYTE_POSITION) != FULL_BYTE) { // 0
-        new Logger().Warning("binarydata.dart Failed checking start byte");
-        return false;
-      }
 
-      int packetType = view.getUint8(PROTOCOL_PACKETTYPE_POSITION); // 1
-      if (packetType == null) {
-        new Logger().Warning("binarydata.dart Failed checking packetType");
-        return false;
-      }
-
-      int sequenceNumber = view.getUint16(UDP_PROTOCOL_SEQUENCE_POSITION); // 2
-      if (sequenceNumber == null || sequenceNumber < 1) {
-        new Logger().Warning("binarydata.dart Failed checking sequenceNumber");
-        return false;
-      }
-
-      int totalSequences = view.getUint16(UDP_PROTOCOL_TOTALSEQUENCE_POSITION); // 4
-      if (totalSequences == null || totalSequences < sequenceNumber) {
-        new Logger().Warning("binarydata.dart Failed checking totalSequences");
-        return false;
-      }
-
-      int byteLength = view.getUint16(UDP_PROTOCOL_BYTELENGTH_POSITION); // 6
-      if (byteLength == null || byteLength <= 0) {
-        new Logger().Warning("binarydata.dart Failed checking byteLength");
-        return false;
-      }
-
-      int totalBytes = view.getUint32(UDP_PROTOCOL_TOTALBYTELENGTH_POSITION); // 8
-      if (totalBytes == null || totalBytes < byteLength) {
-        new Logger().Warning("binarydata.dart Failed checking totalBytes");
-        return false;
-      }
-
-      int signature = view.getUint32(UDP_PROTOCOL_SIGNATURE_POSITION); // 12
-      int current = new DateTime.now().millisecondsSinceEpoch;
-      if (signature == null) {
-        new Logger().Warning("binarydata.dart Failed checking signature");
-        return false;
-      }
-
-      return true;
-
-    } catch(e, s) {
-      new Logger().Error("Error $e");
-
+    if (view.getUint8(PROTOCOL_STARTBYTE_POSITION) != FULL_BYTE) { // 0
+      return false;
     }
 
-    return false;
+    int packetType = view.getUint8(PROTOCOL_PACKETTYPE_POSITION); // 1
+    if (packetType == null) {
+      return false;
+    }
+
+    int sequenceNumber = view.getUint16(UDP_PROTOCOL_SEQUENCE_POSITION); // 2
+    if (sequenceNumber == null || sequenceNumber < 1) {
+      return false;
+    }
+
+    int totalSequences = view.getUint16(UDP_PROTOCOL_TOTALSEQUENCE_POSITION); // 4
+    if (totalSequences == null || totalSequences < sequenceNumber) {
+      return false;
+    }
+
+    int byteLength = view.getUint16(UDP_PROTOCOL_BYTELENGTH_POSITION); // 6
+    if (byteLength == null || byteLength <= 0) {
+      return false;
+    }
+
+    int totalBytes = view.getUint32(UDP_PROTOCOL_TOTALBYTELENGTH_POSITION); // 8
+    if (totalBytes == null || totalBytes < byteLength) {
+      return false;
+    }
+
+    int signature = view.getUint32(UDP_PROTOCOL_SIGNATURE_POSITION); // 12
+    if (signature == null) {
+      return false;
+    }
+
+    return true;
   }
 }
 

@@ -76,6 +76,10 @@ class BinaryTests {
 
       test("BinaryData, getSignature, returns signature", () {
         ByteBuffer udpBuffer = getSimpleUdpPacket();
+        BinaryData.isValidUdp(udpBuffer);
+        print(BinaryData.lastError);
+        expect(BinaryData.isValidUdp(udpBuffer), isTrue);
+
         expect(BinaryData.getSignature(udpBuffer), equals(defaultSignature));
 
         ByteBuffer tcpBuffer = getSimpleTcpPacket();
@@ -102,12 +106,12 @@ class BinaryTests {
 
   ByteBuffer getSimpleTcpPacket() {
     return BinaryData.writeTcpHeader(
-        BinaryData.bufferFromString(testString), BINARY_TYPE_CUSTOM, defaultSignature, 4);
+        BinaryData.bufferFromString(testString), BINARY_TYPE_CUSTOM, defaultSignature, testString.length + SIZEOF_TCP_HEADER);
   }
 
   ByteBuffer getSimpleUdpPacket() {
     return BinaryData.writeUdpHeader
-        (BinaryData.bufferFromString(testString), BINARY_TYPE_CUSTOM, 1, 1, defaultSignature, 4);
+        (BinaryData.bufferFromString(testString), BINARY_TYPE_CUSTOM, 1, 1, defaultSignature,  testString.length + SIZEOF_UDP_HEADER);
   }
 }
 

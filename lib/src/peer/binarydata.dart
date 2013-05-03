@@ -40,6 +40,7 @@ const int TCP_PROTOCOL_FIRST_CONTENT_POSITION = 12;
  * Binary reader/writer for Datachannel
  */
 class BinaryData {
+  static String lastError = "";
 
   static ByteBuffer bufferFromString(String s) {
     Uint8List array = new Uint8List(s.length);
@@ -258,31 +259,37 @@ class BinaryData {
 
     int packetType = view.getUint8(PROTOCOL_PACKETTYPE_POSITION); // 1
     if (packetType == null) {
+      lastError = "Packet type: $packetType";
       return false;
     }
 
     int sequenceNumber = view.getUint16(UDP_PROTOCOL_SEQUENCE_POSITION); // 2
     if (sequenceNumber == null || sequenceNumber < 1) {
+      lastError = "Sequence number: $sequenceNumber";
       return false;
     }
 
     int totalSequences = view.getUint16(UDP_PROTOCOL_TOTALSEQUENCE_POSITION); // 4
     if (totalSequences == null || totalSequences < sequenceNumber) {
+      lastError = "Total sequences: $totalSequences";
       return false;
     }
 
     int byteLength = view.getUint16(UDP_PROTOCOL_BYTELENGTH_POSITION); // 6
     if (byteLength == null || byteLength <= 0) {
+      lastError = "Bytelength: $byteLength";
       return false;
     }
 
     int totalBytes = view.getUint32(UDP_PROTOCOL_TOTALBYTELENGTH_POSITION); // 8
     if (totalBytes == null || totalBytes < byteLength) {
+      lastError = "Total bytes: $totalBytes";
       return false;
     }
 
     int signature = view.getUint32(UDP_PROTOCOL_SIGNATURE_POSITION); // 12
     if (signature == null) {
+      lastError = "Signature: $signature";
       return false;
     }
 

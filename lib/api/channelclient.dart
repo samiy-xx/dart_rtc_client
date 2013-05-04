@@ -35,13 +35,9 @@ class ChannelClient implements RtcClient,
   String _myId;
 
   /* TODO: Ugh */
-  String _otherId;
+  //String _otherId;
 
   bool _muteLocalLoopback = true;
-  /**
-   * Signal handler
-   */
-  Signaler get signalHandler => _signalHandler;
 
   /**
    * PeerManager
@@ -81,7 +77,6 @@ class ChannelClient implements RtcClient,
 
   ChannelClient(DataSource ds) {
     _ds = ds;
-    //_ds.subscribe(this);
 
     _peerManager = new PeerManager();
     _peerManager.subscribe(this);
@@ -99,7 +94,6 @@ class ChannelClient implements RtcClient,
     _peerStateChangeController = new StreamController();
     _iceGatheringStateChangeController = new StreamController();
     _dataChannelStateChangeController = new StreamController();
-
 
     _binaryController = new StreamController();
 
@@ -140,7 +134,7 @@ class ChannelClient implements RtcClient,
       _signalHandler.initialize();
     }
 
-    window.onBeforeUnload.listen((event) {
+    window.onBeforeUnload.listen((_) {
       window.setImmediate(() {
         _signalHandler.close();
         _peerManager.closeAll();
@@ -178,7 +172,7 @@ class ChannelClient implements RtcClient,
    */
   ChannelClient setRequireDataChannel(bool b) {
     _defaultPeerCreationConstraints.dataChannelEnabled = b;
-    _signalHandler.setDataChannelsEnabled(b);
+    _peerManager.dataChannelsEnabled = b;
     return this;
   }
 
@@ -186,6 +180,7 @@ class ChannelClient implements RtcClient,
     _peerManager.reliableDataChannels = b;
     return this;
   }
+
   /**
    * Implements RtcClient setChannel
    */
@@ -332,9 +327,9 @@ class ChannelClient implements RtcClient,
   /**
    * Request the server that users gets kicked out of channel
    */
-  void disconnectUser() {
-    if (isChannelOwner && _otherId != null) {
-      _signalHandler.send(PacketFactory.get(new RemoveUserCommand.With(_otherId, _channelId)));
+  void disconnectUser(String id) {
+    if (isChannelOwner) {
+      _signalHandler.send(PacketFactory.get(new RemoveUserCommand.With(id, _channelId)));
     }
   }
 
@@ -380,17 +375,6 @@ class ChannelClient implements RtcClient,
     return w;
   }
 
-  /**
-   * Sends an arraybufferview to peer
-   */
-  //Future<int> sendArrayBufferViewReliable(String peerId, ArrayBufferView data) {
-  //  return sendArrayBufferReliable(peerId, data.buffer);
-  //}
-
-  //void sendArrayBufferViewUnReliable(String peerId, ArrayBufferView data) {
-  //  sendArrayBufferUnReliable(peerId, data.buffer);
-  //}
-
   DataPeerWrapper _getDataPeerWrapper(String peerId) {
     try {
       PeerWrapper w = _getPeerWrapper(peerId);
@@ -424,13 +408,13 @@ class ChannelClient implements RtcClient,
     else if (e is ServerParticipantJoinEvent) {
       // TODO: Why do i even care about id's here
       ServerParticipantJoinEvent p = e;
-      _otherId = p.id;
+      //_otherId = p.id;
     }
 
     else if (e is ServerParticipantIdEvent) {
     // TODO: Why do i even care about id's here
       ServerParticipantIdEvent p = e;
-      _otherId = p.id;
+      //_otherId = p.id;
     }
 
     else if (e is ServerParticipantLeftEvent) {

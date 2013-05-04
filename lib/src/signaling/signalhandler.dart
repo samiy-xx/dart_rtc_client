@@ -10,7 +10,7 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
   PeerManager _peerManager;
   String _id;
   String _channelId;
-  bool _dataChannelsEnabled = false;
+
   bool _createPeerOnJoin = true;
   bool get createPeerOnJoin => _createPeerOnJoin;
 
@@ -61,10 +61,10 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
    * Sets data channels enabled
    * calls the same method in peer manager
    */
-  void setDataChannelsEnabled(bool value) {
-    _dataChannelsEnabled = value;
-    _peerManager.dataChannelsEnabled = value;
-  }
+  //void setDataChannelsEnabled(bool value) {
+   // _dataChannelsEnabled = value;
+   // _peerManager.dataChannelsEnabled = value;
+  //}
 
   /**
    * Initializes the connection to the web socket server

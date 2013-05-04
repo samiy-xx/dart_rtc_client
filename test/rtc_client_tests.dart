@@ -34,4 +34,5 @@ void run() {
   new SequencerTests().run();
   new UDPReaderTests().run();
   new TcpWriterTests().run();
+  new UdpWriterTests().run();
 }

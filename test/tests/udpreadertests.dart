@@ -24,10 +24,10 @@ class UDPReaderTests implements BinaryDataReceivedEventListener {
          String t = BinaryData.stringFromBuffer(buffer);
          reader.readChunkString(t).then((a) {
            expect(result.lengthInBytes, equals(buffer.lengthInBytes - SIZEOF_UDP_HEADER));
-           print(result.lengthInBytes);
+
            String out = BinaryData.stringFromBuffer(new Uint8List.view(result, 0, 9).buffer);
            //String out = BinaryData.stringFromBuffer(result.slice(0, 19));
-           print(out);
+
            expect(out, equals(testString));
          });
 

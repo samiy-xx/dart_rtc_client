@@ -13,5 +13,8 @@ class MockUdpWriter extends UDPDataWriter {
     sentData = true;
     packetsSent++;
     buffers.add(buf);
+    int signature = BinaryData.getSignature(buf);
+    int sequence = BinaryData.getSequenceNumber(buf);
+    receiveAck(signature, sequence);
   }
 }

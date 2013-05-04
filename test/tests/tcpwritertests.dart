@@ -26,47 +26,59 @@ class TcpWriterTests {
       });
 
       test("TcpWriter, Send, Sends data", () {
-        writer.send(buffer, BINARY_TYPE_CUSTOM).then((_) {
-          expect(writer.sentData, isTrue);
+        writer.send(buffer, BINARY_TYPE_CUSTOM).then((int ms) {
+          expectAsync1(ms) {
+            expect(writer.sentData, isTrue);
+          }
         });
       });
 
       test("TcpWriter, Send, Splits bytebuffer in chunks", () {
-        writer.send(buffer, BINARY_TYPE_CUSTOM).then((_) {
-          expect(writer.packetsSent, equals(expectedPacketCount));
-          expect(writer.buffers.length, equals(expectedPacketCount));
+        writer.send(buffer, BINARY_TYPE_CUSTOM).then((int ms) {
+          expectAsync1(ms) {
+            expect(writer.packetsSent, equals(expectedPacketCount));
+            expect(writer.buffers.length, equals(expectedPacketCount));
+          }
         });
       });
 
       test("TcpWriter, Send, Each chunk is valid tcp packet", () {
-        writer.send(buffer, BINARY_TYPE_CUSTOM).then((_) {
-          for (var buffer in writer.buffers) {
-            expect(BinaryData.isValidTcp(buffer), isTrue);
+        writer.send(buffer, BINARY_TYPE_CUSTOM).then((int ms) {
+          expectAsync1(ms) {
+            for (var buffer in writer.buffers) {
+              expect(BinaryData.isValidTcp(buffer), isTrue);
+            }
           }
         });
       });
 
       test("TcpWriter, Send, Each chunk has valid packet type", () {
-        writer.send(buffer, BINARY_TYPE_CUSTOM).then((_) {
-          for (var buffer in writer.buffers) {
-            expect(BinaryData.getPacketType(buffer), equals(BINARY_TYPE_CUSTOM));
+        writer.send(buffer, BINARY_TYPE_CUSTOM).then((int ms) {
+          expectAsync1(ms) {
+            for (var buffer in writer.buffers) {
+              expect(BinaryData.getPacketType(buffer), equals(BINARY_TYPE_CUSTOM));
+            }
           }
         });
       });
 
       test("TcpWriter, Send, Each chunk has header", () {
-        writer.send(buffer, BINARY_TYPE_CUSTOM).then((_) {
-          for (var buffer in writer.buffers) {
-            expect(BinaryData.hasHeader(buffer), isTrue);
+        writer.send(buffer, BINARY_TYPE_CUSTOM).then((int ms) {
+          expectAsync1(ms) {
+            for (var buffer in writer.buffers) {
+              expect(BinaryData.hasHeader(buffer), isTrue);
+            }
           }
         });
       });
 
       test("TcpWriter, Send, Each chunk has same signature", () {
-        writer.send(buffer, BINARY_TYPE_CUSTOM).then((_) {
-          for (var buffer in writer.buffers) {
-            expect(writer.buffers.every(
-                (b) => BinaryData.getSignature(b) == BinaryData.getSignature(writer.buffers[0])), isTrue);
+        writer.send(buffer, BINARY_TYPE_CUSTOM).then((int ms) {
+          expectAsync1(ms) {
+            for (var buffer in writer.buffers) {
+              expect(writer.buffers.every(
+                  (b) => BinaryData.getSignature(b) == BinaryData.getSignature(writer.buffers[0])), isTrue);
+            }
           }
         });
       });

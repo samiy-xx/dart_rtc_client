@@ -49,7 +49,7 @@ class TcpReaderTests implements BinaryDataReceivedEventListener {
     result = b;
   }
   void onPeerFile(PeerWrapper pw, Blob b) {}
-  void onPeerReadChunk(PeerWrapper pw, ByteBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesTotal) {}
+  void onPeerReadTcpChunk(PeerWrapper pw, ByteBuffer buffer, int signature, int bytes, int bytesTotal) {}
 
   void onPeerSendSuccess(int signature, int sequence) {}
 }

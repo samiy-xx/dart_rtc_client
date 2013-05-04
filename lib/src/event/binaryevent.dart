@@ -1,8 +1,5 @@
 part of rtc_client;
 
-const int BINARY_PROTOCOL_TCP = 1;
-const int BINARY_PROTOCOL_UDP = 2;
-
 class BinaryChunkEvent extends RtcEvent {
 
   PeerWrapper peer;

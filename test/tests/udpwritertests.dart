@@ -83,6 +83,17 @@ class UdpWriterTests {
           }
         });
       });
+
+      test("UdpWriter, Send, Each chunk has sequence number", () {
+        writer.send(buffer, BINARY_TYPE_CUSTOM, false).then((int ms) {
+          expectAsync1(ms) {
+            for (var buffer in writer.buffers) {
+              expect(writer.buffers.every(
+                  (b) => BinaryData.getSequenceNumber(b) is int), isTrue);
+            }
+          }
+        });
+      });
     });
   }
 }

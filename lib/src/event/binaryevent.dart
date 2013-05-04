@@ -1,15 +1,20 @@
 part of rtc_client;
 
+const int BINARY_PROTOCOL_TCP = 1;
+const int BINARY_PROTOCOL_UDP = 2;
+
 class BinaryChunkEvent extends RtcEvent {
+
   PeerWrapper peer;
   ByteBuffer buffer;
+  int binary_protocol;
   int signature;
   int sequence;
   int totalSequences;
   int bytes;
   int bytesTotal;
 
-  BinaryChunkEvent(this.peer, this.buffer, this.signature, this.sequence, this.totalSequences, this.bytes, this.bytesTotal);
+  BinaryChunkEvent(this.peer, this.buffer, this.signature, this.sequence, this.totalSequences, this.bytes, this.bytesTotal, this.binary_protocol);
 }
 
 class BinaryChunkWriteEvent extends RtcEvent {
@@ -52,4 +57,3 @@ class BinaryFileCompleteEvent extends RtcEvent {
 
   BinaryFileCompleteEvent(this.peer, this.blob);
 }
-

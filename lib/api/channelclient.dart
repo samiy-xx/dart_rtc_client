@@ -557,9 +557,17 @@ class ChannelClient implements RtcClient,
   /**
    * Implements BinaryDataReceivedEventListener onPeerReadChunk
    */
-  void onPeerReadChunk(PeerWrapper pw, ByteBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesTotal) {
+  void onPeerReadUdpChunk(PeerWrapper pw, ByteBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesTotal) {
     if (_binaryController.hasListener)
-      _binaryController.add(new BinaryChunkEvent(pw, buffer, signature, sequence, totalSequences, bytes, bytesTotal));
+      _binaryController.add(new BinaryChunkEvent(pw, buffer, signature, sequence, totalSequences, bytes, bytesTotal, BINARY_PROTOCOL_UDP));
+  }
+
+  /**
+   * Implements BinaryDataReceivedEventListener onPeerReadChunk
+   */
+  void onPeerReadTcpChunk(PeerWrapper pw, ByteBuffer buffer, int signature, int bytes, int bytesTotal) {
+    if (_binaryController.hasListener)
+      _binaryController.add(new BinaryChunkEvent(pw, buffer, signature, null, null, bytes, bytesTotal, BINARY_PROTOCOL_TCP));
   }
 
   /**

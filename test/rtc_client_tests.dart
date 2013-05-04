@@ -21,6 +21,7 @@ part 'tests/binaryreadertests.dart';
 part 'tests/rtttests.dart';
 part 'tests/sequencertests.dart';
 part 'tests/udpreadertests.dart';
+part 'tests/tcpreadertests.dart';
 part 'tests/udpwritertests.dart';
 part 'tests/tcpwritertests.dart';
 part 'tests/testutils.dart';
@@ -33,6 +34,7 @@ void run() {
   new RoundTripTimerTests().run();
   new SequencerTests().run();
   new UDPReaderTests().run();
+  new TcpReaderTests().run();
   new TcpWriterTests().run();
   new UdpWriterTests().run();
 }

@@ -301,7 +301,7 @@ class UDPDataReader extends BinaryDataReader {
    */
   void _signalReadChunk(ByteBuffer buf, int signature, int sequence, int totalSequences, int bytes, int bytesTotal) {
     listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
-      l.onPeerReadChunk(_wrapper, buf, signature, sequence, totalSequences, bytes, bytesTotal);
+      l.onPeerReadUdpChunk(_wrapper, buf, signature, sequence, totalSequences, bytes, bytesTotal);
     });
   }
 

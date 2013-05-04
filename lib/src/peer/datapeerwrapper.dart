@@ -4,15 +4,9 @@ part of rtc_client;
  * DataChannel enabled peer connection
  */
 class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventListener, BinaryDataSentEventListener {
-  /* DataChannel */
   RtcDataChannel _dataChannel;
-
-  /* Logger */
   Logger _log = new Logger();
-
-  /* Current channel state */
   String _channelState = null;
-
 
   /* reliable tcp, unreliable udp */
   bool _isReliable = false;
@@ -26,12 +20,8 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
   BinaryDataWriter get binaryWriter => _binaryWriter;
   BinaryDataReader get binaryReader => _binaryReader;
 
-  /**
-   * Constructor
-   */
   DataPeerWrapper(PeerManager pm, RtcPeerConnection p) : super(pm, p) {
     _peer.onDataChannel.listen(_onNewDataChannelOpen);
-    //_peer.onStateChange.listen(_onStateChanged);
     _peer.on['onsignalingstatechange'].listen(_onStateChanged);
     _binaryWriter = new UDPDataWriter(this);
     _binaryReader = new UDPDataReader(this);
@@ -62,7 +52,6 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
       _log.Debug("Is Host");
       _sendOffer();
     }
-
   }
 
   /**
@@ -96,14 +85,6 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
     _binaryReader.dataChannel = _dataChannel;
   }
 
-  /**
-   * Sends a packet trough the data channel
-   * deprecate -- PeerPacket is something that should be implemented on application level
-   */
-  //void send(PeerPacket p) {
-  //  sendBuffer(p.toBuffer(), BINARY_TYPE_PACKET, false);
-  //}
-
   void sendString(String s) {
     _dataChannel.send(s);
   }
@@ -118,13 +99,6 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
   Future<int> sendBuffer(ByteBuffer buf, int packetType, bool reliable) {
     return _binaryWriter.send(buf, packetType, reliable);
   }
-
-  /**
-   * Implements BinaryDataReceivedEventListener onPacket
-   */
-  //void onPeerPacket(PeerWrapper pw, PeerPacket p) {
-  //
-  //}
 
   /**
    * Implements BinaryDataReceivedEventListener onString
@@ -147,9 +121,13 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
   /**
    * Implements BinaryDataReceivedEventListener onReadChunk
    */
-  void onPeerReadChunk(PeerWrapper pw, ByteBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesTotal) {
+  void onPeerReadUdpChunk(PeerWrapper pw, ByteBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesTotal) {
     if (_binaryWriter is UDPDataWriter)
       (_binaryWriter as UDPDataWriter).writeAck(signature, sequence, totalSequences);
+  }
+
+  void onPeerReadTcpChunk(PeerWrapper pw, ByteBuffer buffer, int signature, int bytes, int bytesTotal) {
+
   }
 
   void onPeerSendSuccess(int signature, int sequence) {
@@ -170,7 +148,6 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
   void onWroteChunk(PeerWrapper pw, int signature, int sequence, int totalSequences, int bytes) {
 
   }
-
 
   /**
    * Data channel is open and ready for data

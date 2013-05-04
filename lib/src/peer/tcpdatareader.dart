@@ -10,7 +10,7 @@ class TCPDataReader extends BinaryDataReader {
   int _currentChunkContentLength;
   ByteBuffer _latest;
   ByteData _latestView;
-
+  int get leftToRead => _leftToRead;
   TCPDataReader(PeerWrapper wrapper) : super(wrapper) {
 
   }
@@ -36,6 +36,37 @@ class TCPDataReader extends BinaryDataReader {
         _process_init_read(v.getUint8(i));
         i += SIZEOF8;
         continue;
+      }
+
+      if (_currentReadState == BinaryReadState.READ_TYPE) {
+        _process_read_type(v.getUint8(i));
+        i += SIZEOF8;
+        continue;
+      }
+
+      if (_currentReadState == BinaryReadState.READ_LENGTH) {
+        _process_read_length(v.getUint16(i));
+        i += SIZEOF16;
+        continue;
+      }
+
+      if (_currentReadState == BinaryReadState.READ_TOTAL_LENGTH) {
+        _process_read_total_length(v.getUint32(i));
+        i += SIZEOF32;
+        continue;
+      }
+
+      if (_currentReadState == BinaryReadState.READ_SIGNATURE) {
+        _process_read_signature(v.getUint32(i));
+        i += SIZEOF32;
+        continue;
+      }
+
+      if (_currentReadState == BinaryReadState.READ_CONTENT) {
+        if (leftToRead > 0) {
+          _process_content(v.getUint8(i), i - SIZEOF_TCP_HEADER);
+          i += SIZEOF8;
+        }
       }
     }
   }
@@ -89,7 +120,7 @@ class TCPDataReader extends BinaryDataReader {
 
   void _process_end() {
 
-    //_signalReadChunk(_latest, _signature, _currentChunkSequence, _totalSequences, _currentChunkContentLength, _contentTotalLength);
+    _signalReadChunk(_latest, _signature, _currentChunkContentLength, _contentTotalLength);
 
     //new Logger().Debug("Processed $_totalRead of $_contentTotalLength");
     if (_totalRead == _contentTotalLength)
@@ -111,6 +142,12 @@ class TCPDataReader extends BinaryDataReader {
     _totalRead = 0;
     //if (buffer != null)
       //_doSignalingBasedOnBufferType(buffer);
+  }
+
+  void _signalReadChunk(ByteBuffer buf, int signature, int bytes, int bytesTotal) {
+    listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
+      l.onPeerReadTcpChunk(_wrapper, buf, signature, bytes, bytesTotal);
+    });
   }
 }
 

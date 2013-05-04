@@ -12,43 +12,23 @@ class PeerWrapper extends GenericEventTarget<PeerEventListener>{
   /** Session Description type answer */
   final String SDP_ANSWER = 'answer';
 
-  /* The connection !! */
   RtcPeerConnection _peer;
-
   PeerManager _manager;
-
-  /* Is peer connection open */
-  //bool _isOpen = false;
-
-  /* are we hosting */
   bool _isHost = false;
-
-  /* Wee. logger */
   final Logger _log = new Logger();
 
   String _id;
-
   String _channelId;
-
   String get id => _id;
-
   String get channel => _channelId;
-
   set id(String value) => _id = value;
-
   set channel(String value) => _channelId = value;
 
-  /** Getter returning RtcPeerConnection object */
-  RtcPeerConnection get peer => _peer;
 
-  /** True if hosting the session */
+  RtcPeerConnection get peer => _peer;
   bool get isHost => _isHost;
   set isHost(bool value) => setAsHost(value);
 
-  /** returns true if connection is open */
-  //bool get isOpen => _isOpen;
-
-  /** returns current readystate */
   String get state => _peer.signalingState;
   String get iceConnectionState => _peer.iceConnectionState;
   String get iceGatheringState => _peer.iceGatheringState;

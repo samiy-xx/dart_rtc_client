@@ -23,6 +23,6 @@ abstract class Signaler {
   void setDataChannelsEnabled(bool value);
   bool get isChannelOwner;
   set createPeerOnJoin(bool v);
-  bool setChannelLimit(int l);
+  bool setChannelLimit(String id, String channelId, int l);
 }
 

@@ -129,14 +129,22 @@ class UDPDataReader extends BinaryDataReader {
     sc.setEntry(new SequenceEntry(sequence, buffer));
   }
 
-  ByteBuffer buildCompleteBuffer(int signature) {
+  Future<ByteBuffer> buildCompleteBuffer(int signature, int totalLength, int totalSequences) {
+    Completer<ByteBuffer> completer = new Completer<ByteBuffer>();
+    new Timer(const Duration(milliseconds: 0), () {
+      completer.complete(_buildCompleteBuffer(signature, totalLength, totalSequences));
+    });
+    return completer.future;
+  }
+
+  ByteBuffer _buildCompleteBuffer(int signature, int totalLength, int totalSequences) {
     _watch.reset();
     _watch.start();
     SequenceCollection sc = _sequencer.getSequenceCollection(signature);
-    ByteBuffer complete = new Uint8List(_contentTotalLength).buffer;
+    ByteBuffer complete = new Uint8List(totalLength).buffer;
     ByteData completeView = new ByteData.view(complete);
     int k = 0;
-    for (int i = 0; i < _totalSequences; i++) {
+    for (int i = 0; i < totalSequences; i++) {
       ByteBuffer part = sc.getEntry(i + 1).data;
       ByteData partView = new ByteData.view(part);
 
@@ -271,17 +279,19 @@ class UDPDataReader extends BinaryDataReader {
    */
   void _processBuffer() {
     _totalRead = 0;
-    //_contentTotalLength = 0;
-    //new Logger().Debug("Processing buffer");
     ByteBuffer buffer;
     if (sequencerComplete(_signature)) {
-      //new Logger().Debug("Sequence complete, building complete buffer");
-      buffer = buildCompleteBuffer(_signature);
+      buildCompleteBuffer(_signature, _contentTotalLength, _totalSequences).then((ByteBuffer buffer) {
+
+        if (buffer != null)
+          _doSignalingBasedOnBufferType(buffer);
+
+      });
     }
     _contentTotalLength = 0;
     _totalRead = 0;
-    if (buffer != null)
-      _doSignalingBasedOnBufferType(buffer);
+
+
   }
 
   void _doSignalingBasedOnBufferType(ByteBuffer buffer) {

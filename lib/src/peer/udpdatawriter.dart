@@ -103,7 +103,7 @@ class UDPDataWriter extends BinaryDataWriter {
       _signalWriteChunk(signature, sequence, totalSequences, toAdd.lengthInBytes);
       write(b);
       _signalWroteChunk(signature, sequence, totalSequences, toAdd.lengthInBytes);
-      _sentItems.add(new SendItem(b, sequence, signature));
+      _sentItems.add(new SendItem(b, sequence, signature, new DateTime.now().millisecondsSinceEpoch));
       sequence++;
       read += toRead;
       leftToRead -= toRead;
@@ -132,7 +132,7 @@ class UDPDataWriter extends BinaryDataWriter {
       _signalWriteChunk(signature, _currentSequence, totalSequences, toAdd.lengthInBytes);
       write(b);
       _signalWroteChunk(signature, _currentSequence, totalSequences, toAdd.lengthInBytes);
-      _sentItems.add(new SendItem(b, _currentSequence, signature));
+      _sentItems.add(new SendItem(b, _currentSequence, signature, new DateTime.now().millisecondsSinceEpoch));
       _currentSequence++;
       read += toRead;
       leftToRead -= toRead;
@@ -154,10 +154,21 @@ class UDPDataWriter extends BinaryDataWriter {
   }
 
   void _process() {
+    int reSendLimit = 100;
     if (_sentItems.length == 0)
       _completer.complete(new DateTime.now().millisecondsSinceEpoch - _startSend);
-    else
+    else {
+      //print("Checking for packets hanging");
+      if (_sentItems.every((SendItem item) => item.sent)) {
+        print("Sending hanging packets");
+        _sentItems.where((SendItem si) => (si.added + reSendLimit) < new DateTime.now().millisecondsSinceEpoch).forEach((SendItem si) {
+          write(si.buffer);
+          si.added = new DateTime.now().millisecondsSinceEpoch;
+        });
+      }
       _setImmediate();
+    }
+
   }
 
   void _onLoadEnd(ProgressEvent e) {
@@ -191,8 +202,9 @@ class SendItem {
   ByteBuffer buffer;
   int signature;
   int sequence;
-
-  SendItem(this.buffer, this.sequence, this.signature);
+  int added;
+  bool sent = false;
+  SendItem(this.buffer, this.sequence, this.signature, this.added);
 }
 
 class UDPDataWriterOld extends BinaryDataWriter {

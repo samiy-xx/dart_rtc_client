@@ -3,6 +3,7 @@ part of rtc_client;
 class UDPDataReader extends BinaryDataReader {
   ByteBuffer _latest;
   ByteData _latestView;
+
   Sequencer _sequencer;
   int _lastProcessed;
   /* Length of data for currently processed object */
@@ -18,6 +19,7 @@ class UDPDataReader extends BinaryDataReader {
   int _packetType;
   int _signature;
   int _startMs;
+  int _testMS = 0;
   Stopwatch _watch;
   BinaryReadState _currentReadState = BinaryReadState.INIT_READ;
   BinaryReadState get currentReadState => _currentReadState;
@@ -105,11 +107,15 @@ class UDPDataReader extends BinaryDataReader {
         continue;
       }
 
-      if (_currentReadState == BinaryReadState.READ_CONTENT) {
+      /*if (_currentReadState == BinaryReadState.READ_CONTENT) {
         if (leftToRead > 0) {
           _process_content(v.getUint8(i), i - 16);
           i += SIZEOF8;
         }
+      }*/
+      if (_currentReadState == BinaryReadState.READ_CONTENT) {
+        _process_content_v2(buf);
+        i += buf.lengthInBytes - SIZEOF_UDP_HEADER;
       }
     }
   }
@@ -203,9 +209,27 @@ class UDPDataReader extends BinaryDataReader {
     _haveThisPart = haveCurrentPart();
   }
 
-  /*
-   * Push data to buffer
-   */
+  void _process_content_v2(ByteBuffer buffer) {
+    //Uint8List l = new Uint8List.view(buffer, SIZEOF_UDP_HEADER);
+    //print(l.length);
+    //Uint8List ll = new Uint8List.view(_latest);
+    //int index = ll.length;
+    //for (int i = 0; i < l.length; i++) {
+      //print("insert to ${index + i}");
+    //  ll[i] = l[i];
+    //}
+    var tmp = new Uint8List.view(buffer).sublist(SIZEOF_UDP_HEADER);
+    _latest = new Uint8List.fromList(tmp).buffer;
+    _leftToRead -= buffer.lengthInBytes - SIZEOF_UDP_HEADER;
+    if (!_haveThisPart)
+      _totalRead += buffer.lengthInBytes - SIZEOF_UDP_HEADER;
+
+    if (_leftToRead == 0) {
+      _currentReadState = BinaryReadState.FINISH_READ;
+      _process_end();
+    }
+  }
+
   void _process_content(int b, int index) {
 
     try {
@@ -215,10 +239,10 @@ class UDPDataReader extends BinaryDataReader {
     }
 
     _leftToRead -= SIZEOF8;
-    if (!_haveThisPart) {
+    //if (!_haveThisPart) {
       _totalRead += SIZEOF8;
 
-    }
+    //}
 
     if (_leftToRead == 0) {
       _currentReadState = BinaryReadState.FINISH_READ;
@@ -230,6 +254,7 @@ class UDPDataReader extends BinaryDataReader {
    * Process end of read
    */
   void _process_end() {
+
     addToSequencer(_latest, _signature, _currentChunkSequence);
     if (!_haveThisPart)
       _signalReadChunk(_latest, _signature, _currentChunkSequence, _totalSequences, _currentChunkContentLength, _contentTotalLength);

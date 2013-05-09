@@ -7,7 +7,7 @@ class UDPReaderTests implements BinaryDataReceivedEventListener {
   ByteBuffer result;
   String longTestString;
   ByteBuffer buffer;
-
+  int _start;
   const int CHUNK_SIZE = 50;
   const int STRING_LENGTH = 1000;
 
@@ -23,6 +23,15 @@ class UDPReaderTests implements BinaryDataReceivedEventListener {
 
       tearDown(() {
 
+      });
+
+      test("Test speed", () {
+        var string = TestUtils.genRandomString(59999);
+        print("String created ${string.length}");
+        var buf = BinaryData.bufferFromString(string);
+        print("buffer created ${buf.lengthInBytes}");
+        _start = new DateTime.now().millisecondsSinceEpoch;
+        send(buf);
       });
 
       test("BinaryDataReader, readChunk, can read a chunk", () {
@@ -41,16 +50,60 @@ class UDPReaderTests implements BinaryDataReceivedEventListener {
     });
   }
 
-
+  int chunks = 0;
 
   void onPeerString(PeerWrapper pw, String s) {}
   void onPeerBuffer(PeerWrapper pw, ByteBuffer b) {
+
+    //print("Got buffer of size ${b.lengthInBytes} in ${_now - _start} milliseconds");
     result = b;
   }
   void onPeerFile(PeerWrapper pw, Blob b) {}
-  void onPeerReadUdpChunk(PeerWrapper pw, ByteBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesTotal) {}
+  void onPeerReadUdpChunk(PeerWrapper pw, ByteBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesTotal) {
+    chunks++;
+    //print(chunks);
+    if (chunks == 76) {
+      int _now = new DateTime.now().millisecondsSinceEpoch;
+      print("read chunk ${_now - _start}");
+    }
+
+  }
 
   void onPeerSendSuccess(int signature, int sequence) {}
+
+  void send(ByteBuffer buffer) {
+    int totalSequences = (buffer.lengthInBytes ~/ 800) + 1;
+    int sequence = 1;
+    int read = 0;
+    int leftToRead = buffer.lengthInBytes;
+    int signature = new Random().nextInt(100000000);
+    print("creating $totalSequences sequences");
+    while (read < buffer.lengthInBytes) {
+      int toRead = leftToRead > 800 ? 800 : leftToRead;
+      ByteBuffer toAdd = new Uint8List.fromList(new Uint8List.view(buffer).sublist(read, read+toRead));
+      ByteBuffer b = addUdpHeader(
+          //buffer.slice(read, read + toRead),
+          toAdd,
+          BINARY_TYPE_CUSTOM,
+          sequence,
+          totalSequences,
+          signature,
+          buffer.lengthInBytes
+      );
+      reader.readChunkString(BinaryData.stringFromBuffer(b));
+      //addSequence(signature, sequence, totalSequences, b, reliable);
+      sequence++;
+      read += toRead;
+      leftToRead -= toRead;
+    }
+    print("all sent");
+  }
+
+  ByteBuffer addUdpHeader(ByteBuffer buf, int packetType, int sequenceNumber, int totalSequences, int signature, int total) {
+    return BinaryData.writeUdpHeader(buf, packetType, sequenceNumber, totalSequences, signature, total);
+  }
+
+
 }
 
 

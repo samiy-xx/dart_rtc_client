@@ -6,13 +6,18 @@ class UDPDataWriter extends BinaryDataWriter {
   int _last;
   int _interval = 5;
   Timer _intervalTimer = null;
-
+  int _start = 0;
+  int loops;
+  int sent;
   UDPDataWriter(PeerWrapper wrapper) : super(BINARY_PROTOCOL_UDP, wrapper) {
     _sequencer = new Sequencer();
     _last = new DateTime.now().millisecondsSinceEpoch;
   }
 
   Future<int> send(ByteBuffer buffer, int packetType, bool reliable) {
+    print("buffer to be sent ${buffer.lengthInBytes}");
+    loops = 0;
+    sent = 0;
     Completer completer = new Completer();
     if (!reliable)
       completer.complete(0);
@@ -41,9 +46,8 @@ class UDPDataWriter extends BinaryDataWriter {
       sequence++;
       read += toRead;
       leftToRead -= toRead;
-
     }
-
+    setImmediate();
     return completer.future;
   }
 
@@ -52,7 +56,7 @@ class UDPDataWriter extends BinaryDataWriter {
     sse.resend = resend;
 
     _sequencer.addSequence(signature, total, sse);
-    setImmediate();
+
   }
 
   int removeSequence(int signature, int sequence) {
@@ -84,29 +88,39 @@ class UDPDataWriter extends BinaryDataWriter {
 
       if (!sse.sent) {
         write(sse.data);
-        //new Logger().Debug("Sent chunk ${collection.signature} ${sse.sequence} RESEND = ${sse.resend} PACKETTYPE = ${BinaryData.getPacketType(sse.data)}");
+        sent++;
+        //new Logger().Debug("Sent chunk ${collection.signature} ${sse.sequence} RESEND = ${sse.resend} PACKETTYPE = ${BinaryData.getPacketType(sse.data)} ${sse.data.lengthInBytes}");
         sse.markSent();
         _signalWriteChunk(collection.signature, sse.sequence, collection.total, sse.data.lengthInBytes);
         if (!sse.resend)
           removeSequence(collection.signature, sse.sequence);
       } else {
-        if ((sse.timeReSent + currentLatency) < now) {
-          _roundTripCalculator.addToLatency(50);
-          write(sse.data);
-          new Logger().Debug("RE-Sent chunk ${collection.signature} ${sse.sequence} RESEND = ${sse.resend} PACKETTYPE = ${BinaryData.getPacketType(sse.data)}");
-          sse.markReSent();
-        }
+
+          if ((sse.timeReSent + currentLatency) < now) {
+            //_roundTripCalculator.addToLatency(10);
+            write(sse.data);
+            new Logger().Debug("RE-Sent chunk ${collection.signature} ${sse.sequence} RESEND = ${sse.resend} PACKETTYPE = ${BinaryData.getPacketType(sse.data)}");
+            sse.markReSent();
+          }
       }
 
     }
 
     if (_sequencer.hasMore() && _canLoop) {
       setImmediate();
+    } else {
+      print("loops $loops sent $sent");
     }
+    loops++;
+    int now2 = new DateTime.now().millisecondsSinceEpoch;
+    //print (now2 - now);
   }
 
   void writeAck(int signature, int sequence, int total) {
-    addSequence(signature, 1, 1, BinaryData.createAck(signature, sequence), false);
+    new Timer(const Duration(milliseconds: 0), () {
+      write(BinaryData.createAck(signature, sequence));
+      //addSequence(signature, 1, 1, BinaryData.createAck(signature, sequence), false);
+    });
   }
 
   void receiveAck(int signature, int sequence) {
@@ -116,14 +130,18 @@ class UDPDataWriter extends BinaryDataWriter {
   }
 
   void _signalWriteChunk(int signature, int sequence, int totalSequences, int bytes) {
-    listeners.where((l) => l is BinaryDataSentEventListener).forEach((BinaryDataSentEventListener l) {
-      l.onWriteChunk(_wrapper, signature, sequence, totalSequences, bytes);
+    new Timer(const Duration(milliseconds: 0), () {
+      listeners.where((l) => l is BinaryDataSentEventListener).forEach((BinaryDataSentEventListener l) {
+        l.onWriteChunk(_wrapper, signature, sequence, totalSequences, bytes);
+      });
     });
   }
 
   void _signalWroteChunk(int signature, int sequence, int totalSequences, int bytes) {
-    listeners.where((l) => l is BinaryDataSentEventListener).forEach((BinaryDataSentEventListener l) {
-      l.onWroteChunk(_wrapper, signature, sequence, totalSequences, bytes);
+    new Timer(const Duration(milliseconds: 0), () {
+      listeners.where((l) => l is BinaryDataSentEventListener).forEach((BinaryDataSentEventListener l) {
+        l.onWroteChunk(_wrapper, signature, sequence, totalSequences, bytes);
+      });
     });
   }
 
@@ -131,7 +149,7 @@ class UDPDataWriter extends BinaryDataWriter {
     if (_canLoop) {
       if (_intervalTimer != null)
         _intervalTimer.cancel();
-      _intervalTimer = new Timer(const Duration(milliseconds: 5), _process);
+      _intervalTimer = new Timer(const Duration(milliseconds: 0), _process);
     }
   }
 }

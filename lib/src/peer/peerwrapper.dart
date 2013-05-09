@@ -63,6 +63,7 @@ class PeerWrapper extends GenericEventTarget<PeerEventListener>{
    * if the type is offer, then a answer must be created
    */
   void setRemoteSessionDescription(RtcSessionDescription sdp) {
+
       _peer.setRemoteDescription(sdp).then((val) {
         _log.Debug("(peerwrapper.dart) Setting remote description was success $val");
       })
@@ -113,6 +114,7 @@ class PeerWrapper extends GenericEventTarget<PeerEventListener>{
     _log.Debug("(peerwrapper.dart) Offer created, sending");
     sdp = hackTheSdp(sdp);
     setSessionDescription(sdp);
+
     _manager._sendPacket(PacketFactory.get(new DescriptionPacket.With(sdp.sdp, 'offer', _id, _channelId)));
   }
 
@@ -122,8 +124,10 @@ class PeerWrapper extends GenericEventTarget<PeerEventListener>{
    */
   void _onAnswerSuccess(RtcSessionDescription sdp) {
     sdp = hackTheSdp(sdp);
+
     _log.Debug("(peerwrapper.dart) Answer created, sending");
     setSessionDescription(sdp);
+
     _manager._sendPacket(PacketFactory.get(new DescriptionPacket.With(sdp.sdp, 'answer', _id, _channelId)));
   }
 

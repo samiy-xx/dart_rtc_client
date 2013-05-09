@@ -20,7 +20,7 @@ abstract class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListen
   int _binaryProtocol;
 
   // write only max this size chunks to data channel
-  int _writeChunkSize = 500;
+  int _writeChunkSize = 512;
 
   /** Returns the current latency */
   int get currentLatency => _roundTripCalculator.currentLatency;
@@ -42,7 +42,7 @@ abstract class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListen
 
   void writeAck(int signature, int sequence, int total);
   Future<int> send(ByteBuffer buffer, int packetType, bool reliable);
-
+  Future<int> sendFile(File f);
   void write(ByteBuffer buf) {
     try {
       var toSend = _wrapToString ? wrapToString(buf) : buf;

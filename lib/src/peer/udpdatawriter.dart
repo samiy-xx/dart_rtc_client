@@ -1,21 +1,79 @@
 part of rtc_client;
 
-class SendItem {
-  ByteBuffer buffer;
-  int signature;
-  int sequence;
-
-  SendItem(this.buffer, this.sequence, this.signature);
-}
 class UDPDataWriter extends BinaryDataWriter {
   List<SendItem> _sentItems;
   Completer _completer;
   Timer _intervalTimer = null;
   int _startSend;
+  int _currentSequence;
 
   UDPDataWriter(PeerWrapper wrapper) : super(BINARY_PROTOCOL_UDP, wrapper) {
     _sentItems = new List<SendItem>();
   }
+
+  Future<int> sendFile(File file) {
+    _currentSequence = 1;
+    _completer = new Completer();
+    int maxFileChunkSize = 1024 * 1024;
+    int totalSequences = (file.size ~/ _writeChunkSize) + 1;
+    int sequence = 1;
+    int read = 0;
+    int leftToRead = file.size;
+    int signature = new Random().nextInt(100000000);
+    FileReader reader = new FileReader();
+    int toRead = file.size > maxFileChunkSize ? maxFileChunkSize : file.size;
+    reader.readAsArrayBuffer(file.slice(read, read + toRead));
+    reader.onLoadEnd.listen((ProgressEvent e) {
+      _send(reader.result, signature, totalSequences, file.size, BINARY_TYPE_FILE);
+      read += toRead;
+      leftToRead -= toRead;
+      if (read < file.size) {
+        toRead = leftToRead > maxFileChunkSize ? maxFileChunkSize : file.size;
+        reader.readAsArrayBuffer(file.slice(read, read + toRead));
+      } else {
+        _setImmediate();
+      }
+    });
+    return _completer.future;
+  }
+  /*Future<int> sendFile(File file) {
+    Completer completer = new Completer();
+    int totalSequences = (file.size ~/ _writeChunkSize) + 1;
+    int sequence = 1;
+    int read = 0;
+    int leftToRead = file.size;
+    int signature = new Random().nextInt(100000000);
+    _completer = completer;
+    FileReader reader = new FileReader();
+    int toRead;
+
+    toRead = leftToRead > _writeChunkSize ? _writeChunkSize : leftToRead;
+    reader.readAsArrayBuffer(file.slice(read, read + toRead));
+    reader.onLoadEnd.listen((ProgressEvent e) {
+      ByteBuffer b = addUdpHeader(
+          reader.result,
+          BINARY_TYPE_FILE,
+          sequence,
+          totalSequences,
+          signature,
+          file.size
+      );
+      _signalWriteChunk(signature, sequence, totalSequences, (reader.result as ByteBuffer).lengthInBytes);
+      write(b);
+      _signalWroteChunk(signature, sequence, totalSequences, (reader.result as ByteBuffer).lengthInBytes);
+      _sentItems.add(new SendItem(b, sequence, signature));
+      sequence++;
+      read += toRead;
+      leftToRead -= toRead;
+      if (read < file.size) {
+        toRead = leftToRead > _writeChunkSize ? _writeChunkSize : leftToRead;
+        reader.readAsArrayBuffer(file.slice(read, read + toRead));
+      } else {
+        _setImmediate();
+      }
+    });
+    return completer.future;
+  }*/
 
   Future<int> send(ByteBuffer buffer, int packetType, bool reliable) {
     _startSend = new DateTime.now().millisecondsSinceEpoch;
@@ -32,6 +90,7 @@ class UDPDataWriter extends BinaryDataWriter {
 
     while (read < buffer.lengthInBytes) {
       int toRead = leftToRead > _writeChunkSize ? _writeChunkSize : leftToRead;
+
       ByteBuffer toAdd = new Uint8List.fromList(new Uint8List.view(buffer).sublist(read, read+toRead));
       ByteBuffer b = addUdpHeader(
           toAdd,
@@ -48,16 +107,38 @@ class UDPDataWriter extends BinaryDataWriter {
       sequence++;
       read += toRead;
       leftToRead -= toRead;
+
     }
     _setImmediate();
     return completer.future;
   }
 
-  void _process() {
-    if (_sentItems.length == 0)
-      _completer.complete(new DateTime.now().millisecondsSinceEpoch - _startSend);
-    else
-      _setImmediate();
+  void _send(ByteBuffer buffer, int signature, int totalSequences, int totalLength, int packetType) {
+    print("need to send ${buffer.lengthInBytes} bytes $signature, $totalSequences, $totalLength");
+
+    int read = 0;
+    int leftToRead = buffer.lengthInBytes;
+    while (read < buffer.lengthInBytes) {
+      int toRead = leftToRead > _writeChunkSize ? _writeChunkSize : leftToRead;
+      ByteBuffer toAdd = new Uint8List.fromList(new Uint8List.view(buffer).sublist(read, read+toRead));
+      ByteBuffer b = addUdpHeader(
+          toAdd,
+          packetType,
+          _currentSequence,
+          totalSequences,
+          signature,
+          totalLength
+      );
+      _signalWriteChunk(signature, _currentSequence, totalSequences, toAdd.lengthInBytes);
+      write(b);
+      _signalWroteChunk(signature, _currentSequence, totalSequences, toAdd.lengthInBytes);
+      _sentItems.add(new SendItem(b, _currentSequence, signature));
+      _currentSequence++;
+      read += toRead;
+      leftToRead -= toRead;
+
+    }
+    print("current $_currentSequence");
   }
 
   void writeAck(int signature, int sequence, int total) {
@@ -69,10 +150,18 @@ class UDPDataWriter extends BinaryDataWriter {
   void receiveAck(int signature, int sequence) {
     new Timer(const Duration(milliseconds: 0), () {
       _sentItems.removeWhere((SendItem i) => i.signature == signature && i.sequence == sequence);
-
-      if (_sentItems.length == 0)
-        print("sentItems empty");
     });
+  }
+
+  void _process() {
+    if (_sentItems.length == 0)
+      _completer.complete(new DateTime.now().millisecondsSinceEpoch - _startSend);
+    else
+      _setImmediate();
+  }
+
+  void _onLoadEnd(ProgressEvent e) {
+
   }
 
   void _signalWriteChunk(int signature, int sequence, int totalSequences, int bytes) {
@@ -98,6 +187,13 @@ class UDPDataWriter extends BinaryDataWriter {
   }
 }
 
+class SendItem {
+  ByteBuffer buffer;
+  int signature;
+  int sequence;
+
+  SendItem(this.buffer, this.sequence, this.signature);
+}
 
 class UDPDataWriterOld extends BinaryDataWriter {
   Sequencer _sequencer;

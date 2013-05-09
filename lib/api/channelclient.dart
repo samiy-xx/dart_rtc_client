@@ -351,6 +351,9 @@ class ChannelClient implements RtcClient,
     throw new UnsupportedError("sendBlob is a work in progress");
   }
 
+  Future<int> sendFileObject(String peerId, File f) {
+    return _getDataPeerWrapper(peerId).sendFile(f);
+  }
   Future<int> sendFile(String peerId, ByteBuffer data) {
       return _getDataPeerWrapper(peerId).sendBuffer(data, BINARY_TYPE_FILE, true);
   }

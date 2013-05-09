@@ -96,6 +96,10 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
     throw new NotImplementedException("Sending blob is not implemented");
   }
 
+  Future<int> sendFile(File f) {
+    return _binaryWriter.sendFile(f);
+  }
+
   Future<int> sendBuffer(ByteBuffer buf, int packetType, bool reliable) {
     return _binaryWriter.send(buf, packetType, reliable);
   }

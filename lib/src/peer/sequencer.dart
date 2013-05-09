@@ -116,7 +116,11 @@ class SequenceCollection {
   }
 
   void setEntry(SequenceEntry entry) {
-    _sequences[entry.sequence - 1] = entry;
+    try {
+      _sequences[entry.sequence - 1] = entry;
+    } on RangeError catch(e) {
+      print("Error: ${_sequences.length} ${entry.sequence}");
+    }
   }
 
   bool hasEntry(int sequence) {

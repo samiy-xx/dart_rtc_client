@@ -203,7 +203,7 @@ class SendItem {
   int signature;
   int sequence;
   int added;
-  bool sent = false;
+  bool sent = true;
   SendItem(this.buffer, this.sequence, this.signature, this.added);
 }
 

@@ -6,6 +6,8 @@ class UDPDataWriter extends BinaryDataWriter {
   Timer _intervalTimer = null;
   int _startSend;
   int _currentSequence;
+  bool _allSent;
+  int _lastAck = 0;
 
   UDPDataWriter(PeerWrapper wrapper) : super(BINARY_PROTOCOL_UDP, wrapper) {
     _sentItems = new List<SendItem>();
@@ -13,6 +15,7 @@ class UDPDataWriter extends BinaryDataWriter {
 
   Future<int> sendFile(File file) {
     _currentSequence = 1;
+    _allSent = false;
     _completer = new Completer();
     int maxFileChunkSize = 1024 * 1024;
     int totalSequences = (file.size ~/ _writeChunkSize) + 1;
@@ -31,6 +34,7 @@ class UDPDataWriter extends BinaryDataWriter {
         toRead = leftToRead > maxFileChunkSize ? maxFileChunkSize : file.size;
         reader.readAsArrayBuffer(file.slice(read, read + toRead));
       } else {
+        _allSent = true;
         _setImmediate();
       }
     });
@@ -109,6 +113,7 @@ class UDPDataWriter extends BinaryDataWriter {
       leftToRead -= toRead;
 
     }
+    _allSent = true;
     _setImmediate();
     return completer.future;
   }
@@ -148,23 +153,25 @@ class UDPDataWriter extends BinaryDataWriter {
   }
 
   void receiveAck(int signature, int sequence) {
+    _lastAck = new DateTime.now().millisecondsSinceEpoch;
     new Timer(const Duration(milliseconds: 0), () {
       _sentItems.removeWhere((SendItem i) => i.signature == signature && i.sequence == sequence);
     });
   }
 
   void _process() {
-    int reSendLimit = 100;
+    int reSendLimit = 50;
     if (_sentItems.length == 0)
       _completer.complete(new DateTime.now().millisecondsSinceEpoch - _startSend);
     else {
       //print("Checking for packets hanging");
-      if (_sentItems.every((SendItem item) => item.sent)) {
+      if (_allSent && (_lastAck + reSendLimit) < new DateTime.now().millisecondsSinceEpoch) {
         print("Sending hanging packets");
-        _sentItems.where((SendItem si) => (si.added + reSendLimit) < new DateTime.now().millisecondsSinceEpoch).forEach((SendItem si) {
+        _sentItems.forEach((SendItem si) {
           write(si.buffer);
           si.added = new DateTime.now().millisecondsSinceEpoch;
         });
+        print(_sentItems.length);
       }
       _setImmediate();
     }

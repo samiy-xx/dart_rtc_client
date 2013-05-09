@@ -226,16 +226,20 @@ class UDPDataReader extends BinaryDataReader {
       //print("insert to ${index + i}");
     //  ll[i] = l[i];
     //}
+    if (_haveThisPart) {
+      _currentReadState = BinaryReadState.INIT_READ;
+      return;
+    }
     var tmp = new Uint8List.view(buffer).sublist(SIZEOF_UDP_HEADER);
     _latest = new Uint8List.fromList(tmp).buffer;
-    _leftToRead -= buffer.lengthInBytes - SIZEOF_UDP_HEADER;
+    //_leftToRead -= buffer.lengthInBytes - SIZEOF_UDP_HEADER;
     if (!_haveThisPart)
       _totalRead += buffer.lengthInBytes - SIZEOF_UDP_HEADER;
 
-    if (_leftToRead == 0) {
+    //if (_leftToRead == 0) {
       _currentReadState = BinaryReadState.FINISH_READ;
       _process_end();
-    }
+    //}
   }
 
   void _process_content(int b, int index) {

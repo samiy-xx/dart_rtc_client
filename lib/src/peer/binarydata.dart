@@ -3,7 +3,7 @@ part of rtc_client;
 const int SIZEOF8 = 1;
 const int SIZEOF16 = 2;
 const int SIZEOF32 = 4;
-const int SIZEOF_UDP_HEADER = 16;
+const int SIZEOF_UDP_HEADER = 20;
 const int SIZEOF_TCP_HEADER = 12;
 
 const int NULL_BYTE = 0x00;
@@ -25,11 +25,11 @@ const int PROTOCOL_STARTBYTE_POSITION = 0;
 const int PROTOCOL_PACKETTYPE_POSITION = 1;
 
 const int UDP_PROTOCOL_SEQUENCE_POSITION = 2;
-const int UDP_PROTOCOL_TOTALSEQUENCE_POSITION = 4;
-const int UDP_PROTOCOL_BYTELENGTH_POSITION = 6;
-const int UDP_PROTOCOL_TOTALBYTELENGTH_POSITION = 8;
-const int UDP_PROTOCOL_SIGNATURE_POSITION = 12;
-const int UDP_PROTOCOL_FIRST_CONTENT_POSITION = 16;
+const int UDP_PROTOCOL_TOTALSEQUENCE_POSITION = 6;
+const int UDP_PROTOCOL_BYTELENGTH_POSITION = 10;
+const int UDP_PROTOCOL_TOTALBYTELENGTH_POSITION = 12;
+const int UDP_PROTOCOL_SIGNATURE_POSITION = 16;
+const int UDP_PROTOCOL_FIRST_CONTENT_POSITION = 20;
 
 const int TCP_PROTOCOL_BYTELENGTH_POSITION = 2;
 const int TCP_PROTOCOL_TOTALBYTELENGTH_POSITION = 4;
@@ -81,7 +81,7 @@ class BinaryData {
   }
 
   static ByteBuffer createAck(int signature, int sequence) {
-    ByteBuffer ackBuffer = new Uint8List(17).buffer;
+    ByteBuffer ackBuffer = new Uint8List(SIZEOF_UDP_HEADER + 1).buffer;
     ByteData viewAck = new ByteData.view(ackBuffer);
     //DataView viewAck = new DataView(ackBuffer);
 
@@ -95,12 +95,12 @@ class BinaryData {
         0x00
     );
 
-    viewAck.setUint16(
+    viewAck.setUint32(
         UDP_PROTOCOL_SEQUENCE_POSITION,
         sequence
     );
 
-    viewAck.setUint16(
+    viewAck.setUint32(
         UDP_PROTOCOL_TOTALSEQUENCE_POSITION,
         sequence
     );
@@ -149,7 +149,7 @@ class BinaryData {
   }
 
   static int getCommand(ByteBuffer buffer) {
-    return new ByteData.view(buffer).getUint8(16);
+    return new ByteData.view(buffer).getUint8(20);
   }
 
   static int getSignature(ByteBuffer buffer) {
@@ -166,7 +166,7 @@ class BinaryData {
     if (!isValidUdp(buffer))
       return 0;
     ByteData view = new ByteData.view(buffer, 0, 16);
-    return view.getUint16(UDP_PROTOCOL_SEQUENCE_POSITION);
+    return view.getUint32(UDP_PROTOCOL_SEQUENCE_POSITION);
   }
 
   static int getPacketType(ByteBuffer buffer) {
@@ -181,11 +181,11 @@ class BinaryData {
 
     writer.setUint8(PROTOCOL_STARTBYTE_POSITION, FULL_BYTE); // 0
     writer.setUint8(PROTOCOL_PACKETTYPE_POSITION, packetType); // 1
-    writer.setUint16(UDP_PROTOCOL_SEQUENCE_POSITION, sequenceNumber); // 2
-    writer.setUint16(UDP_PROTOCOL_TOTALSEQUENCE_POSITION, totalSequences); //4
-    writer.setUint16(UDP_PROTOCOL_BYTELENGTH_POSITION, buf.lengthInBytes); //6
-    writer.setUint32(UDP_PROTOCOL_TOTALBYTELENGTH_POSITION, total); //8
-    writer.setUint32(UDP_PROTOCOL_SIGNATURE_POSITION, signature); //12
+    writer.setUint32(UDP_PROTOCOL_SEQUENCE_POSITION, sequenceNumber); // 2
+    writer.setUint32(UDP_PROTOCOL_TOTALSEQUENCE_POSITION, totalSequences); //6
+    writer.setUint16(UDP_PROTOCOL_BYTELENGTH_POSITION, buf.lengthInBytes); //10
+    writer.setUint32(UDP_PROTOCOL_TOTALBYTELENGTH_POSITION, total); //12
+    writer.setUint32(UDP_PROTOCOL_SIGNATURE_POSITION, signature); //16
 
     for (int i = 0; i < content.length; i++) {
       writer.setUint8(i + UDP_PROTOCOL_FIRST_CONTENT_POSITION, content[i]);
@@ -263,31 +263,31 @@ class BinaryData {
       return false;
     }
 
-    int sequenceNumber = view.getUint16(UDP_PROTOCOL_SEQUENCE_POSITION); // 2
+    int sequenceNumber = view.getUint32(UDP_PROTOCOL_SEQUENCE_POSITION); // 2
     if (sequenceNumber == null || sequenceNumber < 1) {
       lastError = "Sequence number: $sequenceNumber";
       return false;
     }
 
-    int totalSequences = view.getUint16(UDP_PROTOCOL_TOTALSEQUENCE_POSITION); // 4
+    int totalSequences = view.getUint32(UDP_PROTOCOL_TOTALSEQUENCE_POSITION); // 6
     if (totalSequences == null || totalSequences < sequenceNumber) {
       lastError = "Total sequences: $totalSequences";
       return false;
     }
 
-    int byteLength = view.getUint16(UDP_PROTOCOL_BYTELENGTH_POSITION); // 6
+    int byteLength = view.getUint16(UDP_PROTOCOL_BYTELENGTH_POSITION); // 10
     if (byteLength == null || byteLength <= 0) {
       lastError = "Bytelength: $byteLength";
       return false;
     }
 
-    int totalBytes = view.getUint32(UDP_PROTOCOL_TOTALBYTELENGTH_POSITION); // 8
+    int totalBytes = view.getUint32(UDP_PROTOCOL_TOTALBYTELENGTH_POSITION); // 12
     if (totalBytes == null || totalBytes < byteLength) {
       lastError = "Total bytes: $totalBytes";
       return false;
     }
 
-    int signature = view.getUint32(UDP_PROTOCOL_SIGNATURE_POSITION); // 12
+    int signature = view.getUint32(UDP_PROTOCOL_SIGNATURE_POSITION); // 16
     if (signature == null) {
       lastError = "Signature: $signature";
       return false;

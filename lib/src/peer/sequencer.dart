@@ -120,6 +120,7 @@ class SequenceCollection {
       _sequences[entry.sequence - 1] = entry;
     } on RangeError catch(e) {
       print("Error: ${_sequences.length} ${entry.sequence}");
+      throw e;
     }
   }
 

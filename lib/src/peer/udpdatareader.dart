@@ -78,14 +78,14 @@ class UDPDataReader extends BinaryDataReader {
       }
 
       if (_currentReadState == BinaryReadState.READ_SEQUENCE) {
-        _process_read_sequence(v.getUint16(i));
-        i += SIZEOF16;
+        _process_read_sequence(v.getUint32(i));
+        i += SIZEOF32;
         continue;
       }
 
       if (_currentReadState == BinaryReadState.READ_TOTAL_SEQUENCES) {
-        _process_read_total_sequences(v.getUint16(i));
-        i += SIZEOF16;
+        _process_read_total_sequences(v.getUint32(i));
+        i += SIZEOF32;
         continue;
       }
 

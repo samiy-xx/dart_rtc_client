@@ -218,15 +218,10 @@ class UDPDataReader extends BinaryDataReader {
   }
 
   void _process_content_v2(ByteBuffer buffer) {
-    //Uint8List l = new Uint8List.view(buffer, SIZEOF_UDP_HEADER);
-    //print(l.length);
-    //Uint8List ll = new Uint8List.view(_latest);
-    //int index = ll.length;
-    //for (int i = 0; i < l.length; i++) {
-      //print("insert to ${index + i}");
-    //  ll[i] = l[i];
-    //}
+
     if (_haveThisPart) {
+      print("have this part");
+      (_wrapper as DataPeerWrapper).binaryWriter.writeAck(_signature, _currentChunkSequence);
       _currentReadState = BinaryReadState.INIT_READ;
       return;
     }

@@ -1,185 +1,131 @@
 part of rtc_client;
 
 class UDPDataWriter extends BinaryDataWriter {
-  List<SendItem> _sentItems;
-  Completer _completer;
-  Timer _intervalTimer = null;
-  int _startSend;
+  const int MAX_SEND_TRESHOLD = 60;
+  const int START_SEND_TRESHOLD = 5;
+  const int ELAPSED_TIME_AFTER_SEND = 500;
+
+  Timer _observerTimer;
+  SendQueue _queue;
+  int _c_packetsToSend;
+  int _c_leftToRead;
+  int _c_read;
   int _currentSequence;
-  bool _allSent;
-  int _lastAck = 0;
+  int resendCount = 0;
+  int currentTreshold = 0;
 
   UDPDataWriter(PeerWrapper wrapper) : super(BINARY_PROTOCOL_UDP, wrapper) {
-    _sentItems = new List<SendItem>();
+    _queue = new SendQueue();
   }
-
-  Future<int> sendFile(File file) {
-    _currentSequence = 1;
-    _allSent = false;
-    _completer = new Completer();
-    int maxFileChunkSize = 1024 * 1024;
-    int totalSequences = (file.size ~/ _writeChunkSize) + 1;
-    int sequence = 1;
-    int read = 0;
-    int leftToRead = file.size;
-    int signature = new Random().nextInt(100000000);
-    FileReader reader = new FileReader();
-    int toRead = file.size > maxFileChunkSize ? maxFileChunkSize : file.size;
-    reader.readAsArrayBuffer(file.slice(read, read + toRead));
-    reader.onLoadEnd.listen((ProgressEvent e) {
-      _send(reader.result, signature, totalSequences, file.size, BINARY_TYPE_FILE);
-      read += toRead;
-      leftToRead -= toRead;
-      if (read < file.size) {
-        toRead = leftToRead > maxFileChunkSize ? maxFileChunkSize : file.size;
-        reader.readAsArrayBuffer(file.slice(read, read + toRead));
-      } else {
-        _allSent = true;
-        _setImmediate();
-      }
-    });
-    return _completer.future;
-  }
-  /*Future<int> sendFile(File file) {
-    Completer completer = new Completer();
-    int totalSequences = (file.size ~/ _writeChunkSize) + 1;
-    int sequence = 1;
-    int read = 0;
-    int leftToRead = file.size;
-    int signature = new Random().nextInt(100000000);
-    _completer = completer;
-    FileReader reader = new FileReader();
-    int toRead;
-
-    toRead = leftToRead > _writeChunkSize ? _writeChunkSize : leftToRead;
-    reader.readAsArrayBuffer(file.slice(read, read + toRead));
-    reader.onLoadEnd.listen((ProgressEvent e) {
-      ByteBuffer b = addUdpHeader(
-          reader.result,
-          BINARY_TYPE_FILE,
-          sequence,
-          totalSequences,
-          signature,
-          file.size
-      );
-      _signalWriteChunk(signature, sequence, totalSequences, (reader.result as ByteBuffer).lengthInBytes);
-      write(b);
-      _signalWroteChunk(signature, sequence, totalSequences, (reader.result as ByteBuffer).lengthInBytes);
-      _sentItems.add(new SendItem(b, sequence, signature));
-      sequence++;
-      read += toRead;
-      leftToRead -= toRead;
-      if (read < file.size) {
-        toRead = leftToRead > _writeChunkSize ? _writeChunkSize : leftToRead;
-        reader.readAsArrayBuffer(file.slice(read, read + toRead));
-      } else {
-        _setImmediate();
-      }
-    });
-    return completer.future;
-  }*/
 
   Future<int> send(ByteBuffer buffer, int packetType, bool reliable) {
-    _startSend = new DateTime.now().millisecondsSinceEpoch;
     Completer completer = new Completer();
     if (!reliable)
       completer.complete(0);
-
     int totalSequences = (buffer.lengthInBytes ~/ _writeChunkSize) + 1;
-    int sequence = 1;
+    _currentSequence = 1;
+    //int sequence = 1;
     int read = 0;
     int leftToRead = buffer.lengthInBytes;
     int signature = new Random().nextInt(100000000);
-    _completer = completer;
-
-    while (read < buffer.lengthInBytes) {
-      int toRead = leftToRead > _writeChunkSize ? _writeChunkSize : leftToRead;
-
-      ByteBuffer toAdd = new Uint8List.fromList(new Uint8List.view(buffer).sublist(read, read+toRead));
-      ByteBuffer b = addUdpHeader(
-          toAdd,
-          packetType,
-          sequence,
-          totalSequences,
-          signature,
-          buffer.lengthInBytes
-      );
-      _signalWriteChunk(signature, sequence, totalSequences, toAdd.lengthInBytes);
-      write(b);
-      _signalWroteChunk(signature, sequence, totalSequences, toAdd.lengthInBytes);
-      _sentItems.add(new SendItem(b, sequence, signature, new DateTime.now().millisecondsSinceEpoch));
-      sequence++;
-      read += toRead;
-      leftToRead -= toRead;
-
-    }
-    _allSent = true;
-    _setImmediate();
+    _send(buffer, signature, totalSequences, buffer.lengthInBytes, packetType).then((int i) {
+      if (!completer.isCompleted)
+        completer.complete(1);
+    });
     return completer.future;
   }
 
-  void _send(ByteBuffer buffer, int signature, int totalSequences, int totalLength, int packetType) {
-    print("need to send ${buffer.lengthInBytes} bytes $signature, $totalSequences, $totalLength");
-
+  Future<int> _send(ByteBuffer buffer, int signature, int totalSequences, int totalLength, int packetType) {
+    currentTreshold = START_SEND_TRESHOLD;
+    Completer<int> completer = new Completer<int>();
     int read = 0;
     int leftToRead = buffer.lengthInBytes;
-    while (read < buffer.lengthInBytes) {
-      int toRead = leftToRead > _writeChunkSize ? _writeChunkSize : leftToRead;
-      ByteBuffer toAdd = new Uint8List.fromList(new Uint8List.view(buffer).sublist(read, read+toRead));
-      ByteBuffer b = addUdpHeader(
-          toAdd,
-          packetType,
-          _currentSequence,
-          totalSequences,
-          signature,
-          totalLength
-      );
-      _signalWriteChunk(signature, _currentSequence, totalSequences, toAdd.lengthInBytes);
-      write(b);
-      _signalWroteChunk(signature, _currentSequence, totalSequences, toAdd.lengthInBytes);
-      _sentItems.add(new SendItem(b, _currentSequence, signature, new DateTime.now().millisecondsSinceEpoch));
-      _currentSequence++;
-      read += toRead;
-      leftToRead -= toRead;
+    StreamSubscription sub;
+    sub = _queue.onEmpty.listen((bool b) {
+      _adjustTreshold();
 
-    }
-    print("current $_currentSequence");
+      resendCount = 0;
+      if (_observerTimer != null)
+        _observerTimer.cancel();
+
+      if (leftToRead == 0) {
+        sub.cancel();
+        completer.complete(1);
+        return;
+      }
+
+      int t = (leftToRead ~/ writeChunkSize) + 1;
+      int treshold = t < currentTreshold ? t : currentTreshold;
+
+      int added = 0;
+      while (added < treshold) {
+        int toRead = leftToRead > _writeChunkSize ? _writeChunkSize : leftToRead;
+        ByteBuffer toAdd = new Uint8List.fromList(new Uint8List.view(buffer).sublist(read, read+toRead));
+        ByteBuffer b = addUdpHeader(
+            toAdd,
+            packetType,
+            _currentSequence,
+            totalSequences,
+            signature,
+            totalLength
+        );
+        read += toRead;
+        leftToRead -= toRead;
+        var si = new SendItem(b, _currentSequence, signature);
+        si.totalSequences = totalSequences;
+        si.signature = signature;
+        _queue.add(si);
+        _currentSequence++;
+        added++;
+      }
+
+      observe();
+      int now = new DateTime.now().millisecondsSinceEpoch;
+      for (int i = 0; i < _queue.itemCount; i++) {
+        SendItem si = _queue.items[i];
+        si.markSent();
+        _signalWriteChunk(si.signature, si.sequence, si.totalSequences, si.buffer.lengthInBytes - SIZEOF_UDP_HEADER);
+        write(si.buffer);
+      }
+    });
+    _queue.initialize();
+    return completer.future;
   }
 
-  void writeAck(int signature, int sequence, int total) {
+  void observe() {
+    _observerTimer = new Timer.periodic(const Duration(milliseconds: 10), (Timer t) {
+      if (_queue.itemCount > 0) {
+        int now = new DateTime.now().millisecondsSinceEpoch;
+        SendItem item = _queue.items[0];
+        if ((item.sendTime + ELAPSED_TIME_AFTER_SEND) < now) {
+          item.sendTime = now;
+          write(item.buffer);
+          resendCount++;
+        }
+      }
+    });
+  }
+
+  void _adjustTreshold() {
+    if (resendCount > 0) {
+      currentTreshold--;
+    } else {
+      currentTreshold = currentTreshold >= MAX_SEND_TRESHOLD ? MAX_SEND_TRESHOLD : currentTreshold + 1;
+    }
+  }
+
+  void writeAck(int signature, int sequence) {
     new Timer(const Duration(milliseconds: 0), () {
       write(BinaryData.createAck(signature, sequence));
     });
   }
 
   void receiveAck(int signature, int sequence) {
-    _lastAck = new DateTime.now().millisecondsSinceEpoch;
     new Timer(const Duration(milliseconds: 0), () {
-      _sentItems.removeWhere((SendItem i) => i.signature == signature && i.sequence == sequence);
+      var si = _queue.removeItem(signature, sequence);
+      if (si != null)
+        _signalWroteChunk(si.signature, si.sequence, si.totalSequences, si.buffer.lengthInBytes - SIZEOF_UDP_HEADER);
     });
-  }
-
-  void _process() {
-    int reSendLimit = 50;
-    if (_sentItems.length == 0)
-      _completer.complete(new DateTime.now().millisecondsSinceEpoch - _startSend);
-    else {
-      //print("Checking for packets hanging");
-      if (_allSent && (_lastAck + reSendLimit) < new DateTime.now().millisecondsSinceEpoch) {
-        print("Sending hanging packets");
-        _sentItems.forEach((SendItem si) {
-          write(si.buffer);
-          si.added = new DateTime.now().millisecondsSinceEpoch;
-        });
-        print(_sentItems.length);
-      }
-      _setImmediate();
-    }
-
-  }
-
-  void _onLoadEnd(ProgressEvent e) {
-
   }
 
   void _signalWriteChunk(int signature, int sequence, int totalSequences, int bytes) {
@@ -197,175 +143,65 @@ class UDPDataWriter extends BinaryDataWriter {
       });
     });
   }
-
-  void _setImmediate() {
-    if (_intervalTimer != null)
-      _intervalTimer.cancel();
-    _intervalTimer = new Timer(const Duration(milliseconds: 5), _process);
-  }
 }
 
+class SendQueue {
+  StreamController<bool> _queueEmptyController;
+  Stream<bool> onEmpty;
+  List<SendItem> _items;
+
+  List<SendItem> get items => _items;
+  int get itemCount => _items.length;
+
+  SendQueue() {
+    _items = new List<SendItem>();
+    _queueEmptyController = new StreamController<bool>();
+    onEmpty = _queueEmptyController.stream;
+  }
+
+  void write() {
+
+  }
+  void add(SendItem item) {
+    _items.add(item);
+
+  }
+
+  SendItem removeItem(int signature, int sequence) {
+    SendItem item = null;
+    //_items.removeWhere((SendItem i) => i.signature == signature && i.sequence == sequence);
+    for (int i = 0; i < items.length ; i++) {
+      SendItem si = items[i];
+      if (si.signature == signature && si.sequence == sequence) {
+        item = items.removeAt(i);
+        break;
+      }
+    }
+
+    if (_items.length == 0)
+      if (_queueEmptyController.hasListener)
+        _queueEmptyController.add(true);
+
+    return item;
+  }
+
+  void initialize() {
+    if (_queueEmptyController.hasListener)
+      _queueEmptyController.add(true);
+  }
+}
 class SendItem {
   ByteBuffer buffer;
   int signature;
   int sequence;
-  int added;
-  bool sent = true;
-  SendItem(this.buffer, this.sequence, this.signature, this.added);
-}
+  int totalSequences;
+  int sendTime;
+  bool sent = false;
+  SendItem(this.buffer, this.sequence, this.signature);
 
-class UDPDataWriterOld extends BinaryDataWriter {
-  Sequencer _sequencer;
-  bool _canLoop = true;
-  int _last;
-  int _interval = 5;
-  Timer _intervalTimer = null;
-  int _start = 0;
-  int loops;
-  int sent;
-  UDPDataWriterOld(PeerWrapper wrapper) : super(BINARY_PROTOCOL_UDP, wrapper) {
-    _sequencer = new Sequencer();
-    _last = new DateTime.now().millisecondsSinceEpoch;
-  }
-
-  Future<int> send(ByteBuffer buffer, int packetType, bool reliable) {
-    print("buffer to be sent ${buffer.lengthInBytes}");
-    loops = 0;
-    sent = 0;
-    Completer completer = new Completer();
-    if (!reliable)
-      completer.complete(0);
-
-    int totalSequences = (buffer.lengthInBytes ~/ _writeChunkSize) + 1;
-    int sequence = 1;
-    int read = 0;
-    int leftToRead = buffer.lengthInBytes;
-    int signature = new Random().nextInt(100000000);
-    SequenceCollection sc = _sequencer.createNewSequenceCollection(signature, totalSequences);
-    sc.completer = completer;
-
-    while (read < buffer.lengthInBytes) {
-      int toRead = leftToRead > _writeChunkSize ? _writeChunkSize : leftToRead;
-      ByteBuffer toAdd = new Uint8List.fromList(new Uint8List.view(buffer).sublist(read, read+toRead));
-      ByteBuffer b = addUdpHeader(
-          //buffer.slice(read, read + toRead),
-          toAdd,
-          packetType,
-          sequence,
-          totalSequences,
-          signature,
-          buffer.lengthInBytes
-      );
-      //addSequence(signature, sequence, totalSequences, b, reliable);
-      write(b);
-      sequence++;
-      read += toRead;
-      leftToRead -= toRead;
-    }
-    setImmediate();
-    return completer.future;
-  }
-
-  void addSequence(int signature, int sequence, int total, ByteBuffer buffer, bool resend) {
-    var sse =  new SendSequenceEntry(sequence, buffer);
-    sse.resend = resend;
-
-    _sequencer.addSequence(signature, total, sse);
-
-  }
-
-  int removeSequence(int signature, int sequence) {
-    SequenceCollection collection = _sequencer.getSequenceCollection(signature);
-    if (collection == null)
-      return null;
-
-    SendSequenceEntry sse = collection.getEntry(sequence);
-    if (sse == null)
-      return null;
-
-    _sequencer.removeSequence(signature, sequence);
-    if (!BinaryData.isCommand(sse.data))
-      _signalWroteChunk(collection.signature, sse.sequence, collection.total, sse.data.lengthInBytes);
-    return sse.timeSent;
-  }
-
-  void _process() {
-
-    int now = new DateTime.now().millisecondsSinceEpoch;
-    List<SequenceCollection> collections = _sequencer.getCollections();
-
-    for (int i = 0; i < collections.length; i++) {
-      SequenceCollection collection = collections[i];
-      SendSequenceEntry sse = collection.getFirst();
-
-      if (sse == null)
-        continue;
-
-      if (!sse.sent) {
-        write(sse.data);
-        sent++;
-        //new Logger().Debug("Sent chunk ${collection.signature} ${sse.sequence} RESEND = ${sse.resend} PACKETTYPE = ${BinaryData.getPacketType(sse.data)} ${sse.data.lengthInBytes}");
-        sse.markSent();
-        _signalWriteChunk(collection.signature, sse.sequence, collection.total, sse.data.lengthInBytes);
-        if (!sse.resend)
-          removeSequence(collection.signature, sse.sequence);
-      } else {
-
-          if ((sse.timeReSent + currentLatency) < now) {
-            //_roundTripCalculator.addToLatency(10);
-            write(sse.data);
-            new Logger().Debug("RE-Sent chunk ${collection.signature} ${sse.sequence} RESEND = ${sse.resend} PACKETTYPE = ${BinaryData.getPacketType(sse.data)}");
-            sse.markReSent();
-          }
-      }
-
-    }
-
-    if (_sequencer.hasMore() && _canLoop) {
-      setImmediate();
-    } else {
-      print("loops $loops sent $sent");
-    }
-    loops++;
-    int now2 = new DateTime.now().millisecondsSinceEpoch;
-    //print (now2 - now);
-  }
-
-  void writeAck(int signature, int sequence, int total) {
-    new Timer(const Duration(milliseconds: 0), () {
-      write(BinaryData.createAck(signature, sequence));
-      //addSequence(signature, 1, 1, BinaryData.createAck(signature, sequence), false);
-    });
-  }
-
-  void receiveAck(int signature, int sequence) {
-    int timeSent = removeSequence(signature, sequence);
-    if (timeSent != null)
-      calculateLatency(timeSent);
-  }
-
-  void _signalWriteChunk(int signature, int sequence, int totalSequences, int bytes) {
-    new Timer(const Duration(milliseconds: 0), () {
-      listeners.where((l) => l is BinaryDataSentEventListener).forEach((BinaryDataSentEventListener l) {
-        l.onWriteChunk(_wrapper, signature, sequence, totalSequences, bytes);
-      });
-    });
-  }
-
-  void _signalWroteChunk(int signature, int sequence, int totalSequences, int bytes) {
-    new Timer(const Duration(milliseconds: 0), () {
-      listeners.where((l) => l is BinaryDataSentEventListener).forEach((BinaryDataSentEventListener l) {
-        l.onWroteChunk(_wrapper, signature, sequence, totalSequences, bytes);
-      });
-    });
-  }
-
-  void setImmediate() {
-    if (_canLoop) {
-      if (_intervalTimer != null)
-        _intervalTimer.cancel();
-      _intervalTimer = new Timer(const Duration(milliseconds: 0), _process);
-    }
+  void markSent() {
+    sent = true;
+    sendTime = new DateTime.now().millisecondsSinceEpoch;
   }
 }
 

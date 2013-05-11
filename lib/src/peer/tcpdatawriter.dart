@@ -4,7 +4,7 @@ class TCPDataWriter extends BinaryDataWriter {
   TCPDataWriter(PeerWrapper wrapper) : super(BINARY_PROTOCOL_TCP, wrapper) {
 
   }
-
+/*
   Future<int> send(ByteBuffer buffer, int packetType) {
     Completer completer = new Completer();
     int signature = new Random().nextInt(100000000);
@@ -26,5 +26,5 @@ class TCPDataWriter extends BinaryDataWriter {
     }
     completer.complete(1);
     return completer.future;
-  }
+  }*/
 }

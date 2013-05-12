@@ -123,7 +123,7 @@ class BinaryData {
     viewAck.setUint8(UDP_PROTOCOL_FIRST_CONTENT_POSITION, BINARY_PACKET_ACK);
 
     if (!isValid(ackBuffer,BINARY_PROTOCOL_UDP )) {
-      new Logger().Warning("Created nonvalid ack response");
+      new Logger().warning("Created nonvalid ack response");
     }
     return ackBuffer;
   }

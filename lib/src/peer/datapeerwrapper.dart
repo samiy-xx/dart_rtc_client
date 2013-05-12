@@ -43,13 +43,13 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
   void setAsHost(bool value) {
     super.setAsHost(value);
 
-    _logger.Debug("(datapeerwrapper.dart) Initializing datachannel now");
+    _logger.fine("Initializing datachannel now");
     initChannel();
   }
 
   void initialize() {
     if (_isHost) {
-      _logger.Debug("Is Host");
+      _logger.fine("Is Host");
       _sendOffer();
     }
   }
@@ -59,7 +59,7 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
    * TODO: Whenever these reliable and unreliable are implemented by whomever. fix this.
    */
   void initChannel() {
-    _logger.Debug("Initializing send data channel");
+    _logger.fine("Initializing send data channel");
     _dataChannel = _peer.createDataChannel("channel", {'reliable': _isReliable});
     _dataChannel.binaryType = "arraybuffer";
     _dataChannel.onClose.listen(onDataChannelClose);
@@ -74,7 +74,7 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
    * Callback for when data channel created by the other party comes trough the peer
    */
   void _onNewDataChannelOpen(RtcDataChannelEvent e) {
-    _logger.Debug("--- Receiving incoming data channel");;
+    _logger.fine("--- Receiving incoming data channel");;
 
     _dataChannel = e.channel;
     _dataChannel.onClose.listen(onDataChannelClose);
@@ -129,7 +129,7 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
   }
 
   void onPeerFile(PeerWrapper pw, Blob b) {
-    _logger.Debug("(datapeerwrapper.dart) got blob, ${b.size} bytes");
+    _logger.fine("got blob, ${b.size} bytes");
   }
 
   /**
@@ -169,7 +169,7 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
   void onDataChannelOpen(Event e) {
     RtcDataChannel dc = e.target;
     _signalChannelStateChanged();
-    _logger.Debug("(datapeerwrapper.dart) DataChannelOpen ${dc.label}");
+    _logger.fine("DataChannelOpen ${dc.label}");
   }
 
   /**
@@ -178,14 +178,14 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
   void onDataChannelClose(Event e) {
     RtcDataChannel dc = e.target;
     _signalChannelStateChanged();
-    _logger.Debug("(datapeerwrapper.dart) DataChannelClose ${dc.label}");
+    _logger.fine(" DataChannelClose ${dc.label}");
   }
 
   /**
    * Message, check if blob, otherwise assume string data
    */
   void onDataChannelMessage(MessageEvent e) {
-    _logger.Debug("datachannel message");
+    _logger.fine("datachannel message");
 
   }
 
@@ -193,7 +193,7 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
    * Error
    */
   void onDataChannelError(RtcDataChannelEvent e) {
-    _logger.Debug("(datapeerwrapper.dart) DataChannelError $e");
+    _logger.fine("DataChannelError $e");
   }
 
   /**

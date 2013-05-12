@@ -19,12 +19,12 @@ class ChannelSignalHandler extends SignalHandler{
    */
   void onOpenDataSource(String e) {
     super.onOpenDataSource(e);
-    _logger.Debug("WebSocket connection opened, sending HELO, ${_dataSource.readyState}");
+    _logger.fine("WebSocket connection opened, sending HELO, ${_dataSource.readyState}");
     _dataSource.send(PacketFactory.get(new HeloPacket.With(_channelId, "")));
   }
 
   void handleChannelInfo(ChannelPacket p) {
-    _logger.Info("ChannelPacket owner=${p.owner}");
+    _logger.info("ChannelPacket owner=${p.owner}");
     _isChannelOwner = p.owner;
   }
 

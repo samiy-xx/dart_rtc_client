@@ -11,7 +11,7 @@ class StreamingSignalHandler extends SignalHandler {
 
   void onJoinChannel(JoinPacket p) {
     if (channelId != "")
-      _logger.Debug("got channel id channelId");
+      _logger.fine("got channel id channelId");
 
     if (p.id != id)
       other = p.id;

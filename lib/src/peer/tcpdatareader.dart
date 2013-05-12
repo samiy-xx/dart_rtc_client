@@ -106,7 +106,7 @@ class TCPDataReader extends BinaryDataReader {
     try {
       _latestView.setUint8(index, b);
     } catch (e) {
-      _logger.Error("Error at index $index setting byte $b : exception $e");
+      _logger.severe("Error at index $index setting byte $b : exception $e");
     }
 
     _leftToRead -= SIZEOF8;

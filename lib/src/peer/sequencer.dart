@@ -121,7 +121,7 @@ class SequenceCollection {
     try {
       _sequences[entry.sequence - 1] = entry;
     } on RangeError catch(e) {
-      _logger.Error("Error: ${_sequences.length} ${entry.sequence}");
+      _logger.severe("Error: ${_sequences.length} ${entry.sequence}");
       throw e;
     }
   }

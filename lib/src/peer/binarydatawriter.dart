@@ -50,11 +50,11 @@ abstract class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListen
       var toSend = _wrapToString ? wrapToString(buf) : buf;
       _writeChannel.send(toSend);
     } on DomException catch(e, s) {
-      _logger.Error("Error $e");
-      _logger.Error("Trace $s");
-      _logger.Error("Attempted to send buffer of ${buf.lengthInBytes} bytes");
-      _logger.Error("Buffer valid = ${BinaryData.isValid(buf, _binaryProtocol)}");
-      _logger.Error("Channel state = ${_writeChannel.readyState}");
+      _logger.severe("Error $e");
+      _logger.severe("Trace $s");
+      _logger.severe("Attempted to send buffer of ${buf.lengthInBytes} bytes");
+      _logger.severe("Buffer valid = ${BinaryData.isValid(buf, _binaryProtocol)}");
+      _logger.severe("Channel state = ${_writeChannel.readyState}");
     }
   }
 

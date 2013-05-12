@@ -386,10 +386,10 @@ class ChannelClient implements RtcClient,
         throw new PeerWrapperTypeException("Peer wrapper is not DataPeerWrapper type");
       return w;
     } on PeerWrapperNullException catch (e) {
-      _logger.Error("$e");
+      _logger.severe("$e");
       throw e;
     } on PeerWrapperTypeException catch (e) {
-      _logger.Error("$e");
+      _logger.severe("$e");
       throw e;
     }
   }
@@ -481,7 +481,7 @@ class ChannelClient implements RtcClient,
         dpw.binaryReader.subscribe(this);
         dpw.binaryWriter.subscribe(this);
       } catch(e) {
-       _logger.Error("Error: $e");
+       _logger.severe("Error: $e");
       }
       //dpw.binaryWriter.subscribe(this);
       pw.subscribe(this);

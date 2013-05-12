@@ -111,7 +111,7 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
     if (_signalingStateController.hasListener)
       _signalingStateController.add(new SignalingStateEvent(Signaler.SIGNALING_STATE_OPEN));
 
-    _logger.Debug("WebSocket connection opened, sending HELO, ${_dataSource.readyState}");
+    _logger.fine("WebSocket connection opened, sending HELO, ${_dataSource.readyState}");
     _dataSource.send(PacketFactory.get(new HeloPacket.With(_channelId, "")));
   }
 
@@ -128,7 +128,7 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
    * Implements DataSourceConnectionEventListener onError
    */
   void onDataSourceError(String e) {
-    _logger.Error("Error $e");
+    _logger.severe("Error $e");
   }
 
   /**
@@ -141,17 +141,17 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
     try {
       p = PacketFactory.getPacketFromString(m);
     } catch(e) {
-      _logger.Error(e.toString());
+      _logger.severe(e.toString());
     }
 
     if (p != null) {
       try {
         if (!executeHandler(p))
-          _logger.Warning("Packet ${p.packetType} has no handlers set");
+          _logger.warning("Packet ${p.packetType} has no handlers set");
       } on Exception catch(e) {
-        _logger.Error(e.toString());
+        _logger.severe(e.toString());
       } catch(e) {
-        _logger.Error(e.toString());
+        _logger.severe(e.toString());
       }
     }
   }
@@ -185,7 +185,7 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
         return true;
       }
     } catch (e, s) {
-      _logger.Error("Error: $e $s");
+      _logger.severe("Error: $e $s");
     }
     return false;
   }
@@ -215,7 +215,7 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
     if (_serverEventController.hasListener)
       _serverEventController.add(new ServerParticipantJoinEvent(packet.id, packet.channelId));
     try {
-      _logger.Debug("JoinPacket channel ${packet.channelId} user ${packet.id}");
+      _logger.fine("JoinPacket channel ${packet.channelId} user ${packet.id}");
       if (_createPeerOnJoin) {
         PeerWrapper p = createPeerWrapper();
         p.id = packet.id;
@@ -223,7 +223,7 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
         p.setAsHost(true);
       }
     } catch (e) {
-      _logger.Error("Error handleJoin $e");
+      _logger.severe("Error handleJoin $e");
     }
   }
 
@@ -233,7 +233,7 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
   void handleId(IdPacket id) {
     if (_serverEventController.hasListener)
       _serverEventController.add(new ServerParticipantIdEvent(id.id, id.channelId));
-    _logger.Debug("ID packet: channel ${id.channelId} user ${id.id}");
+    _logger.fine("ID packet: channel ${id.channelId} user ${id.id}");
     if (id.id != null && !id.id.isEmpty) {
       if (_createPeerOnJoin) {
         PeerWrapper p = createPeerWrapper();
@@ -250,10 +250,10 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
     if (_serverEventController.hasListener)
       _serverEventController.add(new ServerParticipantLeftEvent(p.id));
 
-    _logger.Debug("Received BYE from ${p.id}");
+    _logger.fine("Received BYE from ${p.id}");
     PeerWrapper peer = _peerManager.findWrapper(p.id);
     if (peer != null) {
-      _logger.Debug("Closing peer ${peer.id}");
+      _logger.fine("Closing peer ${peer.id}");
       peer.close();
     }
   }
@@ -262,14 +262,14 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
     if (_serverEventController.hasListener)
       _serverEventController.add(new ServerJoinEvent(p.channelId, p.owner, p.limit));
 
-    _logger.Info("ChannelPacket owner=${p.owner}");
+    _logger.info("ChannelPacket owner=${p.owner}");
     _isChannelOwner = p.owner;
   }
 
   void handleIdChange(ChangeNickCommand c) {
     if (_serverEventController.hasListener)
       _serverEventController.add(new ServerParticipantStatusEvent(c.id, c.newId));
-    _logger.Debug("CHANGEID packet: user ${c.id} to ${c.newId}");
+    _logger.fine("CHANGEID packet: user ${c.id} to ${c.newId}");
     if (c.id == _id) {
       // t's me
       _id = c.id;
@@ -283,7 +283,7 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
    * handle connection success
    */
   void handleConnectionSuccess(ConnectionSuccessPacket p) {
-    _logger.Debug("Connection successfull user ${p.id}");
+    _logger.fine("Connection successfull user ${p.id}");
     _id = p.id;
     if (_signalingStateController.hasListener)
       _signalingStateController.add(new SignalingReadyEvent(p.id, Signaler.SIGNALING_STATE_READY));
@@ -309,7 +309,7 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
    * Handles sdp description
    */
   void handleDescription(DescriptionPacket p) {
-    _logger.Debug("RECV: DescriptionPacket channel ${p.channelId} user ${p.id}");
+    _logger.fine("RECV: DescriptionPacket channel ${p.channelId} user ${p.id}");
 
     RtcSessionDescription t = new RtcSessionDescription({
       'sdp':p.sdp,
@@ -318,12 +318,12 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
     PeerWrapper peer = _peerManager.findWrapper(p.id);
 
     if (peer == null) {
-      _logger.Debug("Peer not found with id ${p.id}. Creating...");
+      _logger.fine("Peer not found with id ${p.id}. Creating...");
       peer = createPeerWrapper();
       peer.id = p.id;
     }
 
-    _logger.Debug("Setting remote description to peer");
+    _logger.fine("Setting remote description to peer");
     peer.setRemoteSessionDescription(t);
   }
 
@@ -331,7 +331,7 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
    * Handles ping from server, responds with pong
    */
   void handlePing(PingPacket p) {
-    _logger.Debug("Received PING, answering with PONG");
+    _logger.fine("Received PING, answering with PONG");
     _dataSource.send(PacketFactory.get(new PongPacket()));
   }
 

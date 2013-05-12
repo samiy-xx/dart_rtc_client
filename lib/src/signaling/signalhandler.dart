@@ -4,7 +4,7 @@ part of rtc_client;
  * SignalHandler
  */
 class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventListener, DataSourceConnectionEventListener {
-  Logger _log = new Logger();
+  static final _logger = new Logger("dart_rtc_client.SignalHandler");
 
   DataSource _dataSource;
   PeerManager _peerManager;
@@ -111,7 +111,7 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
     if (_signalingStateController.hasListener)
       _signalingStateController.add(new SignalingStateEvent(Signaler.SIGNALING_STATE_OPEN));
 
-    _log.Debug("(signalhandler.dart) WebSocket connection opened, sending HELO, ${_dataSource.readyState}");
+    _logger.Debug("WebSocket connection opened, sending HELO, ${_dataSource.readyState}");
     _dataSource.send(PacketFactory.get(new HeloPacket.With(_channelId, "")));
   }
 
@@ -128,7 +128,7 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
    * Implements DataSourceConnectionEventListener onError
    */
   void onDataSourceError(String e) {
-    _log.Error("Error $e");
+    _logger.Error("Error $e");
   }
 
   /**
@@ -141,17 +141,17 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
     try {
       p = PacketFactory.getPacketFromString(m);
     } catch(e) {
-      _log.Error(e.toString());
+      _logger.Error(e.toString());
     }
 
     if (p != null) {
       try {
         if (!executeHandler(p))
-          _log.Warning("Packet ${p.packetType} has no handlers set");
+          _logger.Warning("Packet ${p.packetType} has no handlers set");
       } on Exception catch(e) {
-        _log.Error(e.toString());
+        _logger.Error(e.toString());
       } catch(e) {
-        _log.Error(e.toString());
+        _logger.Error(e.toString());
       }
     }
   }
@@ -185,7 +185,7 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
         return true;
       }
     } catch (e, s) {
-      new Logger().Error("Error: $e $s");
+      _logger.Error("Error: $e $s");
     }
     return false;
   }
@@ -215,7 +215,7 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
     if (_serverEventController.hasListener)
       _serverEventController.add(new ServerParticipantJoinEvent(packet.id, packet.channelId));
     try {
-      _log.Debug("(signalhandler.dart) JoinPacket channel ${packet.channelId} user ${packet.id}");
+      _logger.Debug("JoinPacket channel ${packet.channelId} user ${packet.id}");
       if (_createPeerOnJoin) {
         PeerWrapper p = createPeerWrapper();
         p.id = packet.id;
@@ -223,7 +223,7 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
         p.setAsHost(true);
       }
     } catch (e) {
-      _log.Error("(signalhandler.dart) Error handleJoin $e");
+      _logger.Error("Error handleJoin $e");
     }
   }
 
@@ -233,7 +233,7 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
   void handleId(IdPacket id) {
     if (_serverEventController.hasListener)
       _serverEventController.add(new ServerParticipantIdEvent(id.id, id.channelId));
-    _log.Debug("(signalhandler.dart) ID packet: channel ${id.channelId} user ${id.id}");
+    _logger.Debug("ID packet: channel ${id.channelId} user ${id.id}");
     if (id.id != null && !id.id.isEmpty) {
       if (_createPeerOnJoin) {
         PeerWrapper p = createPeerWrapper();
@@ -250,10 +250,10 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
     if (_serverEventController.hasListener)
       _serverEventController.add(new ServerParticipantLeftEvent(p.id));
 
-    _log.Debug("(signalhandler.dart) Received BYE from ${p.id}");
+    _logger.Debug("Received BYE from ${p.id}");
     PeerWrapper peer = _peerManager.findWrapper(p.id);
     if (peer != null) {
-      _log.Debug("(signalhandler.dart) Closing peer ${peer.id}");
+      _logger.Debug("Closing peer ${peer.id}");
       peer.close();
     }
   }
@@ -262,14 +262,14 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
     if (_serverEventController.hasListener)
       _serverEventController.add(new ServerJoinEvent(p.channelId, p.owner, p.limit));
 
-    _log.Info("(signalhandler.dart) ChannelPacket owner=${p.owner}");
+    _logger.Info("ChannelPacket owner=${p.owner}");
     _isChannelOwner = p.owner;
   }
 
   void handleIdChange(ChangeNickCommand c) {
     if (_serverEventController.hasListener)
       _serverEventController.add(new ServerParticipantStatusEvent(c.id, c.newId));
-    _log.Debug("(signalhandler.dart) CHANGEID packet: user ${c.id} to ${c.newId}");
+    _logger.Debug("CHANGEID packet: user ${c.id} to ${c.newId}");
     if (c.id == _id) {
       // t's me
       _id = c.id;
@@ -283,7 +283,7 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
    * handle connection success
    */
   void handleConnectionSuccess(ConnectionSuccessPacket p) {
-    _log.Debug("(signalhandler.dart) Connection successfull user ${p.id}");
+    _logger.Debug("Connection successfull user ${p.id}");
     _id = p.id;
     if (_signalingStateController.hasListener)
       _signalingStateController.add(new SignalingReadyEvent(p.id, Signaler.SIGNALING_STATE_READY));
@@ -309,7 +309,7 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
    * Handles sdp description
    */
   void handleDescription(DescriptionPacket p) {
-    _log.Debug("(signalhandler.dart) RECV: DescriptionPacket channel ${p.channelId} user ${p.id}");
+    _logger.Debug("RECV: DescriptionPacket channel ${p.channelId} user ${p.id}");
 
     RtcSessionDescription t = new RtcSessionDescription({
       'sdp':p.sdp,
@@ -318,12 +318,12 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
     PeerWrapper peer = _peerManager.findWrapper(p.id);
 
     if (peer == null) {
-      _log.Debug("(signalhandler.dart) Peer not found with id ${p.id}. Creating...");
+      _logger.Debug("Peer not found with id ${p.id}. Creating...");
       peer = createPeerWrapper();
       peer.id = p.id;
     }
 
-    _log.Debug("(signalhandler.dart) Setting remote description to peer");
+    _logger.Debug("Setting remote description to peer");
     peer.setRemoteSessionDescription(t);
   }
 
@@ -331,7 +331,7 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
    * Handles ping from server, responds with pong
    */
   void handlePing(PingPacket p) {
-    _log.Debug("(signalhandler.dart) Received PING, answering with PONG");
+    _logger.Debug("Received PING, answering with PONG");
     _dataSource.send(PacketFactory.get(new PongPacket()));
   }
 

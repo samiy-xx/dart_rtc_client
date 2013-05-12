@@ -1,6 +1,7 @@
 part of rtc_client;
 
 class Sequencer {
+  static final _logger = new Logger("dart_rtc_client.Sequencer");
   List<SequenceCollection> _sequenceCollections;
 
   Sequencer() {
@@ -84,6 +85,7 @@ class Sequencer {
 }
 
 class SequenceCollection {
+  static final _logger = new Logger("dart_rtc_client.SequenceCollection");
   int _signature;
   int _total;
   Completer _completer;
@@ -119,7 +121,7 @@ class SequenceCollection {
     try {
       _sequences[entry.sequence - 1] = entry;
     } on RangeError catch(e) {
-      print("Error: ${_sequences.length} ${entry.sequence}");
+      _logger.Error("Error: ${_sequences.length} ${entry.sequence}");
       throw e;
     }
   }

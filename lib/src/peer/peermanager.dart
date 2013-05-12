@@ -6,7 +6,7 @@ part of rtc_client;
 class PeerManager extends GenericEventTarget<PeerEventListener> {
   static PeerManager _instance;
 
-  final Logger _log = new Logger();
+  static final _logger = new Logger("dart_rtc_client.PeerManager");
 
   /*
    * Add local stream to peer connections when created
@@ -121,8 +121,8 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
           )
       );
     } catch (e, s) {
-      new Logger().Error("$e");
-      new Logger().Error("$s");
+      _logger.Error("$e");
+      _logger.Error("$s");
       throw e;
     }
     _add(wrapper);
@@ -136,13 +136,13 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
   PeerWrapper _createWrapper(RtcPeerConnection p) {
     PeerWrapper wrapper;
     if (_peerConstraints.dataChannelEnabled) {
-      new Logger().Debug("Creating Data Peer Wrapper");
+      _logger.Debug("Creating Data Peer Wrapper");
       wrapper = new DataPeerWrapper(this, p);
 
       (wrapper as DataPeerWrapper).isReliable = _reliableDataChannels;
       //(wrapper as DataPeerWrapper).initChannel();
     } else {
-      new Logger().Debug("Creating Peer Wrapper");
+      _logger.Debug("Creating Peer Wrapper");
       wrapper = new PeerWrapper(this, p);
     }
 
@@ -249,7 +249,7 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
    */
   void onStateChanged(Event e) {
     PeerWrapper wrapper = getWrapperForPeer(e.target);
-    _log.Debug("(peermanager.dart) onStateChanged: ${wrapper.peer.signalingState}");
+    _logger.Debug("(peermanager.dart) onStateChanged: ${wrapper.peer.signalingState}");
 
     listeners.where((l) => l is PeerConnectionEventListener).forEach((PeerConnectionEventListener l) {
       l.onPeerStateChanged(wrapper, wrapper.peer.signalingState);

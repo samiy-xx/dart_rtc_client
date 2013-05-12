@@ -6,6 +6,7 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:logging_handlers/logging_handlers_shared.dart';
 import 'package:dart_rtc_common/rtc_common.dart';
 //import '../../dart_rtc_common/lib/rtc_common.dart';
 
@@ -60,6 +61,8 @@ part 'src/exception/wrapperexceptions.dart';
 
 part 'api/rtcclient.dart';
 part 'api/channelclient.dart';
+
+final Logger libLogger = new Logger("dart_rtc_client");
 
 const int CLOSE_NORMAL = 1000;
 const int CLOSE_GOING_AWAY = 1001;

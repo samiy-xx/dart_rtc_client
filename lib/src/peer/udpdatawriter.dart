@@ -1,6 +1,7 @@
 part of rtc_client;
 
 class UDPDataWriter extends BinaryDataWriter {
+  static final _logger = new Logger("dart_rtc_client.UDPDataWriter");
   const int MAX_SEND_TRESHOLD = 100;
   const int START_SEND_TRESHOLD = 5;
   const int ELAPSED_TIME_AFTER_SEND = 500;

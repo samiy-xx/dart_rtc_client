@@ -1,6 +1,7 @@
 part of rtc_client;
 
 class StreamingSignalHandler extends SignalHandler {
+  static final _logger = new Logger("dart_rtc_client.StreamingSignalHandler");
   String other = null;
 
   StreamingSignalHandler(DataSource ds) : super(ds) {
@@ -10,7 +11,7 @@ class StreamingSignalHandler extends SignalHandler {
 
   void onJoinChannel(JoinPacket p) {
     if (channelId != "")
-      print("got channel id channelId");
+      _logger.Debug("got channel id channelId");
 
     if (p.id != id)
       other = p.id;

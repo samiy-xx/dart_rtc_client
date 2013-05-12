@@ -1,6 +1,7 @@
 part of rtc_client;
 
 class UDPDataReader extends BinaryDataReader {
+  static final _logger = new Logger("dart_rtc_client.UDPDataReader");
   ByteBuffer _latest;
   ByteData _latestView;
 
@@ -220,7 +221,7 @@ class UDPDataReader extends BinaryDataReader {
   void _process_content_v2(ByteBuffer buffer) {
 
     if (_haveThisPart) {
-      print("have this part");
+      _logger.Debug("have this part");
       (_wrapper as DataPeerWrapper).binaryWriter.writeAck(_signature, _currentChunkSequence);
       _currentReadState = BinaryReadState.INIT_READ;
       return;
@@ -242,7 +243,7 @@ class UDPDataReader extends BinaryDataReader {
     try {
       _latestView.setUint8(index, b);
     } catch (e) {
-      new Logger().Error("Error at index $index setting byte $b : exception $e");
+      _logger.Error("Error at index $index setting byte $b : exception $e");
     }
 
     _leftToRead -= SIZEOF8;

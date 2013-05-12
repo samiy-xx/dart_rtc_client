@@ -5,6 +5,8 @@ part of rtc_client;
  * Needs to be extended for udp and tcp
  */
 abstract class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListener> {
+  static final _logger = new Logger("dart_rtc_client.BinaryDataWriter");
+
   PeerWrapper _wrapper;
 
   // Datachannel where to write to
@@ -48,11 +50,11 @@ abstract class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListen
       var toSend = _wrapToString ? wrapToString(buf) : buf;
       _writeChannel.send(toSend);
     } on DomException catch(e, s) {
-      new Logger().Error("Error $e");
-      new Logger().Error("Trace $s");
-      new Logger().Error("Attempted to send buffer of ${buf.lengthInBytes} bytes");
-      new Logger().Error("Buffer valid = ${BinaryData.isValid(buf, _binaryProtocol)}");
-      new Logger().Error("Channel state = ${_writeChannel.readyState}");
+      _logger.Error("Error $e");
+      _logger.Error("Trace $s");
+      _logger.Error("Attempted to send buffer of ${buf.lengthInBytes} bytes");
+      _logger.Error("Buffer valid = ${BinaryData.isValid(buf, _binaryProtocol)}");
+      _logger.Error("Channel state = ${_writeChannel.readyState}");
     }
   }
 

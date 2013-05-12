@@ -1,6 +1,7 @@
 part of rtc_client;
 
 class TCPDataReader extends BinaryDataReader {
+  static final _logger = new Logger("dart_rtc_client.TCPDataReader");
   BinaryReadState _currentReadState = BinaryReadState.INIT_READ;
   int _packetType;
   int _leftToRead = 0;
@@ -105,7 +106,7 @@ class TCPDataReader extends BinaryDataReader {
     try {
       _latestView.setUint8(index, b);
     } catch (e) {
-      new Logger().Error("Error at index $index setting byte $b : exception $e");
+      _logger.Error("Error at index $index setting byte $b : exception $e");
     }
 
     _leftToRead -= SIZEOF8;

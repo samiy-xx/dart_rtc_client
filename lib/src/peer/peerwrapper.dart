@@ -5,7 +5,7 @@ part of rtc_client;
  * Wraps the peer connection comfortably
  */
 class PeerWrapper extends GenericEventTarget<PeerEventListener>{
-
+  static final _logger = new Logger("dart_rtc_client.PeerWrapper");
   /** Session Description type offer */
   final String SDP_OFFER = 'offer';
 
@@ -15,7 +15,6 @@ class PeerWrapper extends GenericEventTarget<PeerEventListener>{
   RtcPeerConnection _peer;
   PeerManager _manager;
   bool _isHost = false;
-  final Logger _log = new Logger();
 
   String _id;
   String _channelId;
@@ -52,9 +51,9 @@ class PeerWrapper extends GenericEventTarget<PeerEventListener>{
    */
   void setSessionDescription(RtcSessionDescription sdp) {
     _peer.setLocalDescription(sdp).then((val) {
-        _log.Debug("(peerwrapper.dart) Setting local description was success $val");
+        _logger.Debug("(peerwrapper.dart) Setting local description was success $val");
     }).catchError((e) {
-        _log.Error("(peerwrapper.dart) setting local description failed ${e}");
+        _logger.Error("(peerwrapper.dart) setting local description failed ${e}");
     });
   }
 
@@ -65,10 +64,10 @@ class PeerWrapper extends GenericEventTarget<PeerEventListener>{
   void setRemoteSessionDescription(RtcSessionDescription sdp) {
 
       _peer.setRemoteDescription(sdp).then((val) {
-        _log.Debug("(peerwrapper.dart) Setting remote description was success $val");
+        _logger.Debug("(peerwrapper.dart) Setting remote description was success $val");
       })
       .catchError((e) {
-        _log.Error("(peerwrapper.dart) setting remote description failed ${e}");
+        _logger.Error("(peerwrapper.dart) setting remote description failed ${e}");
       });
 
       if (sdp.type == SDP_OFFER)
@@ -89,7 +88,7 @@ class PeerWrapper extends GenericEventTarget<PeerEventListener>{
   void _sendOffer() {
     _peer.createOffer().then(_onOfferSuccess)
     .catchError((e) {
-      _log.Error("(peerwrapper.dart) Error creating offer $e");
+      _logger.Error("(peerwrapper.dart) Error creating offer $e");
     });
   }
 
@@ -111,7 +110,7 @@ class PeerWrapper extends GenericEventTarget<PeerEventListener>{
    * and set is our local session description
    */
   void _onOfferSuccess(RtcSessionDescription sdp) {
-    _log.Debug("(peerwrapper.dart) Offer created, sending");
+    _logger.Debug("(peerwrapper.dart) Offer created, sending");
     sdp = hackTheSdp(sdp);
     setSessionDescription(sdp);
 
@@ -125,14 +124,14 @@ class PeerWrapper extends GenericEventTarget<PeerEventListener>{
   void _onAnswerSuccess(RtcSessionDescription sdp) {
     sdp = hackTheSdp(sdp);
 
-    _log.Debug("(peerwrapper.dart) Answer created, sending");
+    _logger.Debug("(peerwrapper.dart) Answer created, sending");
     setSessionDescription(sdp);
 
     _manager._sendPacket(PacketFactory.get(new DescriptionPacket.With(sdp.sdp, 'answer', _id, _channelId)));
   }
 
   RtcSessionDescription hackTheSdp(RtcSessionDescription sd) {
-    _log.Debug("(peerwrapper.dart) Hacking created session description for more banswidth");
+    _logger.Debug("(peerwrapper.dart) Hacking created session description for more banswidth");
 
     String hacked = sd.sdp.replaceFirst("b=AS:30", "b=AS:1638400");
 
@@ -152,16 +151,16 @@ class PeerWrapper extends GenericEventTarget<PeerEventListener>{
   void addStream(MediaStream ms) {
     if (ms == null)
       throw new Exception("MediaStream was null");
-    _log.Debug("(peerwrapper.dart) Adding stream to peer $id");
+    _logger.Debug("(peerwrapper.dart) Adding stream to peer $id");
     try {
       _peer.addStream(ms, _manager.getStreamConstraints().toMap());
     } on DomException catch(e, s) {
-      _log.Error("DOM Error setting constraints: $e ${_manager.getStreamConstraints().toMap().toString()}");
+      _logger.Error("DOM Error setting constraints: $e ${_manager.getStreamConstraints().toMap().toString()}");
       _peer.addStream(ms);
     } on Exception catch (e) {
-      _log.Error("Exception on adding stream $e");
+      _logger.Error("Exception on adding stream $e");
     } catch(e) {
-      _log.Error("Exception on adding stream $e");
+      _logger.Error("Exception on adding stream $e");
     }
   }
 
@@ -173,7 +172,7 @@ class PeerWrapper extends GenericEventTarget<PeerEventListener>{
    * means we're hosting and the other party must reply with answer
    */
   void _onNegotiationNeeded(Event e) {
-    _log.Info("(peerwrapper.dart) onNegotiationNeeded");
+    _logger.Info("(peerwrapper.dart) onNegotiationNeeded");
 
     if (isHost)
       _sendOffer();
@@ -188,7 +187,7 @@ class PeerWrapper extends GenericEventTarget<PeerEventListener>{
       throw new Exception("RtcIceCandidate was null");
 
     if (_peer.signalingState != PEER_CLOSED) {
-      _log.Debug("(peerwrapper.dart) Receiving remote ICE Candidate ${candidate.candidate}");
+      _logger.Debug("(peerwrapper.dart) Receiving remote ICE Candidate ${candidate.candidate}");
       _peer.addIceCandidate(candidate);
     }
   }
@@ -213,18 +212,18 @@ class PeerWrapper extends GenericEventTarget<PeerEventListener>{
    * TODO: find out where the hell is ongatheringstate
    */
   void _onIceChange(Event c) {
-    _log.Debug("(peerwrapper.dart) ICE Change ${c} (ice gathering state ${_peer.iceGatheringState}) (ice state ${_peer.iceConnectionState})");
+    _logger.Debug("(peerwrapper.dart) ICE Change ${c} (ice gathering state ${_peer.iceGatheringState}) (ice state ${_peer.iceConnectionState})");
   }
 
   void _onRTCError(String error) {
-    _log.Error("(peerwrapper.dart) RTC ERROR : $error");
+    _logger.Error("(peerwrapper.dart) RTC ERROR : $error");
   }
 
   /**
    * Close the peer connection if not closed already
    */
   void close() {
-    _log.Error("(peerwrapper.dart) Closing peer");
+    _logger.Error("(peerwrapper.dart) Closing peer");
     if (_peer.signalingState != PEER_CLOSED)
       _peer.close();
   }

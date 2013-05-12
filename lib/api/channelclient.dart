@@ -4,6 +4,7 @@ class ChannelClient implements RtcClient,
   PeerConnectionEventListener, PeerMediaEventListener, PeerDataEventListener,
   BinaryDataReceivedEventListener, BinaryDataSentEventListener {
 
+  static final _logger = new Logger("dart_rtc_client.ChannelClient");
   /* Keeps track of the initialization state of the client */
   InitializationState _currentState;
 
@@ -385,10 +386,10 @@ class ChannelClient implements RtcClient,
         throw new PeerWrapperTypeException("Peer wrapper is not DataPeerWrapper type");
       return w;
     } on PeerWrapperNullException catch (e) {
-      new Logger().Error("$e");
+      _logger.Error("$e");
       throw e;
     } on PeerWrapperTypeException catch (e) {
-      new Logger().Error("$e");
+      _logger.Error("$e");
       throw e;
     }
   }
@@ -480,7 +481,7 @@ class ChannelClient implements RtcClient,
         dpw.binaryReader.subscribe(this);
         dpw.binaryWriter.subscribe(this);
       } catch(e) {
-        new Logger().Error("Error: $e");
+       _logger.Error("Error: $e");
       }
       //dpw.binaryWriter.subscribe(this);
       pw.subscribe(this);

@@ -18,7 +18,7 @@ class WheelSignalHandler extends SignalHandler {
   }
 
   void onConnect(ConnectionSuccessPacket p) {
-    print("Connected, my id is ${p.id}");
+
   }
 
   void onUserDisconnect(Disconnected d) {
@@ -30,7 +30,7 @@ class WheelSignalHandler extends SignalHandler {
   }
 
   void onUserMessage(UserMessage m) {
-    print("user message");
+
   }
 
   void requestRandomUser() {

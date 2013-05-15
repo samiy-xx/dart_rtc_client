@@ -280,11 +280,12 @@ class UDPDataReader extends BinaryDataReader {
   void _processBuffer() {
     _totalRead = 0;
     ByteBuffer buffer;
+    var type = _packetType;
     if (sequencerComplete(_signature)) {
       buildCompleteBuffer(_signature, _contentTotalLength, _totalSequences).then((ByteBuffer buffer) {
 
         if (buffer != null)
-          _doSignalingBasedOnBufferType(buffer);
+          _doSignalingBasedOnBufferType(buffer, type);
 
       });
     }
@@ -294,8 +295,9 @@ class UDPDataReader extends BinaryDataReader {
 
   }
 
-  void _doSignalingBasedOnBufferType(ByteBuffer buffer) {
-      switch (_packetType) {
+  void _doSignalingBasedOnBufferType(ByteBuffer buffer, int type) {
+    print("PACKETTYPE $_packetType ${buffer.lengthInBytes}");
+    switch (type) {
         case BINARY_TYPE_STRING:
           String s = BinaryData.stringFromBuffer(buffer);
           _signalReadString(s);

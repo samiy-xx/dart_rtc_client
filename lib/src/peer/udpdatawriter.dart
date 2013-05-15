@@ -50,6 +50,7 @@ class UDPDataWriter extends BinaryDataWriter {
         _observerTimer.cancel();
 
       if (leftToRead == 0) {
+        print("Cancel sub");
         sub.cancel();
         completer.complete(1);
         return;

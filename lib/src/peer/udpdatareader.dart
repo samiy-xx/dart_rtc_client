@@ -22,6 +22,9 @@ class UDPDataReader extends BinaryDataReader {
   int _startMs;
   int _testMS = 0;
   Stopwatch _watch;
+  Timer _ackTimer;
+  const int _ackTransmitWaitMs = 2;
+  AckBuffer _ackBuffer;
   BinaryReadState _currentReadState = BinaryReadState.INIT_READ;
   BinaryReadState get currentReadState => _currentReadState;
 
@@ -35,12 +38,17 @@ class UDPDataReader extends BinaryDataReader {
     _sequencer = new Sequencer();
     _lastProcessed = new DateTime.now().millisecondsSinceEpoch;
     _watch = new Stopwatch();
+    _ackBuffer = new AckBuffer();
+    _ackBuffer.onFull.listen(_ackBufferFull);
+    _monitorAcks();
   }
 
   Future readChunkString(String s) {
     Completer c = new Completer();
     window.setImmediate(() {
       _startMs = new DateTime.now().millisecondsSinceEpoch;
+
+
       readChunk(BinaryData.bufferFromString(s));
       c.complete();
     });
@@ -57,7 +65,7 @@ class UDPDataReader extends BinaryDataReader {
     int i = 0;
 
     if (BinaryData.isCommand(buf)) {
-      _process_command(BinaryData.getCommand(buf), buf);
+      _process_command(buf);
       return;
     }
 
@@ -147,9 +155,9 @@ class UDPDataReader extends BinaryDataReader {
     int k = 0;
     for (int i = 0; i < totalSequences; i++) {
       ByteBuffer part = sc.getEntry(i + 1).data;
-      ByteData partView = new ByteData.view(part);
+      ByteData partView = new ByteData.view(part, SIZEOF_UDP_HEADER);
 
-      for (int j = 0; j < part.lengthInBytes; j++) {
+      for (int j = 0; j < part.lengthInBytes - SIZEOF_UDP_HEADER; j++) {
         completeView.setUint8(k, partView.getUint8(j));
         k++;
       }
@@ -222,12 +230,19 @@ class UDPDataReader extends BinaryDataReader {
 
     if (_haveThisPart) {
       _logger.fine("have this part");
-      (_wrapper as DataPeerWrapper).binaryWriter.writeAck(_signature, _currentChunkSequence);
+      //(_wrapper as DataPeerWrapper).binaryWriter.writeAck(_signature, _currentChunkSequence);
+      //List<int> sequences = new List<int>(1);
+      //sequences[0] = _currentChunkSequence;
+      //ByteBuffer ack = BinaryData.createAck(_signature, sequences);
+      //_ackBuffer.add(ack);
+      _ackBuffer.add(_currentChunkSequence);
+      //(_wrapper as DataPeerWrapper).binaryWriter.sendAck(ack);
       _currentReadState = BinaryReadState.INIT_READ;
       return;
     }
-    var tmp = new Uint8List.view(buffer).sublist(SIZEOF_UDP_HEADER);
-    _latest = new Uint8List.fromList(tmp).buffer;
+    //var tmp = new Uint8List.view(buffer).sublist(SIZEOF_UDP_HEADER);
+    //_latest = new Uint8List.fromList(tmp).buffer;
+    _latest = buffer;
     //_leftToRead -= buffer.lengthInBytes - SIZEOF_UDP_HEADER;
     if (!_haveThisPart)
       _totalRead += buffer.lengthInBytes - SIZEOF_UDP_HEADER;
@@ -264,9 +279,15 @@ class UDPDataReader extends BinaryDataReader {
   void _process_end() {
 
     addToSequencer(_latest, _signature, _currentChunkSequence);
-    if (!_haveThisPart)
+    if (!_haveThisPart) {
+      //List<int> sequences = new List<int>(1);
+      //sequences[0] = _currentChunkSequence;
+      //ByteBuffer ack = BinaryData.createAck(_signature, sequences);
+      //(_wrapper as DataPeerWrapper).binaryWriter.sendAck(ack);
+      _ackBuffer.add(_currentChunkSequence);
+      //(_wrapper as DataPeerWrapper).binaryWriter.writeAck(_signature, _currentChunkSequence);
       _signalReadChunk(_latest, _signature, _currentChunkSequence, _totalSequences, _currentChunkContentLength, _contentTotalLength);
-
+    }
     //new Logger().Debug("Processed $_totalRead of $_contentTotalLength");
     if (_totalRead == _contentTotalLength)
       _processBuffer();
@@ -295,6 +316,31 @@ class UDPDataReader extends BinaryDataReader {
 
   }
 
+  void _monitorAcks() {
+    _ackTimer = new Timer.periodic(const Duration(milliseconds: 1), (Timer t) {
+      if (_signature == null || _ackBuffer.length == 0)
+        return;
+      int now = new DateTime.now().millisecondsSinceEpoch;
+      if ((_startMs + _ackTransmitWaitMs) < now) {
+        //print("create ack for $_signature ${_ackBuffer.length}");
+        ByteBuffer ack = BinaryData.createAck(_signature, _ackBuffer.acks);
+        _ackBuffer.clear();
+        (_wrapper as DataPeerWrapper).binaryWriter.sendAck(ack);
+
+      }
+    });
+  }
+  void _ackBufferFull(List<int> acks) {
+    ByteBuffer ack = BinaryData.createAck(_signature, _ackBuffer.acks);
+    (_wrapper as DataPeerWrapper).binaryWriter.sendAck(ack);
+  }
+  void _cancelMonitor() {
+    if (_ackTimer != null) {
+      _ackTimer.cancel();
+      _ackTimer = null;
+    }
+  }
+
   void _doSignalingBasedOnBufferType(ByteBuffer buffer, int type) {
     print("PACKETTYPE $_packetType ${buffer.lengthInBytes}");
     switch (type) {
@@ -313,9 +359,19 @@ class UDPDataReader extends BinaryDataReader {
       }
   }
 
-  void _process_command(int command, ByteBuffer buffer) {
+  void _process_command(ByteBuffer buffer) {
 
-    switch (command) {
+      int signature = BinaryData.getSignature(buffer);
+      int contentLength = buffer.lengthInBytes - SIZEOF_UDP_HEADER;
+      int sequenceCount = contentLength ~/ SIZEOF32;
+
+      var byteData = new ByteData.view(buffer, SIZEOF_UDP_HEADER);
+      for (int i = 0; i < sequenceCount; i++) {
+        int sequence = byteData.getUint32(i * SIZEOF32);
+        _signalSendSuccess(signature, sequence);
+      }
+
+    /*switch (command) {
       case BINARY_PACKET_ACK:
         int signature = BinaryData.getSignature(buffer);
         int sequence = BinaryData.getSequenceNumber(buffer);
@@ -323,7 +379,7 @@ class UDPDataReader extends BinaryDataReader {
         break;
       default:
         break;
-    }
+    }*/
   }
 
   // TODO: Move to writer
@@ -366,5 +422,55 @@ class UDPDataReader extends BinaryDataReader {
   void reset() {
     _currentReadState = BinaryReadState.INIT_READ;
     _leftToRead = 0;
+  }
+}
+
+class AckBuffer {
+  StreamController<List<int>> _bufferyController;
+  Stream<List<int>> onFull;
+  const int ACK_LIMIT = 50;
+  List<int> _acks;
+  int _index = 0;
+  bool get full => _index == ACK_LIMIT - 1;
+  List<int> get acks => _getAcks();
+  AckBuffer() {
+    _acks = new List<int>(ACK_LIMIT);
+    _bufferyController = new StreamController<List<int>>();
+    onFull = _bufferyController.stream;
+  }
+
+  void add(int ack) {
+    _acks[_index++] = ack;
+    if (full) {
+      _bufferyController.add(_acks);
+      _index = 0;
+      clear();
+    }
+  }
+
+  int length()  {
+    int count = 0;
+    for (int i = 0; i < ACK_LIMIT; i++) {
+      if (_acks[i] != null)
+        count++;
+    }
+    return count;
+  }
+
+  void clear() {
+    _acks = new List<int>(ACK_LIMIT);
+    _index = 0;
+  }
+
+  List<int> _getAcks() {
+    int l = length();
+    List<int> r = new List<int>(l);
+    int r_index = 0;
+    for (int i = 0; i < _acks.length; i++) {
+      if (_acks[i] != null) {
+        r[r_index++] = _acks[i];
+      }
+    }
+    return r;
   }
 }

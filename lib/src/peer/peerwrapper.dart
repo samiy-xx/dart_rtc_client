@@ -39,6 +39,7 @@ class PeerWrapper extends GenericEventTarget<PeerEventListener>{
     _peer.onNegotiationNeeded.listen(_onNegotiationNeeded);
     _peer.onIceConnectionStateChange.listen(_onIceChange);
     _peer.onSignalingStateChange.listen(_onStateChange);
+
   }
 
   void setAsHost(bool value) {

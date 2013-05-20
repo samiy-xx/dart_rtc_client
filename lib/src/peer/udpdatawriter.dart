@@ -1,10 +1,11 @@
 part of rtc_client;
 
 class UDPDataWriter extends BinaryDataWriter {
-  const int MAX_SEND_TRESHOLD = 100;
   static final _logger = new Logger("dart_rtc_client.UDPDataWriter");
-  const int START_SEND_TRESHOLD = 5;
-  const int ELAPSED_TIME_AFTER_SEND = 500;
+  const int MAX_SEND_TRESHOLD = 150;
+  const int START_SEND_TRESHOLD = 15;
+  const int ELAPSED_TIME_AFTER_SEND = 200;
+  const int MAX_FILE_BUFFER_SIZE = 1024 * 1024 * 10;
 
   Timer _observerTimer;
   SendQueue _queue;
@@ -20,18 +21,50 @@ class UDPDataWriter extends BinaryDataWriter {
   }
 
   Future<int> send(ByteBuffer buffer, int packetType, bool reliable) {
+    _clearSequenceNumber();
     Completer completer = new Completer();
     if (!reliable)
       completer.complete(0);
     int totalSequences = (buffer.lengthInBytes ~/ _writeChunkSize) + 1;
-    _currentSequence = 1;
-    //int sequence = 1;
+
     int read = 0;
     int leftToRead = buffer.lengthInBytes;
     int signature = new Random().nextInt(100000000);
     _send(buffer, signature, totalSequences, buffer.lengthInBytes, packetType).then((int i) {
       if (!completer.isCompleted)
         completer.complete(1);
+    });
+    return completer.future;
+  }
+
+  Future<int> sendFile(Blob file) {
+    _clearSequenceNumber();
+    Completer completer = new Completer();
+    FileReader reader = new FileReader();
+    //int totalSequences = (file.size / _writeChunkSize).ceil();
+    int totalSequences = _getSequenceTotal(file.size);
+    print(totalSequences);
+    print(file.size);
+    //return;
+
+    int read = 0;
+    int leftToRead = file.size;
+    int signature = new Random().nextInt(100000000);
+    int toRead = file.size > MAX_FILE_BUFFER_SIZE ? MAX_FILE_BUFFER_SIZE : file.size;
+    reader.readAsArrayBuffer(file.slice(read, read + toRead));
+    reader.onLoadEnd.listen((ProgressEvent e) {
+      _send(reader.result, signature, totalSequences, file.size, BINARY_TYPE_FILE).then((int i) {
+        read += toRead;
+        leftToRead -= toRead;
+        if (read < file.size) {
+          toRead = leftToRead > MAX_FILE_BUFFER_SIZE ? MAX_FILE_BUFFER_SIZE : file.size;
+          reader.readAsArrayBuffer(file.slice(read, read + toRead));
+        } else {
+          print("chunks $_currentSequence");
+          completer.complete(1);
+        }
+      });
+
     });
     return completer.future;
   }
@@ -56,10 +89,11 @@ class UDPDataWriter extends BinaryDataWriter {
         return;
       }
 
-      int t = (leftToRead ~/ writeChunkSize) + 1;
+      int t = (leftToRead /writeChunkSize).ceil();
       int treshold = t < currentTreshold ? t : currentTreshold;
 
       int added = 0;
+      _queue.prepare(treshold);
       while (added < treshold) {
         int toRead = leftToRead > _writeChunkSize ? _writeChunkSize : leftToRead;
         ByteBuffer toAdd = new Uint8List.fromList(new Uint8List.view(buffer).sublist(read, read+toRead));
@@ -76,6 +110,7 @@ class UDPDataWriter extends BinaryDataWriter {
         var si = new SendItem(b, _currentSequence, signature);
         si.totalSequences = totalSequences;
         si.signature = signature;
+
         _queue.add(si);
         _currentSequence++;
         added++;
@@ -94,11 +129,28 @@ class UDPDataWriter extends BinaryDataWriter {
     return completer.future;
   }
 
+  int _getSequenceTotal([int bytes = 36056912]) {
+    int total = 0;
+    int leftToRead = bytes;
+    while (leftToRead > 0) {
+      int b = leftToRead > MAX_FILE_BUFFER_SIZE ? MAX_FILE_BUFFER_SIZE : leftToRead;
+      total += (b / _writeChunkSize).ceil();
+      leftToRead -= b;
+      print("$total $leftToRead");
+    }
+    return total;
+  }
+
+  void _clearSequenceNumber() {
+    _currentSequence = 1;
+  }
+
   void observe() {
     _observerTimer = new Timer.periodic(const Duration(milliseconds: 10), (Timer t) {
       if (_queue.itemCount > 0) {
         int now = new DateTime.now().millisecondsSinceEpoch;
-        SendItem item = _queue.items[0];
+        SendItem item = _queue.first();
+
         if ((item.sendTime + ELAPSED_TIME_AFTER_SEND) < now) {
           item.sendTime = now;
           write(item.buffer);
@@ -122,11 +174,19 @@ class UDPDataWriter extends BinaryDataWriter {
     });
   }
 
+  void sendAck(ByteBuffer buffer) {
+    new Timer(const Duration(milliseconds: 0), () {
+      write(buffer);
+    });
+  }
+
   void receiveAck(int signature, int sequence) {
     new Timer(const Duration(milliseconds: 0), () {
       var si = _queue.removeItem(signature, sequence);
-      if (si != null)
+      if (si != null) {
+
         _signalWroteChunk(si.signature, si.sequence, si.totalSequences, si.buffer.lengthInBytes - SIZEOF_UDP_HEADER);
+      }
     });
   }
 
@@ -151,22 +211,26 @@ class SendQueue {
   StreamController<bool> _queueEmptyController;
   Stream<bool> onEmpty;
   List<SendItem> _items;
-
+  int _index;
   List<SendItem> get items => _items;
-  int get itemCount => _items.length;
+  int get itemCount => _length();
 
   SendQueue() {
-    _items = new List<SendItem>();
     _queueEmptyController = new StreamController<bool>();
     onEmpty = _queueEmptyController.stream;
+  }
+
+  void prepare(int count) {
+    _index = 0;
+    _items = new List<SendItem>(count);
   }
 
   void write() {
 
   }
-  void add(SendItem item) {
-    _items.add(item);
 
+  void add(SendItem item) {
+    _items[_index++] = item;
   }
 
   SendItem removeItem(int signature, int sequence) {
@@ -174,24 +238,46 @@ class SendQueue {
     //_items.removeWhere((SendItem i) => i.signature == signature && i.sequence == sequence);
     for (int i = 0; i < items.length ; i++) {
       SendItem si = items[i];
-      if (si.signature == signature && si.sequence == sequence) {
-        item = items.removeAt(i);
-        break;
+      if (si != null) {
+        if (si.signature == signature && si.sequence == sequence) {
+          item = si;
+
+          _items[i] = null;
+          break;
+        }
       }
     }
 
-    if (_items.length == 0)
+    if (_length() == 0) {
+
       if (_queueEmptyController.hasListener)
         _queueEmptyController.add(true);
-
+    }
     return item;
   }
 
+  SendItem first() {
+    for (int i = 0; i < _items.length; i++) {
+      if (_items[i] != null)
+        return _items[i];
+    }
+    return null;
+  }
+
+  int _length() {
+    int count = 0;
+    for (int i = 0; i < _items.length; i++) {
+      if (_items[i] != null)
+      count++;
+    }
+    return count;
+  }
   void initialize() {
     if (_queueEmptyController.hasListener)
       _queueEmptyController.add(true);
   }
 }
+
 class SendItem {
   ByteBuffer buffer;
   int signature;

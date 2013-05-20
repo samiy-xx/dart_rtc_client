@@ -91,7 +91,7 @@ class SequenceCollection {
   Completer _completer;
   List<SequenceEntry> _sequences;
   DateTime _created;
-
+  int _added;
   bool get isComplete => _isComplete();
   bool get isEmpty => _isEmpty();
   int get total => _total;
@@ -104,6 +104,7 @@ class SequenceCollection {
     _signature = signature;
     _sequences = new List<SequenceEntry>(total);
     _created = new DateTime.now();
+    _added = 0;
   }
 
   void complete() {
@@ -114,15 +115,18 @@ class SequenceCollection {
   SequenceEntry addCreateSequence(int sequence, ByteBuffer buffer) {
     var se = new SequenceEntry(sequence, buffer);
     _sequences[sequence - 1] = se;
+    _added++;
     return se;
   }
 
   void setEntry(SequenceEntry entry) {
     try {
       _sequences[entry.sequence - 1] = entry;
+      _added++;
     } on RangeError catch(e) {
+      print("Error: ${_sequences.length} ${entry.sequence}");
       _logger.severe("Error: ${_sequences.length} ${entry.sequence}");
-      throw e;
+      //throw e;
     }
   }
 
@@ -133,11 +137,12 @@ class SequenceCollection {
   }
 
   bool _isComplete() {
-    for (int i = 0; i < _total; i++) {
+    return _added == _total;
+    /*for (int i = 0; i < _total; i++) {
       if (_sequences[i] == null)
         return false;
     }
-    return true;
+    return true;*/
   }
 
   bool _isEmpty() {

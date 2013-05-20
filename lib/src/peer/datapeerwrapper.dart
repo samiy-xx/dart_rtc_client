@@ -97,9 +97,8 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
   }
 
   Future<int> sendFile(File f) {
-    //tmp hack
-    //return _binaryWriter.sendFile(f);
-    Completer<int> completer = new Completer<int>();
+    return _binaryWriter.sendFile(f);
+    /*Completer<int> completer = new Completer<int>();
     FileReader reader = new FileReader();
     reader.onLoadEnd.listen((ProgressEvent e) {
       sendBuffer(reader.result, BINARY_TYPE_FILE, true).then((int i) {
@@ -107,7 +106,7 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
       });
     });
     reader.readAsArrayBuffer(f);
-    return completer.future;
+    return completer.future;*/
   }
 
   Future<int> sendBuffer(ByteBuffer buf, int packetType, bool reliable) {
@@ -136,8 +135,8 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
    * Implements BinaryDataReceivedEventListener onReadChunk
    */
   void onPeerReadUdpChunk(PeerWrapper pw, ByteBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesTotal) {
-    if (_binaryWriter is UDPDataWriter)
-      (_binaryWriter as UDPDataWriter).writeAck(signature, sequence);
+    //if (_binaryWriter is UDPDataWriter)
+    //  (_binaryWriter as UDPDataWriter).writeAck(signature, sequence);
   }
 
   void onPeerReadTcpChunk(PeerWrapper pw, ByteBuffer buffer, int signature, int bytes, int bytesTotal) {

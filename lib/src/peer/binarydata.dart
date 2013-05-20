@@ -80,11 +80,10 @@ class BinaryData {
     PacketFactory.getPacketFromString(stringFromBuffer(buffer));
   }
 
-  static ByteBuffer createAck(int signature, int sequence) {
-    ByteBuffer ackBuffer = new Uint8List(SIZEOF_UDP_HEADER + 1).buffer;
+  static ByteBuffer createAck(int signature, List<int> sequences) {
+    ByteBuffer ackBuffer = new Uint8List(SIZEOF_UDP_HEADER + (sequences.length * SIZEOF32)).buffer;
     ByteData viewAck = new ByteData.view(ackBuffer);
-    //DataView viewAck = new DataView(ackBuffer);
-
+    int length = sequences.length * SIZEOF32;
     viewAck.setUint8(
         PROTOCOL_STARTBYTE_POSITION,
         FULL_BYTE
@@ -92,39 +91,43 @@ class BinaryData {
 
     viewAck.setUint8(
         PROTOCOL_PACKETTYPE_POSITION,
-        0x00
+        BINARY_TYPE_COMMAND
     );
 
     viewAck.setUint32(
         UDP_PROTOCOL_SEQUENCE_POSITION,
-        sequence
+        1
     );
 
     viewAck.setUint32(
         UDP_PROTOCOL_TOTALSEQUENCE_POSITION,
-        sequence
+        1
     );
 
     viewAck.setUint16(
         UDP_PROTOCOL_BYTELENGTH_POSITION,
-        1
+        length
     );
 
     viewAck.setUint32(
         UDP_PROTOCOL_TOTALBYTELENGTH_POSITION,
-        1
+        length
     );
 
     viewAck.setUint32(
         UDP_PROTOCOL_SIGNATURE_POSITION,
         signature
     );
+    int i = 0;
 
-    viewAck.setUint8(UDP_PROTOCOL_FIRST_CONTENT_POSITION, BINARY_PACKET_ACK);
-
-    if (!isValid(ackBuffer,BINARY_PROTOCOL_UDP )) {
-      new Logger().warning("Created nonvalid ack response");
+    for (int sequence in sequences) {
+      viewAck.setUint32(UDP_PROTOCOL_FIRST_CONTENT_POSITION + i, sequence);
+      i += SIZEOF32;
     }
+
+    //if (!isValid(ackBuffer,BINARY_PROTOCOL_UDP )) {
+    //  new Logger().warning("Created nonvalid ack response");
+    //}
     return ackBuffer;
   }
 
@@ -143,9 +146,10 @@ class BinaryData {
   }
 
   static bool isCommand(ByteBuffer buffer) {
-    if (!isValidUdp(buffer))
-      return buffer.lengthInBytes == SIZEOF_TCP_HEADER + 1;
-    return buffer.lengthInBytes == SIZEOF_UDP_HEADER + 1;
+    //if (!isValidUdp(buffer))
+    //  return buffer.lengthInBytes == SIZEOF_TCP_HEADER + 1;
+    //return buffer.lengthInBytes == SIZEOF_UDP_HEADER + 1;
+    return getPacketType(buffer) == BINARY_TYPE_COMMAND;
   }
 
   static int getCommand(ByteBuffer buffer) {

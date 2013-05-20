@@ -224,6 +224,7 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
       }
     } catch (e) {
       _logger.severe("Error handleJoin $e");
+      throw e;
     }
   }
 

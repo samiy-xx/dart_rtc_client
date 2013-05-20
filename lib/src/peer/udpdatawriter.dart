@@ -2,10 +2,10 @@ part of rtc_client;
 
 class UDPDataWriter extends BinaryDataWriter {
   static final _logger = new Logger("dart_rtc_client.UDPDataWriter");
-  const int MAX_SEND_TRESHOLD = 150;
-  const int START_SEND_TRESHOLD = 15;
+  const int MAX_SEND_TRESHOLD = 200;
+  const int START_SEND_TRESHOLD = 50;
   const int ELAPSED_TIME_AFTER_SEND = 200;
-  const int MAX_FILE_BUFFER_SIZE = 1024 * 1024 * 10;
+  const int MAX_FILE_BUFFER_SIZE = 1024 * 1024 * 20;
 
   Timer _observerTimer;
   SendQueue _queue;
@@ -15,6 +15,7 @@ class UDPDataWriter extends BinaryDataWriter {
   int _currentSequence;
   int resendCount = 0;
   int currentTreshold = 0;
+  int _lastSendTime;
 
   UDPDataWriter(PeerWrapper wrapper) : super(BINARY_PROTOCOL_UDP, wrapper) {
     _queue = new SendQueue();
@@ -41,11 +42,7 @@ class UDPDataWriter extends BinaryDataWriter {
     _clearSequenceNumber();
     Completer completer = new Completer();
     FileReader reader = new FileReader();
-    //int totalSequences = (file.size / _writeChunkSize).ceil();
     int totalSequences = _getSequenceTotal(file.size);
-    print(totalSequences);
-    print(file.size);
-    //return;
 
     int read = 0;
     int leftToRead = file.size;
@@ -60,7 +57,6 @@ class UDPDataWriter extends BinaryDataWriter {
           toRead = leftToRead > MAX_FILE_BUFFER_SIZE ? MAX_FILE_BUFFER_SIZE : file.size;
           reader.readAsArrayBuffer(file.slice(read, read + toRead));
         } else {
-          print("chunks $_currentSequence");
           completer.complete(1);
         }
       });
@@ -83,7 +79,6 @@ class UDPDataWriter extends BinaryDataWriter {
         _observerTimer.cancel();
 
       if (leftToRead == 0) {
-        print("Cancel sub");
         sub.cancel();
         completer.complete(1);
         return;
@@ -97,6 +92,7 @@ class UDPDataWriter extends BinaryDataWriter {
       while (added < treshold) {
         int toRead = leftToRead > _writeChunkSize ? _writeChunkSize : leftToRead;
         ByteBuffer toAdd = new Uint8List.fromList(new Uint8List.view(buffer).sublist(read, read+toRead));
+
         ByteBuffer b = addUdpHeader(
             toAdd,
             packetType,
@@ -105,6 +101,7 @@ class UDPDataWriter extends BinaryDataWriter {
             signature,
             totalLength
         );
+
         read += toRead;
         leftToRead -= toRead;
         var si = new SendItem(b, _currentSequence, signature);
@@ -114,16 +111,19 @@ class UDPDataWriter extends BinaryDataWriter {
         _queue.add(si);
         _currentSequence++;
         added++;
+        si.markSent();
+        _signalWriteChunk(si.signature, si.sequence, si.totalSequences, si.buffer.lengthInBytes - SIZEOF_UDP_HEADER);
+        write(si.buffer);
       }
 
       observe();
-      int now = new DateTime.now().millisecondsSinceEpoch;
+      /*int now = new DateTime.now().millisecondsSinceEpoch;
       for (int i = 0; i < _queue.itemCount; i++) {
         SendItem si = _queue.items[i];
         si.markSent();
         _signalWriteChunk(si.signature, si.sequence, si.totalSequences, si.buffer.lengthInBytes - SIZEOF_UDP_HEADER);
         write(si.buffer);
-      }
+      }*/
     });
     _queue.initialize();
     return completer.future;
@@ -136,7 +136,6 @@ class UDPDataWriter extends BinaryDataWriter {
       int b = leftToRead > MAX_FILE_BUFFER_SIZE ? MAX_FILE_BUFFER_SIZE : leftToRead;
       total += (b / _writeChunkSize).ceil();
       leftToRead -= b;
-      print("$total $leftToRead");
     }
     return total;
   }
@@ -146,7 +145,7 @@ class UDPDataWriter extends BinaryDataWriter {
   }
 
   void observe() {
-    _observerTimer = new Timer.periodic(const Duration(milliseconds: 10), (Timer t) {
+    _observerTimer = new Timer.periodic(const Duration(milliseconds: 5), (Timer t) {
       if (_queue.itemCount > 0) {
         int now = new DateTime.now().millisecondsSinceEpoch;
         SendItem item = _queue.first();

@@ -46,8 +46,6 @@ class UDPDataReader extends BinaryDataReader {
   Future readChunkString(String s) {
     Completer c = new Completer();
     window.setImmediate(() {
-      _startMs = new DateTime.now().millisecondsSinceEpoch;
-
 
       readChunk(BinaryData.bufferFromString(s));
       c.complete();
@@ -60,8 +58,8 @@ class UDPDataReader extends BinaryDataReader {
    * Can be whole packet or partial
    */
   void readChunk(ByteBuffer buf) {
-    _lastProcessed = new DateTime.now().millisecondsSinceEpoch;
-
+    _lastProcessed = _startMs = new DateTime.now().millisecondsSinceEpoch;
+    //_startMs = new DateTime.now().millisecondsSinceEpoch;
     int i = 0;
 
     if (BinaryData.isCommand(buf)) {
@@ -77,43 +75,43 @@ class UDPDataReader extends BinaryDataReader {
       if (_currentReadState == BinaryReadState.INIT_READ) {
         _process_init_read(v.getUint8(i));
         i += SIZEOF8;
-        continue;
+        //continue;
       }
 
       if (_currentReadState == BinaryReadState.READ_TYPE) {
         _process_read_type(v.getUint8(i));
         i += SIZEOF8;
-        continue;
+        //continue;
       }
 
       if (_currentReadState == BinaryReadState.READ_SEQUENCE) {
         _process_read_sequence(v.getUint32(i));
         i += SIZEOF32;
-        continue;
+        //continue;
       }
 
       if (_currentReadState == BinaryReadState.READ_TOTAL_SEQUENCES) {
         _process_read_total_sequences(v.getUint32(i));
         i += SIZEOF32;
-        continue;
+        //continue;
       }
 
       if (_currentReadState == BinaryReadState.READ_LENGTH) {
         _process_read_length(v.getUint16(i));
         i += SIZEOF16;
-        continue;
+        //continue;
       }
 
       if (_currentReadState == BinaryReadState.READ_TOTAL_LENGTH) {
         _process_read_total_length(v.getUint32(i));
         i += SIZEOF32;
-        continue;
+        //continue;
       }
 
       if (_currentReadState == BinaryReadState.READ_SIGNATURE) {
         _process_read_signature(v.getUint32(i));
         i += SIZEOF32;
-        continue;
+        //continue;
       }
 
       /*if (_currentReadState == BinaryReadState.READ_CONTENT) {
@@ -165,7 +163,6 @@ class UDPDataReader extends BinaryDataReader {
 
     _sequencer.removeCollection(signature);
     _watch.stop();
-    //print("Built a buffer of ${complete.byteLength} bytes in ${_watch.elapsedMilliseconds} milliseconds");
     return complete;
   }
 
@@ -230,13 +227,7 @@ class UDPDataReader extends BinaryDataReader {
 
     if (_haveThisPart) {
       _logger.fine("have this part");
-      //(_wrapper as DataPeerWrapper).binaryWriter.writeAck(_signature, _currentChunkSequence);
-      //List<int> sequences = new List<int>(1);
-      //sequences[0] = _currentChunkSequence;
-      //ByteBuffer ack = BinaryData.createAck(_signature, sequences);
-      //_ackBuffer.add(ack);
       _ackBuffer.add(_currentChunkSequence);
-      //(_wrapper as DataPeerWrapper).binaryWriter.sendAck(ack);
       _currentReadState = BinaryReadState.INIT_READ;
       return;
     }
@@ -251,26 +242,6 @@ class UDPDataReader extends BinaryDataReader {
       _currentReadState = BinaryReadState.FINISH_READ;
       _process_end();
     //}
-  }
-
-  void _process_content(int b, int index) {
-
-    try {
-      _latestView.setUint8(index, b);
-    } catch (e) {
-      _logger.severe("Error at index $index setting byte $b : exception $e");
-    }
-
-    _leftToRead -= SIZEOF8;
-    //if (!_haveThisPart) {
-      _totalRead += SIZEOF8;
-
-    //}
-
-    if (_leftToRead == 0) {
-      _currentReadState = BinaryReadState.FINISH_READ;
-      _process_end();
-    }
   }
 
   /*
@@ -289,6 +260,8 @@ class UDPDataReader extends BinaryDataReader {
       _signalReadChunk(_latest, _signature, _currentChunkSequence, _totalSequences, _currentChunkContentLength, _contentTotalLength);
     }
     //new Logger().Debug("Processed $_totalRead of $_contentTotalLength");
+    int now = new DateTime.now().millisecondsSinceEpoch;
+
     if (_totalRead == _contentTotalLength)
       _processBuffer();
 
@@ -322,7 +295,6 @@ class UDPDataReader extends BinaryDataReader {
         return;
       int now = new DateTime.now().millisecondsSinceEpoch;
       if ((_startMs + _ackTransmitWaitMs) < now) {
-        //print("create ack for $_signature ${_ackBuffer.length}");
         ByteBuffer ack = BinaryData.createAck(_signature, _ackBuffer.acks);
         _ackBuffer.clear();
         (_wrapper as DataPeerWrapper).binaryWriter.sendAck(ack);
@@ -334,6 +306,7 @@ class UDPDataReader extends BinaryDataReader {
     ByteBuffer ack = BinaryData.createAck(_signature, _ackBuffer.acks);
     (_wrapper as DataPeerWrapper).binaryWriter.sendAck(ack);
   }
+
   void _cancelMonitor() {
     if (_ackTimer != null) {
       _ackTimer.cancel();
@@ -342,7 +315,7 @@ class UDPDataReader extends BinaryDataReader {
   }
 
   void _doSignalingBasedOnBufferType(ByteBuffer buffer, int type) {
-    print("PACKETTYPE $_packetType ${buffer.lengthInBytes}");
+
     switch (type) {
         case BINARY_TYPE_STRING:
           String s = BinaryData.stringFromBuffer(buffer);
@@ -360,26 +333,15 @@ class UDPDataReader extends BinaryDataReader {
   }
 
   void _process_command(ByteBuffer buffer) {
+    int signature = BinaryData.getSignature(buffer);
+    int contentLength = buffer.lengthInBytes - SIZEOF_UDP_HEADER;
+    int sequenceCount = contentLength ~/ SIZEOF32;
 
-      int signature = BinaryData.getSignature(buffer);
-      int contentLength = buffer.lengthInBytes - SIZEOF_UDP_HEADER;
-      int sequenceCount = contentLength ~/ SIZEOF32;
-
-      var byteData = new ByteData.view(buffer, SIZEOF_UDP_HEADER);
-      for (int i = 0; i < sequenceCount; i++) {
-        int sequence = byteData.getUint32(i * SIZEOF32);
-        _signalSendSuccess(signature, sequence);
-      }
-
-    /*switch (command) {
-      case BINARY_PACKET_ACK:
-        int signature = BinaryData.getSignature(buffer);
-        int sequence = BinaryData.getSequenceNumber(buffer);
-        _signalSendSuccess(signature, sequence);
-        break;
-      default:
-        break;
-    }*/
+    var byteData = new ByteData.view(buffer, SIZEOF_UDP_HEADER);
+    for (int i = 0; i < sequenceCount; i++) {
+      int sequence = byteData.getUint32(i * SIZEOF32);
+      _signalSendSuccess(signature, sequence);
+    }
   }
 
   // TODO: Move to writer

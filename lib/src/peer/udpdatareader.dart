@@ -23,7 +23,7 @@ class UDPDataReader extends BinaryDataReader {
   int _testMS = 0;
   Stopwatch _watch;
   Timer _ackTimer;
-  const int _ackTransmitWaitMs = 2;
+  const int _ackTransmitWaitMs = 5;
   AckBuffer _ackBuffer;
   BinaryReadState _currentReadState = BinaryReadState.INIT_READ;
   BinaryReadState get currentReadState => _currentReadState;
@@ -390,7 +390,7 @@ class UDPDataReader extends BinaryDataReader {
 class AckBuffer {
   StreamController<List<int>> _bufferyController;
   Stream<List<int>> onFull;
-  const int ACK_LIMIT = 50;
+  const int ACK_LIMIT = 200;
   List<int> _acks;
   int _index = 0;
   bool get full => _index == ACK_LIMIT - 1;

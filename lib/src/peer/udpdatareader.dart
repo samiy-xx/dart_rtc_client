@@ -390,7 +390,7 @@ class UDPDataReader extends BinaryDataReader {
 class AckBuffer {
   StreamController<List<int>> _bufferyController;
   Stream<List<int>> onFull;
-  const int ACK_LIMIT = 200;
+  const int ACK_LIMIT = 50;
   List<int> _acks;
   int _index = 0;
   bool get full => _index == ACK_LIMIT - 1;

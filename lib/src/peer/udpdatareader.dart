@@ -46,7 +46,6 @@ class UDPDataReader extends BinaryDataReader {
   Future readChunkString(String s) {
     Completer c = new Completer();
     window.setImmediate(() {
-
       readChunk(BinaryData.bufferFromString(s));
       c.complete();
     });
@@ -138,7 +137,7 @@ class UDPDataReader extends BinaryDataReader {
 
   Future<ByteBuffer> buildCompleteBuffer(int signature, int totalLength, int totalSequences) {
     Completer<ByteBuffer> completer = new Completer<ByteBuffer>();
-    new Timer(const Duration(milliseconds: 0), () {
+    window.setImmediate(() {
       completer.complete(_buildCompleteBuffer(signature, totalLength, totalSequences));
     });
     return completer.future;
@@ -355,8 +354,10 @@ class UDPDataReader extends BinaryDataReader {
    * Signal listeners that a chunk has been read
    */
   void _signalReadChunk(ByteBuffer buf, int signature, int sequence, int totalSequences, int bytes, int bytesTotal) {
-    listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
-      l.onPeerReadUdpChunk(_wrapper, buf, signature, sequence, totalSequences, bytes, bytesTotal);
+    window.setImmediate(() {
+      listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
+        l.onPeerReadUdpChunk(_wrapper, buf, signature, sequence, totalSequences, bytes, bytesTotal);
+      });
     });
   }
 
@@ -390,7 +391,7 @@ class UDPDataReader extends BinaryDataReader {
 class AckBuffer {
   StreamController<List<int>> _bufferyController;
   Stream<List<int>> onFull;
-  const int ACK_LIMIT = 50;
+  const int ACK_LIMIT = 100;
   List<int> _acks;
   int _index = 0;
   bool get full => _index == ACK_LIMIT - 1;

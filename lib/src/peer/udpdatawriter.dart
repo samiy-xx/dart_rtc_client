@@ -4,6 +4,7 @@ class UDPDataWriter extends BinaryDataWriter {
   static final _logger = new Logger("dart_rtc_client.UDPDataWriter");
   const int MAX_SEND_TRESHOLD = 2200;
   const int START_SEND_TRESHOLD = 200;
+  const int TRESHOLD_INCREMENT = 5;
   const int ELAPSED_TIME_AFTER_SEND = 200;
   const int MAX_FILE_BUFFER_SIZE = 1024 * 1024 * 20;
 
@@ -91,8 +92,9 @@ class UDPDataWriter extends BinaryDataWriter {
       _queue.prepare(treshold);
       while (added < treshold) {
         int toRead = leftToRead > _writeChunkSize ? _writeChunkSize : leftToRead;
-        ByteBuffer toAdd = new Uint8List.fromList(new Uint8List.view(buffer).sublist(read, read+toRead));
-
+        //ByteBuffer toAdd = new Uint8List.fromList(new Uint8List.view(buffer).sublist(read, read+toRead));
+        //ByteBuffer toAdd = new Uint8List.view(buffer).sublist(read, read+toRead);
+        ByteBuffer toAdd = _sublist(buffer, read, toRead);
         ByteBuffer b = addUdpHeader(
             toAdd,
             packetType,
@@ -129,6 +131,16 @@ class UDPDataWriter extends BinaryDataWriter {
     return completer.future;
   }
 
+  // Faster than the default sublist
+  ByteBuffer _sublist(ByteByffer buffer, int from, int to) {
+    var source = new Uint8List.view(buffer, from, to);
+    var result = new Uint8List(source.lengthInBytes);
+    for (int i = 0; i < source.lengthInBytes; i++) {
+      result[i] = source[i];
+    }
+    return result.buffer;
+  }
+
   int _getSequenceTotal([int bytes = 36056912]) {
     int total = 0;
     int leftToRead = bytes;
@@ -161,36 +173,36 @@ class UDPDataWriter extends BinaryDataWriter {
 
   void _adjustTreshold() {
     if (resendCount > 0) {
-      currentTreshold--;
+      currentTreshold -= TRESHOLD_INCREMENT;
     } else {
-      currentTreshold = currentTreshold >= MAX_SEND_TRESHOLD ? MAX_SEND_TRESHOLD : currentTreshold + 1;
+      currentTreshold = currentTreshold >= MAX_SEND_TRESHOLD ? MAX_SEND_TRESHOLD : currentTreshold + TRESHOLD_INCREMENT;
     }
   }
 
   void writeAck(int signature, int sequence) {
-    new Timer(const Duration(milliseconds: 0), () {
+    window.setImmediate(() {
       write(BinaryData.createAck(signature, sequence));
     });
   }
 
   void sendAck(ByteBuffer buffer) {
-    new Timer(const Duration(milliseconds: 0), () {
+    window.setImmediate(() {
       write(buffer);
     });
   }
 
   void receiveAck(int signature, int sequence) {
-    new Timer(const Duration(milliseconds: 0), () {
+    //new Timer(const Duration(milliseconds: 0), () {
+    window.setImmediate(() {
       var si = _queue.removeItem(signature, sequence);
       if (si != null) {
-
         _signalWroteChunk(si.signature, si.sequence, si.totalSequences, si.buffer.lengthInBytes - SIZEOF_UDP_HEADER);
       }
     });
   }
 
   void _signalWriteChunk(int signature, int sequence, int totalSequences, int bytes) {
-    new Timer(const Duration(milliseconds: 0), () {
+    window.setImmediate(() {
       listeners.where((l) => l is BinaryDataSentEventListener).forEach((BinaryDataSentEventListener l) {
         l.onWriteChunk(_wrapper, signature, sequence, totalSequences, bytes);
       });
@@ -198,7 +210,7 @@ class UDPDataWriter extends BinaryDataWriter {
   }
 
   void _signalWroteChunk(int signature, int sequence, int totalSequences, int bytes) {
-    new Timer(const Duration(milliseconds: 0), () {
+    window.setImmediate(() {
       listeners.where((l) => l is BinaryDataSentEventListener).forEach((BinaryDataSentEventListener l) {
         l.onWroteChunk(_wrapper, signature, sequence, totalSequences, bytes);
       });

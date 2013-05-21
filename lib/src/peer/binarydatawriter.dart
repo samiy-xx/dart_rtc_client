@@ -1,5 +1,6 @@
 part of rtc_client;
 
+
 /**
  * BinaryDataWriter
  * Needs to be extended for udp and tcp
@@ -22,7 +23,7 @@ abstract class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListen
   int _binaryProtocol;
 
   // write only max this size chunks to data channel
-  int _writeChunkSize = 512;
+  int _writeChunkSize = 550;
 
   /** Returns the current latency */
   int get currentLatency => _roundTripCalculator.currentLatency;
@@ -46,10 +47,12 @@ abstract class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListen
   void writeAck(int signature, int sequence);
   Future<int> send(ByteBuffer buffer, int packetType, bool reliable);
   Future<int> sendFile(File f);
+
   void write(ByteBuffer buf) {
     try {
       var toSend = _wrapToString ? wrapToString(buf) : buf;
       _writeChannel.send(toSend);
+
     } on DomException catch(e, s) {
       _logger.severe("Error $e");
       _logger.severe("Trace $s");

@@ -225,6 +225,8 @@ class BinaryData {
   }
 
   static bool isValidTcp(ByteBuffer buf) {
+    if (buf.lengthInBytes < SIZEOF_TCP_HEADER)
+      return false;
     ByteData view = new ByteData.view(buf, 0, SIZEOF_TCP_HEADER);
 
     if (view.getUint8(PROTOCOL_STARTBYTE_POSITION) != FULL_BYTE) { // 0
@@ -255,6 +257,9 @@ class BinaryData {
   }
 
   static bool isValidUdp(ByteBuffer buf) {
+    if (buf.lengthInBytes < SIZEOF_UDP_HEADER)
+      return false;
+
     ByteData view = new ByteData.view(buf, 0, SIZEOF_UDP_HEADER);
 
     if (view.getUint8(PROTOCOL_STARTBYTE_POSITION) != FULL_BYTE) { // 0

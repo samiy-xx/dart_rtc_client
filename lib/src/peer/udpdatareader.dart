@@ -296,14 +296,16 @@ class UDPDataReader extends BinaryDataReader {
       if ((_startMs + _ackTransmitWaitMs) < now) {
         ByteBuffer ack = BinaryData.createAck(_signature, _ackBuffer.acks);
         _ackBuffer.clear();
-        (_wrapper as DataPeerWrapper).binaryWriter.sendAck(ack);
+        if (_wrapper != null)
+          (_wrapper as DataPeerWrapper).binaryWriter.sendAck(ack);
 
       }
     });
   }
   void _ackBufferFull(List<int> acks) {
     ByteBuffer ack = BinaryData.createAck(_signature, _ackBuffer.acks);
-    (_wrapper as DataPeerWrapper).binaryWriter.sendAck(ack);
+    if (_wrapper != null)
+      (_wrapper as DataPeerWrapper).binaryWriter.sendAck(ack);
   }
 
   void _cancelMonitor() {

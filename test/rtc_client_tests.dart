@@ -28,11 +28,11 @@ part 'tests/testutils.dart';
 
 void run() {
   useHtmlEnhancedConfiguration();
-  //new BinaryTests().run();
+  new BinaryTests().run();
   //new RoundTripTimerTests().run();
-  //new SequencerTests().run();
+  new SequencerTests().run();
   new UDPReaderTests().run();
   //new TcpReaderTests().run();
   //new TcpWriterTests().run();
-  //new UdpWriterTests().run();
+  new UdpWriterTests().run();
 }

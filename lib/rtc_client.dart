@@ -61,7 +61,7 @@ part 'src/exception/notimplementedexception.dart';
 part 'src/exception/wrapperexceptions.dart';
 
 part 'api/rtcclient.dart';
-part 'api/channelclient.dart';
+part 'api/peerclient.dart';
 
 final Logger libLogger = new Logger("dart_rtc_client");
 

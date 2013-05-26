@@ -1,17 +1,17 @@
 part of rtc_client;
 
-class ChannelClient implements RtcClient,
+class PeerClient implements RtcClient,
   PeerConnectionEventListener, PeerMediaEventListener, PeerDataEventListener,
   BinaryDataReceivedEventListener, BinaryDataSentEventListener {
 
-  static final _logger = new Logger("dart_rtc_client.ChannelClient");
+  static final _logger = new Logger("dart_rtc_client.PeerClient");
   /* Keeps track of the initialization state of the client */
   InitializationState _currentState;
 
-  /* Signal handler. TODO: Might need to remove some of the unused signalhandlers */
+  /** Signaling */
   Signaler _signalHandler;
 
-  /* Manages the creation of peer connections */
+  /** Manages the creation of peer connections */
   PeerManager _peerManager;
 
   /* Datasource, TODO: Rename maybe, Datasource sounds more like database */
@@ -27,7 +27,7 @@ class ChannelClient implements RtcClient,
   StreamConstraints _defaultStreamConstraints;
 
   /* MediaStream from our own webcam etc... */
-  LocalMediaStream _ms = null;
+  MediaStream _ms = null;
 
   /* The channel we're in. TODO: We should support multiple channels? */
   String _channelId;
@@ -76,7 +76,8 @@ class ChannelClient implements RtcClient,
   Stream<SignalingStateEvent> get onSignalingStateChanged => _signalHandler.onSignalingStateChanged;
   Stream<ServerEvent> get onServerEvent=> _signalHandler.onServerEvent;
 
-  ChannelClient(DataSource ds) {
+  PeerClient(DataSource ds) {
+    libLogger.fine("Test");
     _ds = ds;
 
     _peerManager = new PeerManager();
@@ -106,7 +107,7 @@ class ChannelClient implements RtcClient,
    * Initializes client and tells signalhandler to connect.
    */
   void initialize([VideoConstraints constraints]) {
-
+    _logger.fine("Initialize");
     VideoConstraints con = ?constraints ? constraints : _defaultGetUserMediaConstraints;
     if (!con.audio && !con.video && !_defaultPeerCreationConstraints.dataChannelEnabled)
       throw new Exception("Must require either video, audio or data channel");
@@ -114,8 +115,10 @@ class ChannelClient implements RtcClient,
     // If either is set, need to request permission for audio and/or video
     if ((con.audio || con.video) && _ms == null) {
       if (MediaStream.supported) {
+        _logger.fine("Requesting userMedia");
         // TODO: Fix, this should take a map, but it's wrong in dartlang. https://code.google.com/p/dart/issues/detail?id=8061
-        window.navigator.getUserMedia(audio: con.audio, video: con.video).then((LocalMediaStream stream) {
+        window.navigator.getUserMedia(audio: con.audio, video: con.video).then((MediaStream stream) {
+          stream.id = "local";
           _ms = stream;
           _peerManager.setLocalStream(stream);
           _signalHandler.initialize();
@@ -123,6 +126,7 @@ class ChannelClient implements RtcClient,
           _setState(InitializationState.MEDIA_READY);
           _mediaStreamAvailableStreamController.add(new MediaStreamAvailableEvent(stream, null, true));
         }).catchError((e) {
+          _logger.severe("Error initializing $e");
           if (e is NavigatorUserMediaError) {
             window.alert("Unable to access user media. Is webcam or microphone used by another process?");
           }
@@ -148,14 +152,14 @@ class ChannelClient implements RtcClient,
     _peerManager.closeAll();
   }
 
-  ChannelClient setMuteLocalLoopback(bool b) {
+  PeerClient setMuteLocalLoopback(bool b) {
     _muteLocalLoopback = b;
     return this;
   }
   /**
    * Implements RtcClient setRequireAudio
    */
-  ChannelClient setRequireAudio(bool b) {
+  PeerClient setRequireAudio(bool b) {
     _defaultGetUserMediaConstraints.audio = b;
     return this;
   }
@@ -163,7 +167,7 @@ class ChannelClient implements RtcClient,
   /**
    * Implements RtcClient setRequireVideo
    */
-  ChannelClient setRequireVideo(bool b) {
+  PeerClient setRequireVideo(bool b) {
     _defaultGetUserMediaConstraints.video = b;
     return this;
   }
@@ -171,13 +175,13 @@ class ChannelClient implements RtcClient,
   /**
    * Implements RtcClient setRequireDataChannel
    */
-  ChannelClient setRequireDataChannel(bool b) {
+  PeerClient setRequireDataChannel(bool b) {
     _defaultPeerCreationConstraints.dataChannelEnabled = b;
     _peerManager.dataChannelsEnabled = b;
     return this;
   }
 
-  ChannelClient setReliableDataChannel(bool b) {
+  PeerClient setReliableDataChannel(bool b) {
     _peerManager.reliableDataChannels = b;
     return this;
   }
@@ -185,7 +189,7 @@ class ChannelClient implements RtcClient,
   /**
    * Implements RtcClient setChannel
    */
-  ChannelClient setChannel(String c) {
+  PeerClient setChannel(String c) {
     _channelId = c;
     _signalHandler.channelId = c;
     return this;
@@ -195,7 +199,7 @@ class ChannelClient implements RtcClient,
    * If true, Signalhandler will request peermanager to create peer connections
    * When ever a channel is joined.
    */
-  ChannelClient setAutoCreatePeer(bool v) {
+  PeerClient setAutoCreatePeer(bool v) {
     _signalHandler.createPeerOnJoin = v;
     return this;
   }
@@ -203,7 +207,7 @@ class ChannelClient implements RtcClient,
   /**
    * Allows to set constraints for getUserMedia
    */
-  ChannelClient setDefaultVideoConstraints(VideoConstraints vc) {
+  PeerClient setDefaultVideoConstraints(VideoConstraints vc) {
     _defaultGetUserMediaConstraints = vc;
     return this;
   }
@@ -211,7 +215,7 @@ class ChannelClient implements RtcClient,
   /**
    * Allows to set constraints for peer creation
    */
-  ChannelClient setDefaultPeerConstraints(PeerConstraints pc) {
+  PeerClient setDefaultPeerConstraints(PeerConstraints pc) {
     _defaultPeerCreationConstraints = pc;
     _peerManager.setPeerConstraints(pc);
     return this;
@@ -220,7 +224,7 @@ class ChannelClient implements RtcClient,
   /**
    * Constraints for adding stream
    */
-  ChannelClient setDefaultStreamConstraints(StreamConstraints sc) {
+  PeerClient setDefaultStreamConstraints(StreamConstraints sc) {
     _defaultStreamConstraints = sc;
     _peerManager.setStreamConstraints(sc);
     return this;
@@ -352,11 +356,8 @@ class ChannelClient implements RtcClient,
     throw new UnsupportedError("sendBlob is a work in progress");
   }
 
-  Future<int> sendFileObject(String peerId, File f) {
+  Future<int> sendFile(String peerId, File f) {
     return _getDataPeerWrapper(peerId).sendFile(f);
-  }
-  Future<int> sendFile(String peerId, ByteBuffer data) {
-      return _getDataPeerWrapper(peerId).sendBuffer(data, BINARY_TYPE_FILE, true);
   }
 
   /**
@@ -395,6 +396,7 @@ class ChannelClient implements RtcClient,
   }
 
   void _signalingEventHandler(SignalingStateEvent e) {
+    _logger.fine("Signaling event $e");
     if (e is SignalingReadyEvent) {
       SignalingReadyEvent p = e;
       _myId = p.id;

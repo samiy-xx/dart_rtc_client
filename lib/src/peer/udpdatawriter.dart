@@ -92,8 +92,6 @@ class UDPDataWriter extends BinaryDataWriter {
       _queue.prepare(treshold);
       while (added < treshold) {
         int toRead = leftToRead > _writeChunkSize ? _writeChunkSize : leftToRead;
-        //ByteBuffer toAdd = new Uint8List.fromList(new Uint8List.view(buffer).sublist(read, read+toRead));
-        //ByteBuffer toAdd = new Uint8List.view(buffer).sublist(read, read+toRead);
         ByteBuffer toAdd = _sublist(buffer, read, toRead);
         ByteBuffer b = addUdpHeader(
             toAdd,
@@ -141,7 +139,7 @@ class UDPDataWriter extends BinaryDataWriter {
     return result.buffer;
   }
 
-  int _getSequenceTotal([int bytes = 36056912]) {
+  int _getSequenceTotal() {
     int total = 0;
     int leftToRead = bytes;
     while (leftToRead > 0) {
@@ -192,7 +190,6 @@ class UDPDataWriter extends BinaryDataWriter {
   }
 
   void receiveAck(int signature, int sequence) {
-    //new Timer(const Duration(milliseconds: 0), () {
     window.setImmediate(() {
       var si = _queue.removeItem(signature, sequence);
       if (si != null) {

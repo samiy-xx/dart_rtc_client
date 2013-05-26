@@ -21,7 +21,7 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
   /*
    * Local media stream from webcam/microphone
   */
-  LocalMediaStream _ms;
+  MediaStream _ms;
 
   /*
    * Created peerwrapper
@@ -86,7 +86,7 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
   /**
    * Sets the local media stream from users webcam/microphone to all peers
    */
-  void setLocalStream(LocalMediaStream ms) {
+  void setLocalStream(MediaStream ms) {
     _ms = ms;
     _peers.forEach((PeerWrapper p) {
       p.addStream(ms);

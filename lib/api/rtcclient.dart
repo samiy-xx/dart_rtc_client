@@ -78,15 +78,6 @@ abstract class RtcClient {
   Future<int> sendArrayBufferReliable(String peerId, ByteBuffer data);
 
   /**
-   * Sends an ArraBufferView unreliably trough peer connection
-   */
-  //void sendArrayBufferViewUnReliable(String peerId, ArrayBufferView data);
-
-  /**
-   * Sends an ArraBufferView reliably trough peer connection
-   */
-  //Future<int>  sendArrayBufferViewReliable(String peerId, ArrayBufferView data);
-  /**
    * Event that fires when a remote peer offers an video or audio stream
    */
   Stream<MediaStreamAvailableEvent> get onRemoteMediaStreamAvailableEvent;

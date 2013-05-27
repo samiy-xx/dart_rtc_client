@@ -62,10 +62,11 @@ part 'src/exception/wrapperexceptions.dart';
 
 part 'api/rtcclient.dart';
 part 'api/peerclient.dart';
+part 'api/peerclientOld.dart';
 
 final Logger libLogger = new Logger("dart_rtc_client");
 
-const int CLOSE_NORMAL = 1000;
+/*const int CLOSE_NORMAL = 1000;
 const int CLOSE_GOING_AWAY = 1001;
 const int CLOSE_PROTOCOL_ERROR = 1002;
 const int CLOSE_UNSUPPORTED = 1003;
@@ -77,7 +78,7 @@ const int POLICY_VIOLATION = 1008;
 const int MESSAGE_TOO_LARGE = 1009;
 const int NEGOTIATIONS_FAILED = 1010;
 const int UNEXPECTED_CONDITION = 1011;
-const int HANDSHAKE_FAILURE = 1015;
+const int HANDSHAKE_FAILURE = 1015;*/
 
 const bool DEBUG = true;
 String WEBSOCKET_SERVER = DEBUG

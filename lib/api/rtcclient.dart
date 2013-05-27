@@ -34,16 +34,16 @@ abstract class RtcClient {
   RtcClient setChannel(String c);
 
   /**
-   * Returns the signal handler which is responsible for connecting to the server
-   * via data source and handles all incoming and outgoing messages (packets).
+   * Gets/Sets the signal handler which is responsible for the handshaking of the participants.
    */
-  SignalHandler get signalHandler;
-
+  Signaler get signalHandler;
+  set signalHandler(Signaler s);
   /**
    * Returns the PeerManager that is responsible for creating and removing peer connections.
    * You can subscribe to some of the peer events trough this.
    */
   PeerManager get peerManager;
+
 
   /**
    * Sends a message that goes trough the server to all users in channel

@@ -7,7 +7,7 @@ class UdpWriterTests {
   int expectedPacketCount;
 
   const int CHUNK_SIZE = 50;
-  const int STRING_LENGTH = 1000;
+  const int STRING_LENGTH = 1024 * 10;
 
 
   run() {

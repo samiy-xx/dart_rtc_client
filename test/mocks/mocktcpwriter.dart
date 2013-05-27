@@ -14,4 +14,9 @@ class MockTcpWriter extends TCPDataWriter {
     packetsSent++;
     buffers.add(buf);
   }
+  void send(ByteBuffer buf) {
+    sentData = true;
+    packetsSent++;
+    buffers.add(buf);
+  }
 }

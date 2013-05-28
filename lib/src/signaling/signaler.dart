@@ -7,11 +7,7 @@ abstract class Signaler {
 
   Stream<SignalingStateEvent> get onSignalingStateChanged;
   Stream<ServerEvent> get onServerEvent;
-  //Stream<ServerEvent> get onJoinChannel;
-  //Stream<ServerEvent> get onParticipantJoin;
-  //Stream<ServerEvent> get onParticipantId;
-  //Stream<ServerEvent> get onParticipantStateChanged;
-  //Stream<ServerEvent> get onParticipantLeft;
+
   void initialize();
   void send(String message);
   void close();

@@ -41,6 +41,7 @@ const int TCP_PROTOCOL_FIRST_CONTENT_POSITION = 12;
  */
 class BinaryData {
   static String lastError = "";
+  static List<String> lookUp = gen();
 
   static ByteBuffer bufferFromString(String s) {
     Uint8List array = new Uint8List(s.length);
@@ -69,10 +70,35 @@ class BinaryData {
   /**
    * Converts ArrayBuffer to string
    */
-  static String stringFromBuffer(ByteBuffer buffer) {
+  static String stringFromBuffer2(ByteBuffer buffer) {
     return new String.fromCharCodes(new Uint8List.view(buffer));
   }
 
+  static String stringFromBuffer1(ByteBuffer buffer) {
+    StringBuffer sb = new StringBuffer();
+    var list = new Uint8List.view(buffer);
+    for (int i = 0; i < list.lengthInBytes; i++) {
+      sb.writeCharCode(list[i]);
+    }
+    return sb.toString();
+  }
+  static String stringFromBuffer(ByteBuffer buffer) {
+    StringBuffer sb = new StringBuffer();
+    var list = new Uint8List.view(buffer);
+    for (int i = 0; i < list.lengthInBytes; i++) {
+      sb.write(lookUp[list[i]]);
+    }
+    return sb.toString();
+
+  }
+
+  static List<String> gen() {
+    List<int> c = new List<int>(256);
+    for (int i = 0; i < 256; i++) {
+      c[i] = new String.fromCharCode(i);
+    }
+    return c;
+  }
   /**
    * Converts ArrayBuffer to Packet
    */

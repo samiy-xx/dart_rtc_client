@@ -161,6 +161,7 @@ class UDPDataReader extends BinaryDataReader {
     }
 
     _sequencer.removeCollection(signature);
+    _sequencer.clear();
     _watch.stop();
     return complete;
   }

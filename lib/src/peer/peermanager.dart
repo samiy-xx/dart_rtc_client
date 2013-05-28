@@ -39,12 +39,12 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
   /**
    * Sets the local media stream
    */
-  set localMediaStream(LocalMediaStream lms) => setLocalStream(lms);
+  set localMediaStream(MediaStream lms) => setLocalStream(lms);
 
   /**
    * Returns the local media stream
    */
-  LocalMediaStream get localMediaStream => getLocalStream();
+  MediaStream get localMediaStream => getLocalStream();
 
   /**
    * Set data channels enabled or disabled for all peers created

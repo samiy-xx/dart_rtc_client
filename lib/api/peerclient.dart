@@ -139,12 +139,12 @@ class PeerClient implements RtcClient,
       _signalHandler.initialize();
     }
 
-    window.onBeforeUnload.listen((_) {
+    /*window.onBeforeUnload.listen((_) {
       window.setImmediate(() {
         _signalHandler.close();
         _peerManager.closeAll();
       });
-    });
+    });*/
   }
 
   void close() {

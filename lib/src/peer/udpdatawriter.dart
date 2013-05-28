@@ -43,7 +43,7 @@ class UDPDataWriter extends BinaryDataWriter {
     _clearSequenceNumber();
     Completer completer = new Completer();
     FileReader reader = new FileReader();
-    int totalSequences = _getSequenceTotal(file.size);
+    int totalSequences = _getSequenceTotal();
 
     int read = 0;
     int leftToRead = file.size;

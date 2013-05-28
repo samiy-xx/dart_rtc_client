@@ -82,6 +82,7 @@ class BinaryData {
     }
     return sb.toString();
   }
+
   static String stringFromBuffer(ByteBuffer buffer) {
     StringBuffer sb = new StringBuffer();
     var list = new Uint8List.view(buffer);
@@ -89,7 +90,6 @@ class BinaryData {
       sb.write(lookUp[list[i]]);
     }
     return sb.toString();
-
   }
 
   static List<String> gen() {
@@ -99,6 +99,7 @@ class BinaryData {
     }
     return c;
   }
+
   /**
    * Converts ArrayBuffer to Packet
    */

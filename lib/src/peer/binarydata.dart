@@ -93,7 +93,7 @@ class BinaryData {
   }
 
   static List<String> gen() {
-    List<int> c = new List<int>(256);
+    List<String> c = new List<String>(256);
     for (int i = 0; i < 256; i++) {
       c[i] = new String.fromCharCode(i);
     }

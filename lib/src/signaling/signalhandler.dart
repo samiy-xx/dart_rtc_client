@@ -20,7 +20,7 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
   PeerManager get peerManager => getPeerManager();
   DataSource get dataSource => _dataSource;
   set peerManager(PeerManager p) => setPeerManager(p);
-  set dataChannelsEnabled(bool value) => setDataChannelsEnabled(value);
+  //set dataChannelsEnabled(bool value) => setDataChannelsEnabled(value);
   String get id => _id;
   bool _isChannelOwner = false;
   bool get isChannelOwner => _isChannelOwner;
@@ -222,8 +222,8 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
         p.channel = packet.channelId;
         p.setAsHost(true);
       }
-    } catch (e) {
-      _logger.severe("Error handleJoin $e");
+    } catch (e, s) {
+      _logger.severe("Error handleJoin $e $s");
       throw e;
     }
   }
@@ -234,13 +234,18 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
   void handleId(IdPacket id) {
     if (_serverEventController.hasListener)
       _serverEventController.add(new ServerParticipantIdEvent(id.id, id.channelId));
-    _logger.fine("ID packet: channel ${id.channelId} user ${id.id}");
-    if (id.id != null && !id.id.isEmpty) {
-      if (_createPeerOnJoin) {
-        PeerWrapper p = createPeerWrapper();
-        p.id = id.id;
-        p.channel = id.channelId;
+    try {
+      _logger.fine("ID packet: channel ${id.channelId} user ${id.id}");
+      if (id.id != null && !id.id.isEmpty) {
+        if (_createPeerOnJoin) {
+          PeerWrapper p = createPeerWrapper();
+          p.id = id.id;
+          p.channel = id.channelId;
+        }
       }
+    } catch (e) {
+      _logger.severe("Error handleId $e");
+      throw e;
     }
   }
 

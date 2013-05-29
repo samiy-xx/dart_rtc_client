@@ -16,7 +16,7 @@ abstract class Signaler {
   void joinChannel(String id, String channelId);
   void changeId(String id, String newId);
   set channelId(String channelId);
-  void setDataChannelsEnabled(bool value);
+  //void setDataChannelsEnabled(bool value);
   bool get isChannelOwner;
   set createPeerOnJoin(bool v);
   bool setChannelLimit(String id, String channelId, int l);

@@ -60,14 +60,19 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
    */
   void initChannel() {
     _logger.fine("Initializing send data channel");
-    _dataChannel = _peer.createDataChannel("channel", {'reliable': _isReliable});
-    _dataChannel.binaryType = "arraybuffer";
-    _dataChannel.onClose.listen(onDataChannelClose);
-    _dataChannel.onOpen.listen(onDataChannelOpen);
-    _dataChannel.onError.listen(onDataChannelError);
+    try {
+      _dataChannel = _peer.createDataChannel("channel", {'reliable': _isReliable});
+      _dataChannel.binaryType = "arraybuffer";
+      _dataChannel.onClose.listen(onDataChannelClose);
+      _dataChannel.onOpen.listen(onDataChannelOpen);
+      _dataChannel.onError.listen(onDataChannelError);
 
-    _binaryWriter.dataChannel = _dataChannel;
-    _binaryReader.dataChannel = _dataChannel;
+      _binaryWriter.dataChannel = _dataChannel;
+      _binaryReader.dataChannel = _dataChannel;
+    } on Exception catch(e, s) {
+      _logger.severe("$e");
+      _logger.fine("$s");
+    }
   }
 
   /**
@@ -198,11 +203,11 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
   /**
    * Signal listeners that packet has arrived
    */
-  void _signalPacketArrived(Packet p) {
-    listeners.where((l) => l is PeerDataEventListener).forEach((PeerDataEventListener l) {
-      l.onPacket(this, p);
-    });
-  }
+  //void _signalPacketArrived(Packet p) {
+  //  listeners.where((l) => l is PeerDataEventListener).forEach((PeerDataEventListener l) {
+  //    l.onPacket(this, p);
+  //  });
+  //}
 
   /**
    * signal listeners that channel state has changed

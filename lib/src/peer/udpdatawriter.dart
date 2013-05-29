@@ -24,6 +24,7 @@ class UDPDataWriter extends BinaryDataWriter {
 
   Future<int> send(ByteBuffer buffer, int packetType, bool reliable) {
     _clearSequenceNumber();
+    currentTreshold = START_SEND_TRESHOLD;
     Completer completer = new Completer();
     if (!reliable)
       completer.complete(0);
@@ -41,6 +42,7 @@ class UDPDataWriter extends BinaryDataWriter {
 
   Future<int> sendFile(Blob file) {
     _clearSequenceNumber();
+    currentTreshold = START_SEND_TRESHOLD;
     Completer completer = new Completer();
     FileReader reader = new FileReader();
     int totalSequences = _getSequenceTotal(file.size);
@@ -67,7 +69,7 @@ class UDPDataWriter extends BinaryDataWriter {
   }
 
   Future<int> _send(ByteBuffer buffer, int signature, int totalSequences, int totalLength, int packetType) {
-    currentTreshold = START_SEND_TRESHOLD;
+
     Completer<int> completer = new Completer<int>();
     int read = 0;
     int leftToRead = buffer.lengthInBytes;
@@ -177,11 +179,11 @@ class UDPDataWriter extends BinaryDataWriter {
     }
   }
 
-  void writeAck(int signature, int sequence) {
+  /*void writeAck(int signature, int sequence) {
     window.setImmediate(() {
       write(BinaryData.createAck(signature, sequence));
     });
-  }
+  } */
 
   void sendAck(ByteBuffer buffer) {
     window.setImmediate(() {

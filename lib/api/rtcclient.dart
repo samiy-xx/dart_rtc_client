@@ -36,8 +36,8 @@ abstract class RtcClient {
   /**
    * Gets/Sets the signal handler which is responsible for the handshaking of the participants.
    */
-  Signaler get signalHandler;
-  set signalHandler(Signaler s);
+  //Signaler get signalHandler;
+  //set signalHandler(Signaler s);
   /**
    * Returns the PeerManager that is responsible for creating and removing peer connections.
    * You can subscribe to some of the peer events trough this.
@@ -65,7 +65,7 @@ abstract class RtcClient {
   /**
    * Sends a file read as ArayBuffer trough peer connection
    */
-  Future<int> sendFile(String peerId, ByteBuffer data);
+  Future<int> sendFile(String peerId, File file);
 
   /**
    * Sends an ArrayBuffer unreliably trough peer connection
@@ -95,17 +95,17 @@ abstract class RtcClient {
   /**
    * Event fires when signaling has connected to the server via data source
    */
-  Stream<SignalingOpenEvent> get onSignalingOpenEvent;
+  //Stream<SignalingOpenEvent> get onSignalingOpenEvent;
 
   /**
    * Datasource connection to the server has closed
    */
-  Stream<SignalingCloseEvent> get onSignalingCloseEvent;
+  //Stream<SignalingCloseEvent> get onSignalingCloseEvent;
 
   /**
    * Error when talking to server via data source
    */
-  Stream<SignalingErrorEvent> get onSignalingErrorEvent;
+  //Stream<SignalingErrorEvent> get onSignalingErrorEvent;
 
   /**
    * Peer state has changed.
@@ -134,27 +134,27 @@ abstract class RtcClient {
   /**
    * Message has arrived via data source
    */
-  Stream<DataSourceMessageEvent> get onDataSourceMessageEvent;
+  //Stream<DataSourceMessageEvent> get onDataSourceMessageEvent;
 
   /**
    * Connection to the server has closed
    */
-  Stream<DataSourceCloseEvent> get onDataSourceCloseEvent;
+  //Stream<DataSourceCloseEvent> get onDataSourceCloseEvent;
 
   /**
    * Connection to the server has opened
    */
-  Stream<DataSourceOpenEvent> get onDataSourceOpenEvent;
+  //Stream<DataSourceOpenEvent> get onDataSourceOpenEvent;
 
   /**
    * Connection to server had an error
    */
-  Stream<DataSourceErrorEvent> get onDataSourceErrorEvent;
+  //Stream<DataSourceErrorEvent> get onDataSourceErrorEvent;
 
   /**
    * Received packet from server
    *
    * Raw string can be catched from onDataSourceMessageEvent
    */
-  Stream<PacketEvent> get onPacketEvent;
+  //Stream<PacketEvent> get onPacketEvent;
 }

@@ -118,7 +118,7 @@ class PeerClient implements RtcClient,
         _logger.fine("Requesting userMedia");
         // TODO: Fix, this should take a map, but it's wrong in dartlang. https://code.google.com/p/dart/issues/detail?id=8061
         window.navigator.getUserMedia(audio: con.audio, video: con.video).then((MediaStream stream) {
-          stream.id = "local";
+
           _ms = stream;
           _peerManager.setLocalStream(stream);
           _signalHandler.initialize();

@@ -15,7 +15,7 @@ abstract class PeerConnectionEventListener extends PeerEventListener {
    * Notifies listeners that peer state has changed
    */
   void onPeerStateChanged(PeerWrapper pw, String state);
-  
+
   /**
    * Notifies listeners about ice state changes
    */
@@ -30,7 +30,7 @@ abstract class PeerMediaEventListener extends PeerEventListener {
    * Remote media stream available from peer
    */
   void onRemoteMediaStreamAvailable(MediaStream ms, PeerWrapper pw, bool main);
-  
+
   /**
    * Media stream was removed
    */
@@ -38,7 +38,7 @@ abstract class PeerMediaEventListener extends PeerEventListener {
 }
 
 /**
- * Interface for peer packet (datasource) related notifications 
+ * Interface for peer packet (datasource) related notifications
  */
 abstract class PeerPacketEventListener extends PeerEventListener {
   /**
@@ -55,15 +55,15 @@ abstract class PeerDataEventListener extends PeerEventListener {
    * Data received from data channel
    */
   void onDataReceived(int buffered);
-  
+
   /**
    * Channel state changed
    */
   void onChannelStateChanged(DataPeerWrapper p, String state);
-  
+
   /**
    * Packet arrived trough data channel
    */
-  void onPacket(DataPeerWrapper pw, Packet p);
-  
+  //void onPacket(DataPeerWrapper pw, Packet p);
+
 }

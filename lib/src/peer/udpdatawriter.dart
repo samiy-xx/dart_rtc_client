@@ -119,13 +119,6 @@ class UDPDataWriter extends BinaryDataWriter {
       }
 
       observe();
-      /*int now = new DateTime.now().millisecondsSinceEpoch;
-      for (int i = 0; i < _queue.itemCount; i++) {
-        SendItem si = _queue.items[i];
-        si.markSent();
-        _signalWriteChunk(si.signature, si.sequence, si.totalSequences, si.buffer.lengthInBytes - SIZEOF_UDP_HEADER);
-        write(si.buffer);
-      }*/
     });
     _queue.initialize();
     return completer.future;
@@ -179,12 +172,6 @@ class UDPDataWriter extends BinaryDataWriter {
     }
   }
 
-  /*void writeAck(int signature, int sequence) {
-    window.setImmediate(() {
-      write(BinaryData.createAck(signature, sequence));
-    });
-  } */
-
   void sendAck(ByteBuffer buffer) {
     window.setImmediate(() {
       write(buffer);
@@ -223,8 +210,8 @@ class SendQueue {
   List<SendItem> _items;
   int _index;
   List<SendItem> get items => _items;
-  int get itemCount => _length();
-
+  int get itemCount => _length;
+  int _length;
   SendQueue() {
     _queueEmptyController = new StreamController<bool>();
     onEmpty = _queueEmptyController.stream;
@@ -232,6 +219,7 @@ class SendQueue {
 
   void prepare(int count) {
     _index = 0;
+    _length = 0;
     _items = new List<SendItem>(count);
   }
 
@@ -241,6 +229,7 @@ class SendQueue {
 
   void add(SendItem item) {
     _items[_index++] = item;
+    _length++;
   }
 
   SendItem removeItem(int signature, int sequence) {
@@ -253,12 +242,13 @@ class SendQueue {
           item = si;
 
           _items[i] = null;
+          _length--;
           break;
         }
       }
     }
 
-    if (_length() == 0) {
+    if (_length == 0) {
 
       if (_queueEmptyController.hasListener)
         _queueEmptyController.add(true);
@@ -274,7 +264,7 @@ class SendQueue {
     return null;
   }
 
-  int _length() {
+  /*int _length() {
     int count = 0;
     for (int i = 0; i < _items.length; i++) {
       if (_items[i] != null)
@@ -282,6 +272,7 @@ class SendQueue {
     }
     return count;
   }
+  */
   void initialize() {
     if (_queueEmptyController.hasListener)
       _queueEmptyController.add(true);

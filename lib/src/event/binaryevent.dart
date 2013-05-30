@@ -44,8 +44,9 @@ class BinarySendCompleteEvent extends RtcEvent {
 class BinaryBufferCompleteEvent extends RtcEvent {
   PeerWrapper peer;
   ByteBuffer buffer;
+  int binaryType;
 
-  BinaryBufferCompleteEvent(this.peer, this.buffer);
+  BinaryBufferCompleteEvent(this.peer, this.buffer, this.binaryType);
 }
 
 class BinaryFileCompleteEvent extends RtcEvent {

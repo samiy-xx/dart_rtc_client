@@ -5,6 +5,8 @@ class UDPDataReader extends BinaryDataReader {
   ByteBuffer _latest;
   ByteData _latestView;
 
+  bool _fileAsBuffer = false;
+  set fileAsBuffer(bool v) => _fileAsBuffer = v;
   Sequencer _sequencer;
   int _lastProcessed;
   /* Length of data for currently processed object */
@@ -324,10 +326,13 @@ class UDPDataReader extends BinaryDataReader {
           _signalReadString(s);
           break;
         case BINARY_TYPE_CUSTOM:
-          _signalReadBuffer(buffer);
+          _signalReadBuffer(buffer, BINARY_TYPE_CUSTOM);
           break;
         case BINARY_TYPE_FILE:
-          _signalReadFile(buffer);
+          if (_fileAsBuffer)
+            _signalReadBuffer(buffer, BINARY_TYPE_FILE);
+          else
+            _signalReadFile(buffer);
           break;
         default:
           break;
@@ -364,9 +369,9 @@ class UDPDataReader extends BinaryDataReader {
     });
   }
 
-  void _signalReadBuffer(ByteBuffer buffer) {
+  void _signalReadBuffer(ByteBuffer buffer, int binaryType) {
     listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
-      l.onPeerBuffer(_wrapper, buffer);
+      l.onPeerBuffer(_wrapper, buffer, binaryType);
     });
   }
 

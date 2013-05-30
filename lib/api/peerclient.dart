@@ -543,9 +543,9 @@ class PeerClient implements RtcClient,
   /**
    * Implements BinaryDataReceivedEventListener onPeerBuffer
    */
-  void onPeerBuffer(PeerWrapper pw, ByteBuffer b) {
+  void onPeerBuffer(PeerWrapper pw, ByteBuffer b, int binaryType) {
     if (_binaryController.hasListener)
-      _binaryController.add(new BinaryBufferCompleteEvent(pw, b));
+      _binaryController.add(new BinaryBufferCompleteEvent(pw, b, binaryType));
   }
 
   /**

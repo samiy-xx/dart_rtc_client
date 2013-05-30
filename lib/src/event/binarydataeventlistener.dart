@@ -13,7 +13,7 @@ abstract class BinaryDataEventListener {
 abstract class BinaryDataReceivedEventListener extends BinaryDataEventListener {
   //void onPeerPacket(PeerWrapper pw, PeerPacket p);
   void onPeerString(PeerWrapper pw, String s);
-  void onPeerBuffer(PeerWrapper pw, ByteBuffer b);
+  void onPeerBuffer(PeerWrapper pw, ByteBuffer b, int binaryType);
   void onPeerFile(PeerWrapper pw, Blob b);
   void onPeerReadUdpChunk(PeerWrapper pw, ByteBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesTotal);
   void onPeerReadTcpChunk(PeerWrapper pw, ByteBuffer buffer, int signature, int bytes, int bytesTotal);

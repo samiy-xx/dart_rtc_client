@@ -128,7 +128,7 @@ class DataPeerWrapper extends PeerWrapper implements BinaryDataReceivedEventList
   /**
    * Implements BinaryDataReceivedEventListener onBuffer
    */
-  void onPeerBuffer(PeerWrapper pw, ByteBuffer b) {
+  void onPeerBuffer(PeerWrapper pw, ByteBuffer b, int binaryType) {
 
   }
 

@@ -4,7 +4,7 @@ abstract class BinaryDataReader extends GenericEventTarget<BinaryDataEventListen
   PeerWrapper _wrapper;
   RtcDataChannel _channel;
   set dataChannel(RtcDataChannel c) => setChannel(c);
-
+  set fileAsBuffer(bool v);
   BinaryDataReader(PeerWrapper wrapper) : super() {
     _wrapper = wrapper;
   }

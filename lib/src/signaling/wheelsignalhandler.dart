@@ -22,7 +22,7 @@ class WheelSignalHandler extends SignalHandler {
   }
 
   void onUserDisconnect(Disconnected d) {
-    PeerWrapper peer = getPeerManager().findWrapper(d.id);
+    PeerConnection peer = getPeerManager().findWrapper(d.id);
     if (peer != null) {
       peer.close();
       getPeerManager().remove(peer);
@@ -44,7 +44,7 @@ class WheelSignalHandler extends SignalHandler {
   void handleJoin(JoinPacket join) {
     super.handleJoin(join);
 
-    PeerWrapper pw = peerManager.findWrapper(join.id);
+    PeerConnection pw = peerManager.findWrapper(join.id);
     MediaStream ms = peerManager.getLocalStream();
     pw.addStream(ms);
 
@@ -54,7 +54,7 @@ class WheelSignalHandler extends SignalHandler {
     super.handleId(id);
 
     if (!id.id.isEmpty) {
-      PeerWrapper pw = peerManager.findWrapper(id.id);
+      PeerConnection pw = peerManager.findWrapper(id.id);
       MediaStream ms = peerManager.getLocalStream();
       pw.addStream(ms);
     }

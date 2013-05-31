@@ -36,7 +36,7 @@ class ChannelSignalHandler extends SignalHandler{
       _channelId = packet.channelId;
 
     if (createPeerOnJoin) {
-      PeerWrapper p = _peerManager.findWrapper(packet.id);
+      PeerConnection p = _peerManager.findWrapper(packet.id);
       if (p != null)
         p.channel = packet.channelId;
     }
@@ -46,7 +46,7 @@ class ChannelSignalHandler extends SignalHandler{
     super.handleId(id);
 
     if (createPeerOnJoin) {
-      PeerWrapper p = _peerManager.findWrapper(id.id);
+      PeerConnection p = _peerManager.findWrapper(id.id);
       if (p != null)
         p.channel = id.channelId;
     }

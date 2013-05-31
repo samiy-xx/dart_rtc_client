@@ -90,7 +90,7 @@ class PeerClientNew implements RtcClient, PeerConnectionEventListener, PeerMedia
   }
 
   void sendBlob(String peerId, Blob b) {
-    return _getDataPeerWrapper(peerId).sendFile(f);
+    return _getDataPeerWrapper(peerId).sendFile(b);
   }
 
   Future<int> sendFile(String peerId, File f) {
@@ -113,7 +113,7 @@ class PeerClientNew implements RtcClient, PeerConnectionEventListener, PeerMedia
 
     if ((_getUserMediaConstraints.audio || _getUserMediaConstraints.video) && _ms == null) {
       if (MediaStream.supported) {
-        window.navigator.getUserMedia(audio: con.audio, video: con.video).then((MediaStream stream) {
+        window.navigator.getUserMedia(audio: _getUserMediaConstraints.audio, video: _getUserMediaConstraints.video).then((MediaStream stream) {
           _ms = stream;
           _peerManager.setLocalStream(stream);
           _signalHandler.initialize();
@@ -157,26 +157,19 @@ class PeerClientNew implements RtcClient, PeerConnectionEventListener, PeerMedia
     _streamConstraints = new StreamConstraints();
   }
 
-  PeerWrapper _getPeerWrapper(String peerId) {
-    PeerWrapper w = _peerManager.findWrapper(peerId);
+  PeerConnection _getPeerWrapper(String peerId) {
+    PeerConnection w = _peerManager.findWrapper(peerId);
     if (w == null)
       throw new PeerWrapperNullException("Peer wrapper null: $peerId");
     return w;
   }
 
-  DataPeerWrapper _getDataPeerWrapper(String peerId) {
-    try {
-      PeerWrapper w = _getPeerWrapper(peerId);
-      if (!(w is DataPeerWrapper))
-        throw new PeerWrapperTypeException("Peer wrapper is not DataPeerWrapper type");
+  PeerConnection _getDataPeerWrapper(String peerId) {
+
+      PeerConnection w = _getPeerWrapper(peerId);
+
       return w;
-    } on PeerWrapperNullException catch (e) {
-      _logger.severe("$e");
-      throw e;
-    } on PeerWrapperTypeException catch (e) {
-      _logger.severe("$e");
-      throw e;
-    }
+
   }
 
   void _setState(InitializationState state) {
@@ -245,7 +238,7 @@ class PeerClientNew implements RtcClient, PeerConnectionEventListener, PeerMedia
   /**
    * Implements PeerDataEventListener onChannelStateChanged
    */
-  void onChannelStateChanged(DataPeerWrapper p, String state){
+  void onChannelStateChanged(PeerConnection p, String state){
     if (_dataChannelStateChangeController.hasListener)
       _dataChannelStateChangeController.add(new DataChannelStateChangedEvent(p, state));
   }
@@ -253,7 +246,7 @@ class PeerClientNew implements RtcClient, PeerConnectionEventListener, PeerMedia
   /**
    * Remote media stream available from peer
    */
-  void onRemoteMediaStreamAvailable(MediaStream ms, PeerWrapper pw, bool main) {
+  void onRemoteMediaStreamAvailable(MediaStream ms, PeerConnection pw, bool main) {
    if (_mediaStreamAvailableStreamController.hasListener)
      _mediaStreamAvailableStreamController.add(new MediaStreamAvailableEvent(ms, pw));
   }
@@ -261,7 +254,7 @@ class PeerClientNew implements RtcClient, PeerConnectionEventListener, PeerMedia
   /**
    * Media stream was removed
    */
-  void onRemoteMediaStreamRemoved(PeerWrapper pw) {
+  void onRemoteMediaStreamRemoved(PeerConnection pw) {
     if (_mediaStreamRemovedStreamController.hasListener)
       _mediaStreamRemovedStreamController.add(new MediaStreamRemovedEvent(pw));
   }
@@ -269,23 +262,19 @@ class PeerClientNew implements RtcClient, PeerConnectionEventListener, PeerMedia
   /**
    * Implements PeerConnectionEventListener onPeerCreated
    */
-  void onPeerCreated(PeerWrapper pw) {
-    if (pw is DataPeerWrapper) {
-      try {
-        DataPeerWrapper dpw = pw;
-        dpw.binaryReader.subscribe(this);
-        dpw.binaryWriter.subscribe(this);
-      } catch(e) {
-       _logger.severe("Error: $e");
-      }
+  void onPeerCreated(PeerConnection pw) {
+
+        pw.binaryReader.subscribe(this);
+        pw.binaryWriter.subscribe(this);
+
       pw.subscribe(this);
-    }
+
   }
 
   /**
    * Implements PeerConnectionEventListener onPeerStateChanged
    */
-  void onPeerStateChanged(PeerWrapper pw, String state) {
+  void onPeerStateChanged(PeerConnection pw, String state) {
     if (_peerStateChangeController.hasListener)
       _peerStateChangeController.add(new PeerStateChangedEvent(pw, state));
   }
@@ -293,7 +282,7 @@ class PeerClientNew implements RtcClient, PeerConnectionEventListener, PeerMedia
   /**
    * Implements PeerConnectionEventListener onIceGatheringStateChanged
    */
-  void onIceGatheringStateChanged(PeerWrapper pw, String state) {
+  void onIceGatheringStateChanged(PeerConnection pw, String state) {
     if (_iceGatheringStateChangeController.hasListener)
       _iceGatheringStateChangeController.add(new IceGatheringStateChangedEvent(pw, state));
   }
@@ -301,7 +290,7 @@ class PeerClientNew implements RtcClient, PeerConnectionEventListener, PeerMedia
   /**
    * Implements BinaryDataSentEventListener onWriteChunk
    */
-  void onWriteChunk(PeerWrapper pw, int signature, int sequence, int totalSequences, int bytes) {
+  void onWriteChunk(PeerConnection pw, int signature, int sequence, int totalSequences, int bytes) {
     if (_binaryController.hasListener)
       _binaryController.add(new BinaryChunkWriteEvent(pw, signature, sequence, totalSequences, bytes));
   }
@@ -309,7 +298,7 @@ class PeerClientNew implements RtcClient, PeerConnectionEventListener, PeerMedia
   /**
    * Implements BinaryDataSentEventListener onWroteChunk
    */
-  void onWroteChunk(PeerWrapper pw, int signature, int sequence, int totalSequences, int bytes) {
+  void onWroteChunk(PeerConnection pw, int signature, int sequence, int totalSequences, int bytes) {
     if (_binaryController.hasListener)
       _binaryController.add(new BinaryChunkWroteEvent(pw, signature, sequence, totalSequences, bytes));
   }
@@ -317,14 +306,14 @@ class PeerClientNew implements RtcClient, PeerConnectionEventListener, PeerMedia
   /**
    * Implements BinaryDataReceivedEventListener onPeerString
    */
-  void onPeerString(PeerWrapper pw, String s) {
+  void onPeerString(PeerConnection pw, String s) {
 
   }
 
   /**
    * Implements BinaryDataReceivedEventListener onPeerFile
    */
-  void onPeerFile(PeerWrapper pw, Blob b) {
+  void onPeerFile(PeerConnection pw, Blob b) {
     if (_binaryController.hasListener)
       _binaryController.add(new BinaryFileCompleteEvent(pw, b));
   }
@@ -332,7 +321,7 @@ class PeerClientNew implements RtcClient, PeerConnectionEventListener, PeerMedia
   /**
    * Implements BinaryDataReceivedEventListener onPeerBuffer
    */
-  void onPeerBuffer(PeerWrapper pw, ByteBuffer b) {
+  void onPeerBuffer(PeerConnection pw, ByteBuffer b) {
     if (_binaryController.hasListener)
       _binaryController.add(new BinaryBufferCompleteEvent(pw, b));
   }
@@ -340,7 +329,7 @@ class PeerClientNew implements RtcClient, PeerConnectionEventListener, PeerMedia
   /**
    * Implements BinaryDataReceivedEventListener onPeerReadChunk
    */
-  void onPeerReadUdpChunk(PeerWrapper pw, ByteBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesTotal) {
+  void onPeerReadUdpChunk(PeerConnection pw, ByteBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesTotal) {
     if (_binaryController.hasListener)
       _binaryController.add(new BinaryChunkEvent(pw, buffer, signature, sequence, totalSequences, bytes, bytesTotal, BINARY_PROTOCOL_UDP));
   }
@@ -348,7 +337,7 @@ class PeerClientNew implements RtcClient, PeerConnectionEventListener, PeerMedia
   /**
    * Implements BinaryDataReceivedEventListener onPeerReadChunk
    */
-  void onPeerReadTcpChunk(PeerWrapper pw, ByteBuffer buffer, int signature, int bytes, int bytesTotal) {
+  void onPeerReadTcpChunk(PeerConnection pw, ByteBuffer buffer, int signature, int bytes, int bytesTotal) {
     if (_binaryController.hasListener)
       _binaryController.add(new BinaryChunkEvent(pw, buffer, signature, null, null, bytes, bytesTotal, BINARY_PROTOCOL_TCP));
   }

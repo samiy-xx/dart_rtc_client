@@ -100,7 +100,7 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
    * Creates a peer wrapper instance
    * @return PeerWrapper
    */
-  PeerWrapper createPeerWrapper() {
+  PeerConnection createPeerWrapper() {
     return _peerManager.createPeer();
   }
 
@@ -170,6 +170,14 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
     send(PacketFactory.get(p));
   }
 
+  void sendSessionDescription(PeerConnection pc, RtcSessionDescription sd) {
+    sendPacket(new DescriptionPacket.With(sd.sdp, sd.type, pc.id, ""));
+  }
+
+  void sendIceCandidate(PeerConnection pc, RtcIceCandidate candidate) {
+    sendPacket(new IcePacket.With(candidate.candidate, candidate.sdpMid, candidate.sdpMLineIndex, pc.id));
+  }
+
   void joinChannel(String id, String channelId) {
     sendPacket(new ChannelJoinCommand.With(id, channelId));
   }
@@ -193,9 +201,9 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
   /**
    * Sends an arraybuffer trough the datasource
    */
-  void sendArrayBuffer(ByteBuffer b) {
-    throw new UnimplementedError("Sending ArrayBuffer is not implemented");
-  }
+  //void sendArrayBuffer(ByteBuffer b) {
+  //  throw new UnimplementedError("Sending ArrayBuffer is not implemented");
+  //}
 
   /**
    * Implements PeerPacketEventListener onPacketToSend
@@ -217,7 +225,7 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
     try {
       _logger.fine("JoinPacket channel ${packet.channelId} user ${packet.id}");
       if (_createPeerOnJoin) {
-        PeerWrapper p = createPeerWrapper();
+        PeerConnection p = createPeerWrapper();
         p.id = packet.id;
         p.channel = packet.channelId;
         p.setAsHost(true);
@@ -238,7 +246,7 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
       _logger.fine("ID packet: channel ${id.channelId} user ${id.id}");
       if (id.id != null && !id.id.isEmpty) {
         if (_createPeerOnJoin) {
-          PeerWrapper p = createPeerWrapper();
+          PeerConnection p = createPeerWrapper();
           p.id = id.id;
           p.channel = id.channelId;
         }
@@ -257,7 +265,7 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
       _serverEventController.add(new ServerParticipantLeftEvent(p.id));
 
     _logger.fine("Received BYE from ${p.id}");
-    PeerWrapper peer = _peerManager.findWrapper(p.id);
+    PeerConnection peer = _peerManager.findWrapper(p.id);
     if (peer != null) {
       _logger.fine("Closing peer ${peer.id}");
       peer.close();
@@ -280,7 +288,7 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
       // t's me
       _id = c.id;
     } else {
-      PeerWrapper pw = _peerManager.findWrapper(c.id);
+      PeerConnection pw = _peerManager.findWrapper(c.id);
       if (pw != null)
         pw.id = c.newId;
     }
@@ -305,7 +313,7 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
       'sdpMLineIndex': p.sdpMLineIndex
     });
 
-    PeerWrapper peer = _peerManager.findWrapper(p.id);
+    PeerConnection peer = _peerManager.findWrapper(p.id);
     if (peer != null) {
       peer.addRemoteIceCandidate(candidate);
     }
@@ -321,7 +329,7 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
       'sdp':p.sdp,
       'type':p.type
     });
-    PeerWrapper peer = _peerManager.findWrapper(p.id);
+    PeerConnection peer = _peerManager.findWrapper(p.id);
 
     if (peer == null) {
       _logger.fine("Peer not found with id ${p.id}. Creating...");

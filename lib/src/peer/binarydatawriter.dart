@@ -8,7 +8,7 @@ part of rtc_client;
 abstract class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListener> {
   static final _logger = new Logger("dart_rtc_client.BinaryDataWriter");
 
-  PeerWrapper _wrapper;
+  PeerConnection _peer;
 
   // Datachannel where to write to
   RtcDataChannel _writeChannel;
@@ -37,9 +37,9 @@ abstract class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListen
   /** Sets the write data channel */
   set dataChannel(RtcDataChannel c) => _writeChannel = c;
 
-  BinaryDataWriter(int protocol, PeerWrapper wrapper) : super() {
+  BinaryDataWriter(int protocol, PeerConnection pc) : super() {
     _binaryProtocol = protocol;
-    _wrapper = wrapper;
+    _peer = pc;
     _roundTripCalculator = new RoundTripCalculator();
   }
 

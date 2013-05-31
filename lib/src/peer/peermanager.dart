@@ -26,9 +26,11 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
   /*
    * Created peerwrapper
    */
-  List<PeerWrapper> _peers;
+  List<PeerConnection> _peers;
 
-
+  Signaler _signaler;
+  set signaler(Signaler s) => _signaler = s;
+  Signaler get signaler => _signaler;
   PeerConstraints _peerConstraints;
   StreamConstraints _streamConstraints;
   ServerConstraints _serverConstraints;
@@ -68,13 +70,16 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
    * Internal constructor
    */
   PeerManager._internal() {
-    _peers = new List<PeerWrapper>();
+    _peers = new List<PeerConnection>();
     _streamConstraints = new StreamConstraints();
     _peerConstraints = new PeerConstraints();
     _serverConstraints = new ServerConstraints();
     _serverConstraints.addStun(new StunServer());
   }
 
+  Signaler getSignaler() {
+    return _signaler;
+  }
   /**
    * Convenience method
    * Sets the max bit rate to stream constraints
@@ -88,7 +93,7 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
    */
   void setLocalStream(MediaStream ms) {
     _ms = ms;
-    _peers.forEach((PeerWrapper p) {
+    _peers.forEach((PeerConnection p) {
       p.addStream(ms);
     });
   }
@@ -111,8 +116,8 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
     return _ms;
   }
 
-  PeerWrapper createPeer() {
-    PeerWrapper wrapper;
+  PeerConnection createPeer() {
+    PeerConnection wrapper;
     try {
       wrapper = _createWrapper(
           new RtcPeerConnection(
@@ -133,21 +138,16 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
    * Creates a wrapper for peer connection
    * if _dataChannelsEnabled then wrapper will be data wrapper
    */
-  PeerWrapper _createWrapper(RtcPeerConnection p) {
-    PeerWrapper wrapper;
+  PeerConnection _createWrapper(RtcPeerConnection p) {
+    PeerConnection peer = new PeerConnection(this, p);
     if (_peerConstraints.dataChannelEnabled) {
-      _logger.fine("Creating Data Peer Wrapper");
-      wrapper = new DataPeerWrapper(this, p);
-
-      (wrapper as DataPeerWrapper).isReliable = _reliableDataChannels;
-      //(wrapper as DataPeerWrapper).initChannel();
-    } else {
-      _logger.fine("Creating Peer Wrapper");
-      wrapper = new PeerWrapper(this, p);
+      peer.isReliable = _reliableDataChannels;
+      peer.initChannel();
     }
 
+
     if (_setLocalStreamAtStart && _ms != null)
-      wrapper.addStream(_ms);
+      peer.addStream(_ms);
 
     p.onAddStream.listen(onAddStream);
     p.onRemoveStream.listen(onRemoveStream);
@@ -156,23 +156,23 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
     p.onIceCandidate.listen(onIceCandidate);
 
     listeners.where((l) => l is PeerConnectionEventListener).forEach((PeerConnectionEventListener l) {
-      l.onPeerCreated(wrapper);
+      l.onPeerCreated(peer);
     });
-    return wrapper;
+    return peer;
   }
 
-  PeerWrapper getWrapperForPeer(RtcPeerConnection p) {
+  PeerConnection getWrapperForPeer(RtcPeerConnection p) {
     for (int i = 0; i < _peers.length; i++) {
-      PeerWrapper wrapper = _peers[i];
+      PeerConnection wrapper = _peers[i];
       if (wrapper.peer == p)
         return wrapper;
     }
     return null;
   }
 
-  PeerWrapper findWrapper(String id) {
+  PeerConnection findWrapper(String id) {
     for (int i = 0; i < _peers.length; i++) {
-      PeerWrapper wrapper = _peers[i];
+      PeerConnection wrapper = _peers[i];
       if (wrapper.id == id)
         return wrapper;
     }
@@ -184,7 +184,7 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
    * Notifies listeners that stream was removed from peer
    */
   void onRemoveStream(MediaStreamEvent e) {
-    PeerWrapper wrapper = getWrapperForPeer(e.target);
+    PeerConnection wrapper = getWrapperForPeer(e.target);
 
     listeners.where((l) => l is PeerMediaEventListener).forEach((PeerMediaEventListener l) {
       l.onRemoteMediaStreamRemoved(wrapper);
@@ -203,7 +203,7 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
    * Notifies listeners that a media stream was added
    */
   void onAddStream(MediaStreamEvent e) {
-    PeerWrapper wrapper = getWrapperForPeer(e.target);
+    PeerConnection wrapper = getWrapperForPeer(e.target);
 
     listeners.where((l) => l is PeerMediaEventListener).forEach((PeerMediaEventListener l) {
       l.onRemoteMediaStreamAvailable(e.stream, wrapper, true);
@@ -224,7 +224,7 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
    */
   void closeAll() {
     for (int i = 0; i < _peers.length; i++) {
-      PeerWrapper p = _peers[i];
+      PeerConnection p = _peers[i];
       p.close();
     }
   }
@@ -233,11 +233,11 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
    * Removes a single peer wrapper
    * Removed from collection after onStateChanged gets fired
    */
-  void remove(PeerWrapper p) {
+  void remove(PeerConnection p) {
     p.close();
   }
 
-  void _add(PeerWrapper p) {
+  void _add(PeerConnection p) {
     if (!_peers.contains(p))
       _peers.add(p);
   }
@@ -248,7 +248,7 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
    * If readystate changed to closed, remove the peer wrapper and containing peer
    */
   void onStateChanged(Event e) {
-    PeerWrapper wrapper = getWrapperForPeer(e.target);
+    PeerConnection wrapper = getWrapperForPeer(e.target);
     _logger.fine("onStateChanged: ${wrapper.peer.signalingState}");
 
     listeners.where((l) => l is PeerConnectionEventListener).forEach((PeerConnectionEventListener l) {

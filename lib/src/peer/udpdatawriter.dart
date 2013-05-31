@@ -18,7 +18,7 @@ class UDPDataWriter extends BinaryDataWriter {
   int currentTreshold = 0;
   int _lastSendTime;
 
-  UDPDataWriter(PeerWrapper wrapper) : super(BINARY_PROTOCOL_UDP, wrapper) {
+  UDPDataWriter(PeerConnection peer) : super(BINARY_PROTOCOL_UDP, peer) {
     _queue = new SendQueue();
   }
 
@@ -190,7 +190,7 @@ class UDPDataWriter extends BinaryDataWriter {
   void _signalWriteChunk(int signature, int sequence, int totalSequences, int bytes) {
     window.setImmediate(() {
       listeners.where((l) => l is BinaryDataSentEventListener).forEach((BinaryDataSentEventListener l) {
-        l.onWriteChunk(_wrapper, signature, sequence, totalSequences, bytes);
+        l.onWriteChunk(_peer, signature, sequence, totalSequences, bytes);
       });
     });
   }
@@ -198,7 +198,7 @@ class UDPDataWriter extends BinaryDataWriter {
   void _signalWroteChunk(int signature, int sequence, int totalSequences, int bytes) {
     window.setImmediate(() {
       listeners.where((l) => l is BinaryDataSentEventListener).forEach((BinaryDataSentEventListener l) {
-        l.onWroteChunk(_wrapper, signature, sequence, totalSequences, bytes);
+        l.onWroteChunk(_peer, signature, sequence, totalSequences, bytes);
       });
     });
   }

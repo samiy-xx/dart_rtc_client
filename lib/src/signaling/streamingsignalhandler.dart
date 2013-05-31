@@ -28,7 +28,7 @@ class StreamingSignalHandler extends SignalHandler {
 
   void handleJoin(JoinPacket join) {
     super.handleJoin(join);
-    PeerWrapper pw = peerManager.findWrapper(join.id);
+    PeerConnection pw = peerManager.findWrapper(join.id);
     MediaStream ms = peerManager.getLocalStream();
     if (ms != null)
       pw.addStream(ms);
@@ -37,7 +37,7 @@ class StreamingSignalHandler extends SignalHandler {
   void handleId(IdPacket id) {
     super.handleId(id);
     if (!id.id.isEmpty) {
-      PeerWrapper pw = peerManager.findWrapper(id.id);
+      PeerConnection pw = peerManager.findWrapper(id.id);
       MediaStream ms = peerManager.getLocalStream();
       if (ms != null)
         pw.addStream(ms);

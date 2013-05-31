@@ -1,10 +1,10 @@
 part of rtc_client;
 
 class PeerStateChangedEvent extends RtcEvent {
-  PeerWrapper peerwrapper;
+  PeerConnection peerwrapper;
   String state;
-  
-  PeerStateChangedEvent(PeerWrapper p, String s) {
+
+  PeerStateChangedEvent(PeerConnection p, String s) {
     peerwrapper = p;
     state = s;
   }
@@ -12,15 +12,15 @@ class PeerStateChangedEvent extends RtcEvent {
 
 class DataChannelStateChangedEvent extends RtcEvent {
   String state;
-  PeerWrapper peerwrapper;
+  PeerConnection peerwrapper;
   DataChannelStateChangedEvent(this.peerwrapper, this.state);
 }
 
 class IceGatheringStateChangedEvent extends RtcEvent {
-  PeerWrapper peerwrapper;
+  PeerConnection peerwrapper;
   String state;
-  
-  IceGatheringStateChangedEvent(PeerWrapper p, String s) {
+
+  IceGatheringStateChangedEvent(PeerConnection p, String s) {
     peerwrapper = p;
     state = s;
   }

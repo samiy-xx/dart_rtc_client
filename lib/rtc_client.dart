@@ -12,8 +12,7 @@ import 'package:dart_rtc_common/rtc_common.dart';
 //import '../../dart_rtc_common/lib/rtc_common.dart';
 
 part 'src/peer/peermanager.dart';
-part 'src/peer/peerwrapper.dart';
-part 'src/peer/datapeerwrapper.dart';
+part 'src/peer/peerconnection.dart';
 part 'src/peer/binarydata.dart';
 part 'src/peer/binaryreadstate.dart';
 part 'src/peer/binarydatareader.dart';
@@ -53,6 +52,7 @@ part 'src/util/peerconstraints.dart';
 part 'src/util/streamconstraints.dart';
 part 'src/util/videoconstraints.dart';
 part 'src/util/serverconstraints.dart';
+part 'src/util/util.dart';
 
 part 'src/datasource/datasource.dart';
 part 'src/datasource/websocketdatasource.dart';

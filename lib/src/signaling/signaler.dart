@@ -12,7 +12,8 @@ abstract class Signaler {
   void send(String message);
   void close();
 
-  // Need to be cleaned up
+  void sendSessionDescription(PeerConnection pc, RtcSessionDescription sd);
+  void sendIceCandidate(PeerConnection pc, RtcIceCandidate candidate);
   void joinChannel(String id, String channelId);
   void changeId(String id, String newId);
   set channelId(String channelId);

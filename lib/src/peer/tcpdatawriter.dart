@@ -1,7 +1,7 @@
 part of rtc_client;
 
 class TCPDataWriter extends BinaryDataWriter {
-  TCPDataWriter(PeerWrapper wrapper) : super(BINARY_PROTOCOL_TCP, wrapper) {
+  TCPDataWriter(PeerConnection peer) : super(BINARY_PROTOCOL_TCP, peer) {
 
   }
 /*

@@ -35,7 +35,7 @@ class UDPDataReader extends BinaryDataReader {
   bool _haveThisPart = false;
   Timer _timer;
 
-  UDPDataReader(PeerWrapper wrapper) : super(wrapper) {
+  UDPDataReader(PeerConnection peer) : super(peer) {
     _length = 0;
     _sequencer = new Sequencer();
     _lastProcessed = new DateTime.now().millisecondsSinceEpoch;
@@ -299,16 +299,16 @@ class UDPDataReader extends BinaryDataReader {
       if ((_startMs + _ackTransmitWaitMs) < now) {
         ByteBuffer ack = BinaryData.createAck(_signature, _ackBuffer.acks);
         _ackBuffer.clear();
-        if (_wrapper != null)
-          (_wrapper as DataPeerWrapper).binaryWriter.sendAck(ack);
+        if (_peer != null)
+          _peer.binaryWriter.sendAck(ack);
 
       }
     });
   }
   void _ackBufferFull(List<int> acks) {
     ByteBuffer ack = BinaryData.createAck(_signature, _ackBuffer.acks);
-    if (_wrapper != null)
-      (_wrapper as DataPeerWrapper).binaryWriter.sendAck(ack);
+    if (_peer != null)
+      _peer.binaryWriter.sendAck(ack);
   }
 
   void _cancelMonitor() {
@@ -348,6 +348,7 @@ class UDPDataReader extends BinaryDataReader {
     for (int i = 0; i < sequenceCount; i++) {
       int sequence = byteData.getUint32(i * SIZEOF32);
       _signalSendSuccess(signature, sequence);
+      _peer.binaryWriter.receiveAck(signature, sequence);
     }
   }
 
@@ -364,27 +365,27 @@ class UDPDataReader extends BinaryDataReader {
   void _signalReadChunk(ByteBuffer buf, int signature, int sequence, int totalSequences, int bytes, int bytesTotal) {
     window.setImmediate(() {
       listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
-        l.onPeerReadUdpChunk(_wrapper, buf, signature, sequence, totalSequences, bytes, bytesTotal);
+        l.onPeerReadUdpChunk(_peer, buf, signature, sequence, totalSequences, bytes, bytesTotal);
       });
     });
   }
 
   void _signalReadBuffer(ByteBuffer buffer, int binaryType) {
     listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
-      l.onPeerBuffer(_wrapper, buffer, binaryType);
+      l.onPeerBuffer(_peer, buffer, binaryType);
     });
   }
 
   void _signalReadFile(ByteBuffer buffer) {
     listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
       //l.onPeerFile(_wrapper, new Blob([new Uint8Array.fromBuffer(buffer)]));
-      l.onPeerFile(_wrapper, new Blob([buffer]));
+      l.onPeerFile(_peer, new Blob([buffer]));
     });
   }
 
   void _signalReadString(String s) {
     listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
-      l.onPeerString(_wrapper, s);
+      l.onPeerString(_peer, s);
     });
   }
   /**

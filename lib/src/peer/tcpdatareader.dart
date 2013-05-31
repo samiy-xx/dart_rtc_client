@@ -12,7 +12,7 @@ class TCPDataReader extends BinaryDataReader {
   ByteBuffer _latest;
   ByteData _latestView;
   int get leftToRead => _leftToRead;
-  TCPDataReader(PeerWrapper wrapper) : super(wrapper) {
+  TCPDataReader(PeerConnection peer) : super(peer) {
 
   }
 
@@ -147,7 +147,7 @@ class TCPDataReader extends BinaryDataReader {
 
   void _signalReadChunk(ByteBuffer buf, int signature, int bytes, int bytesTotal) {
     listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
-      l.onPeerReadTcpChunk(_wrapper, buf, signature, bytes, bytesTotal);
+      l.onPeerReadTcpChunk(_peer, buf, signature, bytes, bytesTotal);
     });
   }
 }

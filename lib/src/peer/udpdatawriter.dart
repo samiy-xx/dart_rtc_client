@@ -2,8 +2,8 @@ part of rtc_client;
 
 class UDPDataWriter extends BinaryDataWriter {
   static final _logger = new Logger("dart_rtc_client.UDPDataWriter");
-  const int MAX_SEND_TRESHOLD = 2200;
-  const int START_SEND_TRESHOLD = 60;
+  const int MAX_SEND_TRESHOLD = 200;
+  const int START_SEND_TRESHOLD = 30;
   const int TRESHOLD_INCREMENT = 5;
   const int ELAPSED_TIME_AFTER_SEND = 200;
   const int MAX_FILE_BUFFER_SIZE = 1024 * 1024 * 20;
@@ -23,6 +23,7 @@ class UDPDataWriter extends BinaryDataWriter {
   }
 
   Future<int> send(ByteBuffer buffer, int packetType, bool reliable) {
+    _logger.finest("Sending buffer");
     _clearSequenceNumber();
     currentTreshold = START_SEND_TRESHOLD;
     Completer completer = new Completer();
@@ -41,6 +42,7 @@ class UDPDataWriter extends BinaryDataWriter {
   }
 
   Future<int> sendFile(Blob file) {
+    _logger.finest("Sending file");
     _clearSequenceNumber();
     currentTreshold = START_SEND_TRESHOLD;
     Completer completer = new Completer();
@@ -69,7 +71,7 @@ class UDPDataWriter extends BinaryDataWriter {
   }
 
   Future<int> _send(ByteBuffer buffer, int signature, int totalSequences, int totalLength, int packetType) {
-
+    _logger.finest("_send buffer");
     Completer<int> completer = new Completer<int>();
     int read = 0;
     int leftToRead = buffer.lengthInBytes;
@@ -84,6 +86,7 @@ class UDPDataWriter extends BinaryDataWriter {
       if (leftToRead == 0) {
         sub.cancel();
         completer.complete(1);
+        _logger.finest("_sent all");
         return;
       }
 
@@ -153,13 +156,18 @@ class UDPDataWriter extends BinaryDataWriter {
     _observerTimer = new Timer.periodic(const Duration(milliseconds: 5), (Timer t) {
       if (_queue.itemCount > 0) {
         int now = new DateTime.now().millisecondsSinceEpoch;
-        SendItem item = _queue.first();
-
-        if ((item.sendTime + ELAPSED_TIME_AFTER_SEND) < now) {
-          item.sendTime = now;
-          write(item.buffer);
-          resendCount++;
+        //SendItem item = _queue.first();
+        for (int i = 0; i < _queue.items.length; i++) {
+          SendItem item = _queue.items[i];
+          if (item == null)
+            continue;
+          if ((item.sendTime + ELAPSED_TIME_AFTER_SEND) < now) {
+            item.sendTime = now;
+            write(item.buffer);
+            resendCount++;
+          }
         }
+
       }
     });
   }
@@ -167,12 +175,13 @@ class UDPDataWriter extends BinaryDataWriter {
   void _adjustTreshold() {
     if (resendCount > 0) {
       currentTreshold -= resendCount > 1 ? resendCount : TRESHOLD_INCREMENT;
-      if (currentTreshold <= 0)
-        currentTreshold = 1;
+      if (currentTreshold <= START_SEND_TRESHOLD)
+        currentTreshold = START_SEND_TRESHOLD;
     } else {
       currentTreshold = currentTreshold >= MAX_SEND_TRESHOLD ? MAX_SEND_TRESHOLD : currentTreshold + TRESHOLD_INCREMENT;
     }
-    _logger.finest("Resend count = $resendCount treshold = $currentTreshold");
+    if (resendCount > 0)
+      _logger.finest("Resend count = $resendCount treshold = $currentTreshold");
   }
 
   void sendAck(ByteBuffer buffer) {

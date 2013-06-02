@@ -15,7 +15,6 @@ class UDPDataReader extends BinaryDataReader {
   int _packetType;
   int _signature;
   int _startMs;
-
   Timer _ackTimer;
   const int _ackTransmitWaitMs = 5;
   AckBuffer _ackBuffer;
@@ -33,6 +32,7 @@ class UDPDataReader extends BinaryDataReader {
   }
 
   Future readChunkString(String s) {
+    //_logger.finest("readChunkString");
     Completer c = new Completer();
     window.setImmediate(() {
       readChunk(BinaryData.bufferFromString(s));
@@ -232,7 +232,8 @@ class UDPDataReader extends BinaryDataReader {
 
         if (buffer != null)
           _doSignalingBasedOnBufferType(buffer, type);
-
+          _sequencer = new Sequencer();
+          //_signature = null;
       });
     }
     //_signature = null;
@@ -242,8 +243,10 @@ class UDPDataReader extends BinaryDataReader {
 
   void _monitorAcks() {
     _ackTimer = new Timer.periodic(const Duration(milliseconds: 1), (Timer t) {
-      if (_signature == null || _ackBuffer.length == 0)
+
+      if (_signature == null || _ackBuffer.length() == 0)
         return;
+
       int now = new DateTime.now().millisecondsSinceEpoch;
       if ((_startMs + _ackTransmitWaitMs) < now) {
         ByteBuffer ack = BinaryData.createAck(_signature, _ackBuffer.acks);
@@ -257,8 +260,8 @@ class UDPDataReader extends BinaryDataReader {
   }
   void _ackBufferFull(List<int> acks) {
     ByteBuffer ack = BinaryData.createAck(_signature, _ackBuffer.acks);
-    print("writing acks ${_ackBuffer.acks.length}");
-    //_ackBuffer.clear();
+    //print("writing acks ${_ackBuffer.acks.length}");
+    _ackBuffer.clear();
     if (_peer != null)
       _peer.binaryWriter.sendAck(ack);
   }
@@ -352,10 +355,10 @@ class UDPDataReader extends BinaryDataReader {
 class AckBuffer {
   StreamController<List<int>> _bufferyController;
   Stream<List<int>> onFull;
-  const int ACK_LIMIT = 50;
+  const int ACK_LIMIT = 30;
   List<int> _acks;
   int _index = 0;
-  bool get full => _index == ACK_LIMIT;
+  bool get full => _index == ACK_LIMIT - 1;
   List<int> get acks => _getAcks();
   AckBuffer() {
     _acks = new List<int>(ACK_LIMIT);

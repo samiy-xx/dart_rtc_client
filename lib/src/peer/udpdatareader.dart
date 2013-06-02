@@ -3,17 +3,10 @@ part of rtc_client;
 class UDPDataReader extends BinaryDataReader {
   static final _logger = new Logger("dart_rtc_client.UDPDataReader");
   ByteBuffer _latest;
-  ByteData _latestView;
-
   bool _fileAsBuffer = false;
   set fileAsBuffer(bool v) => _fileAsBuffer = v;
   Sequencer _sequencer;
-  int _lastProcessed;
-  /* Length of data for currently processed object */
-  int _length;
 
-  /* Left to read on current packet */
-  int _leftToRead = 0;
   int _totalRead = 0;
   int _currentChunkContentLength;
   int _contentTotalLength;
@@ -22,24 +15,18 @@ class UDPDataReader extends BinaryDataReader {
   int _packetType;
   int _signature;
   int _startMs;
-  int _testMS = 0;
-  Stopwatch _watch;
+
   Timer _ackTimer;
   const int _ackTransmitWaitMs = 5;
   AckBuffer _ackBuffer;
   BinaryReadState _currentReadState = BinaryReadState.INIT_READ;
   BinaryReadState get currentReadState => _currentReadState;
 
-  int get leftToRead => _leftToRead;
-
   bool _haveThisPart = false;
   Timer _timer;
 
   UDPDataReader(PeerConnection peer) : super(peer) {
-    _length = 0;
     _sequencer = new Sequencer();
-    _lastProcessed = new DateTime.now().millisecondsSinceEpoch;
-    _watch = new Stopwatch();
     _ackBuffer = new AckBuffer();
     _ackBuffer.onFull.listen(_ackBufferFull);
     _monitorAcks();
@@ -59,8 +46,7 @@ class UDPDataReader extends BinaryDataReader {
    * Can be whole packet or partial
    */
   void readChunk(ByteBuffer buf) {
-    _lastProcessed = _startMs = new DateTime.now().millisecondsSinceEpoch;
-    //_startMs = new DateTime.now().millisecondsSinceEpoch;
+    _startMs = new DateTime.now().millisecondsSinceEpoch;
     int i = 0;
 
     if (BinaryData.isCommand(buf)) {
@@ -76,51 +62,38 @@ class UDPDataReader extends BinaryDataReader {
       if (_currentReadState == BinaryReadState.INIT_READ) {
         _process_init_read(v.getUint8(i));
         i += SIZEOF8;
-        //continue;
       }
 
       if (_currentReadState == BinaryReadState.READ_TYPE) {
         _process_read_type(v.getUint8(i));
         i += SIZEOF8;
-        //continue;
       }
 
       if (_currentReadState == BinaryReadState.READ_SEQUENCE) {
         _process_read_sequence(v.getUint32(i));
         i += SIZEOF32;
-        //continue;
       }
 
       if (_currentReadState == BinaryReadState.READ_TOTAL_SEQUENCES) {
         _process_read_total_sequences(v.getUint32(i));
         i += SIZEOF32;
-        //continue;
       }
 
       if (_currentReadState == BinaryReadState.READ_LENGTH) {
         _process_read_length(v.getUint16(i));
         i += SIZEOF16;
-        //continue;
       }
 
       if (_currentReadState == BinaryReadState.READ_TOTAL_LENGTH) {
         _process_read_total_length(v.getUint32(i));
         i += SIZEOF32;
-        //continue;
       }
 
       if (_currentReadState == BinaryReadState.READ_SIGNATURE) {
         _process_read_signature(v.getUint32(i));
         i += SIZEOF32;
-        //continue;
       }
 
-      /*if (_currentReadState == BinaryReadState.READ_CONTENT) {
-        if (leftToRead > 0) {
-          _process_content(v.getUint8(i), i - 16);
-          i += SIZEOF8;
-        }
-      }*/
       if (_currentReadState == BinaryReadState.READ_CONTENT) {
         _process_content_v2(buf);
         i += buf.lengthInBytes - SIZEOF_UDP_HEADER;
@@ -146,8 +119,7 @@ class UDPDataReader extends BinaryDataReader {
   }
 
   ByteBuffer _buildCompleteBuffer(int signature, int totalLength, int totalSequences) {
-    _watch.reset();
-    _watch.start();
+
     SequenceCollection sc = _sequencer.getSequenceCollection(signature);
     ByteBuffer complete = new Uint8List(totalLength).buffer;
     ByteData completeView = new ByteData.view(complete);
@@ -164,7 +136,7 @@ class UDPDataReader extends BinaryDataReader {
 
     _sequencer.removeCollection(signature);
     _sequencer.clear();
-    _watch.stop();
+
     return complete;
   }
 
@@ -172,22 +144,12 @@ class UDPDataReader extends BinaryDataReader {
     return _sequencer.getSequenceCollection(signature).isComplete;
   }
 
-  ByteBuffer getLatestChunk() {
-    return _latest;
-  }
-
-  /*
-   * Read the 0xFF byte and switch state
-   */
   void _process_init_read(int b) {
     if (b == FULL_BYTE) {
       _currentReadState = BinaryReadState.READ_TYPE;
     }
   }
 
-  /*
-   * Read the BinaryDataType of the object
-   */
   void _process_read_type(int b) {
     _packetType = b;
     _currentReadState = BinaryReadState.READ_SEQUENCE;
@@ -205,9 +167,7 @@ class UDPDataReader extends BinaryDataReader {
 
   void _process_read_length(int b) {
     _currentChunkContentLength = b;
-    _leftToRead = b;
     _latest = new Uint8List(b).buffer;
-    _latestView = new ByteData.view(_latest);
     _currentReadState = BinaryReadState.READ_TOTAL_LENGTH;
   }
 
@@ -233,40 +193,27 @@ class UDPDataReader extends BinaryDataReader {
       _currentReadState = BinaryReadState.INIT_READ;
       return;
     }
-    //var tmp = new Uint8List.view(buffer).sublist(SIZEOF_UDP_HEADER);
-    //_latest = new Uint8List.fromList(tmp).buffer;
+
     _latest = buffer;
-    //_leftToRead -= buffer.lengthInBytes - SIZEOF_UDP_HEADER;
     if (!_haveThisPart)
       _totalRead += buffer.lengthInBytes - SIZEOF_UDP_HEADER;
 
-    //if (_leftToRead == 0) {
-      _currentReadState = BinaryReadState.FINISH_READ;
-      _process_end();
-    //}
+    _currentReadState = BinaryReadState.FINISH_READ;
+    _process_end();
   }
 
-  /*
-   * Process end of read
-   */
   void _process_end() {
 
     addToSequencer(_latest, _signature, _currentChunkSequence);
     if (!_haveThisPart) {
-      //List<int> sequences = new List<int>(1);
-      //sequences[0] = _currentChunkSequence;
-      //ByteBuffer ack = BinaryData.createAck(_signature, sequences);
-      //(_wrapper as DataPeerWrapper).binaryWriter.sendAck(ack);
       _ackBuffer.add(_currentChunkSequence);
-      //(_wrapper as DataPeerWrapper).binaryWriter.writeAck(_signature, _currentChunkSequence);
       _signalReadChunk(_latest, _signature, _currentChunkSequence, _totalSequences, _currentChunkContentLength, _contentTotalLength);
     }
-    //new Logger().Debug("Processed $_totalRead of $_contentTotalLength");
     int now = new DateTime.now().millisecondsSinceEpoch;
 
-    if (_totalRead == _contentTotalLength)
+    if (_totalRead == _contentTotalLength) {
       _processBuffer();
-
+    }
     _currentReadState = BinaryReadState.INIT_READ;
   }
 
@@ -277,18 +224,20 @@ class UDPDataReader extends BinaryDataReader {
     _totalRead = 0;
     ByteBuffer buffer;
     var type = _packetType;
-    if (sequencerComplete(_signature)) {
-      buildCompleteBuffer(_signature, _contentTotalLength, _totalSequences).then((ByteBuffer buffer) {
+    var signature = _signature;
+
+    if (sequencerComplete(signature)) {
+      //_cancelMonitor();
+      buildCompleteBuffer(signature, _contentTotalLength, _totalSequences).then((ByteBuffer buffer) {
 
         if (buffer != null)
           _doSignalingBasedOnBufferType(buffer, type);
 
       });
     }
+    //_signature = null;
     _contentTotalLength = 0;
     _totalRead = 0;
-
-
   }
 
   void _monitorAcks() {
@@ -298,6 +247,7 @@ class UDPDataReader extends BinaryDataReader {
       int now = new DateTime.now().millisecondsSinceEpoch;
       if ((_startMs + _ackTransmitWaitMs) < now) {
         ByteBuffer ack = BinaryData.createAck(_signature, _ackBuffer.acks);
+        //print("Timeout. writing acks ${_ackBuffer.acks.length}");
         _ackBuffer.clear();
         if (_peer != null)
           _peer.binaryWriter.sendAck(ack);
@@ -307,6 +257,8 @@ class UDPDataReader extends BinaryDataReader {
   }
   void _ackBufferFull(List<int> acks) {
     ByteBuffer ack = BinaryData.createAck(_signature, _ackBuffer.acks);
+    print("writing acks ${_ackBuffer.acks.length}");
+    //_ackBuffer.clear();
     if (_peer != null)
       _peer.binaryWriter.sendAck(ack);
   }
@@ -393,7 +345,7 @@ class UDPDataReader extends BinaryDataReader {
    */
   void reset() {
     _currentReadState = BinaryReadState.INIT_READ;
-    _leftToRead = 0;
+    //_leftToRead = 0;
   }
 }
 
@@ -403,7 +355,7 @@ class AckBuffer {
   const int ACK_LIMIT = 50;
   List<int> _acks;
   int _index = 0;
-  bool get full => _index == ACK_LIMIT - 1;
+  bool get full => _index == ACK_LIMIT;
   List<int> get acks => _getAcks();
   AckBuffer() {
     _acks = new List<int>(ACK_LIMIT);

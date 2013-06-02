@@ -166,10 +166,13 @@ class UDPDataWriter extends BinaryDataWriter {
 
   void _adjustTreshold() {
     if (resendCount > 0) {
-      currentTreshold -= TRESHOLD_INCREMENT;
+      currentTreshold -= resendCount > 1 ? resendCount : TRESHOLD_INCREMENT;
+      if (currentTreshold <= 0)
+        currentTreshold = 1;
     } else {
       currentTreshold = currentTreshold >= MAX_SEND_TRESHOLD ? MAX_SEND_TRESHOLD : currentTreshold + TRESHOLD_INCREMENT;
     }
+    _logger.finest("Resend count = $resendCount treshold = $currentTreshold");
   }
 
   void sendAck(ByteBuffer buffer) {

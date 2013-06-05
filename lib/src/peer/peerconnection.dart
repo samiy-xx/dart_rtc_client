@@ -86,7 +86,7 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
 
   void setSessionDescription(RtcSessionDescription sdp) {
     _peer.setLocalDescription(sdp).then((val) {
-        _logger.fine("(peerwrapper.dart) Setting local description was success $val");
+        _logger.fine("(peerwrapper.dart) Setting local description was success");
     }).catchError((e) {
         _logger.severe("(peerwrapper.dart) setting local description failed ${e}");
     });
@@ -94,10 +94,10 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
 
   void setRemoteSessionDescription(RtcSessionDescription sdp) {
     _peer.setRemoteDescription(sdp).then((val) {
-      _logger.fine("(peerwrapper.dart) Setting remote description was success $val");
+      _logger.fine("(peerwrapper.dart) Setting remote description was success");
     })
     .catchError((e) {
-      _logger.severe("(peerwrapper.dart) setting remote description failed ${e}");
+      _logger.severe("(peerwrapper.dart) setting remote description failed ${e.runtimeType}");
     });
 
     if (sdp.type == SDP_OFFER)
@@ -149,7 +149,7 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
   }
 
   void _sendOffer() {
-    _peer.createOffer()
+    _peer.createOffer({ 'mandatory': { 'OfferToReceiveAudio': true, 'OfferToReceiveVideo': true} })
       .then(_onOfferSuccess)
       .catchError((e) {
         _logger.severe("(peerwrapper.dart) Error creating offer $e");
@@ -157,7 +157,7 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
   }
 
   void _sendAnswer() {
-    _peer.createAnswer()
+    _peer.createAnswer({ 'mandatory': { 'OfferToReceiveAudio': true, 'OfferToReceiveVideo': true} })
       .then(_onAnswerSuccess)
       .catchError((e) {
       });

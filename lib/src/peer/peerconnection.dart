@@ -57,6 +57,9 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
     _logger.fine("Adding stream to peer $id");
     try {
       _peer.addStream(ms, _manager.getStreamConstraints().toMap());
+      if (Browser.isFirefox) {
+        initialize();
+      }
     } on DomException catch(e, s) {
       _logger.severe("DOM Error setting constraints: $e ${_manager.getStreamConstraints().toMap().toString()}");
       _peer.addStream(ms);
@@ -105,12 +108,14 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
   }
 
   void addRemoteIceCandidate(RtcIceCandidate candidate) {
-    if (candidate == null)
-      throw new Exception("RtcIceCandidate was null");
+    if (!Browser.isFirefox) {
+      if (candidate == null)
+        throw new Exception("RtcIceCandidate was null");
 
-    if (_peer.signalingState != PEER_CLOSED) {
-      _logger.fine("(peerwrapper.dart) Receiving remote ICE Candidate ${candidate.candidate}");
-      _peer.addIceCandidate(candidate);
+      if (_peer.signalingState != PEER_CLOSED) {
+        _logger.fine("(peerwrapper.dart) Receiving remote ICE Candidate ${candidate.candidate}");
+        _peer.addIceCandidate(candidate);
+      }
     }
   }
 
@@ -131,12 +136,19 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
   }
 
   void _onIceCandidate(RtcIceCandidateEvent c) {
-    if (c.candidate != null) {
-      //IcePacket ice = new IcePacket.With(c.candidate.candidate, c.candidate.sdpMid, c.candidate.sdpMLineIndex, id);
-      _manager.getSignaler().sendIceCandidate(this, c.candidate);
-      //_manager._sendPacket(PacketFactory.get(ice));
-    } else {
-      // Null, complete
+    try {
+      if (!Browser.isFirefox) {
+        if (c.candidate != null) {
+          //IcePacket ice = new IcePacket.With(c.candidate.candidate, c.candidate.sdpMid, c.candidate.sdpMLineIndex, id);
+          _manager.getSignaler().sendIceCandidate(this, c.candidate);
+          //_manager._sendPacket(PacketFactory.get(ice));
+        } else {
+          _logger.severe("ICE Candidate null");
+        }
+      }
+    } catch (e, s) {
+      _logger.severe("ICE Candidate ${e}");
+      _logger.severe("ICE Candidate ${s}");
     }
   }
 
@@ -149,7 +161,7 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
   }
 
   void _sendOffer() {
-    _peer.createOffer({ 'mandatory': { 'OfferToReceiveAudio': true, 'OfferToReceiveVideo': true} })
+    _peer.createOffer()
       .then(_onOfferSuccess)
       .catchError((e) {
         _logger.severe("(peerwrapper.dart) Error creating offer $e");
@@ -157,7 +169,7 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
   }
 
   void _sendAnswer() {
-    _peer.createAnswer({ 'mandatory': { 'OfferToReceiveAudio': true, 'OfferToReceiveVideo': true} })
+    _peer.createAnswer()
       .then(_onAnswerSuccess)
       .catchError((e) {
       });

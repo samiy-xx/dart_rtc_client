@@ -53,7 +53,7 @@ part 'src/util/streamconstraints.dart';
 part 'src/util/videoconstraints.dart';
 part 'src/util/serverconstraints.dart';
 part 'src/util/util.dart';
-
+part 'src/util/browser.dart';
 part 'src/datasource/datasource.dart';
 part 'src/datasource/websocketdatasource.dart';
 

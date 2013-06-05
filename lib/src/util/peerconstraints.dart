@@ -34,8 +34,8 @@ class PeerConstraints implements Constraints {
    */
   Map toMap() {
     return {
-      'optional' : [{'RtpDataChannels': _dataChannelEnabled}]
-      //'optional' : [{'RtpDataChannels': _dataChannelEnabled}, {'DtlsSrtpKeyAgreement': _dtlsSrtpKeyAgreement}]
+      //'optional' : [{'RtpDataChannels': _dataChannelEnabled}]
+      'optional' : [{'RtpDataChannels': _dataChannelEnabled}, {'DtlsSrtpKeyAgreement': _dtlsSrtpKeyAgreement}]
     };
   }
 }

@@ -36,6 +36,8 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
     _binaryReader = new UDPDataReader(this);
     //_binaryWriter.subscribe(this);
     //_binaryReader.subscribe(this);
+    if (Browser.isFirefox)
+      _isReliable = true;
   }
 
   void setAsHost(bool value) {
@@ -76,7 +78,7 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
   void initChannel() {
     _logger.fine("Initializing send data channel");
     try {
-      _dataChannel = _peer.createDataChannel("channel", {'reliable': _isReliable});
+      _dataChannel = _peer.createDataChannel("channel", Browser.isFirefox ? {'reliable': _isReliable} : {});
       _dataChannel.binaryType = "arraybuffer";
       _dataChannel.onClose.listen(_onDataChannelClose);
       _dataChannel.onOpen.listen(_onDataChannelOpen);

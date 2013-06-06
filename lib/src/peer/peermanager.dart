@@ -122,7 +122,7 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
       wrapper = _createWrapper(
           new RtcPeerConnection(
               _serverConstraints.toMap(),
-              _peerConstraints.toMap()
+              Browser.isWebKit ? _peerConstraints.toMap() : null
           )
       );
     } catch (e, s) {
@@ -192,10 +192,12 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
   }
 
   void onIceCandidate(RtcIceCandidateEvent e) {
-    if (e.candidate == null) {
-      listeners.where((l) => l is PeerConnectionEventListener).forEach((PeerConnectionEventListener l) {
-        l.onIceGatheringStateChanged(getWrapperForPeer(e.target), "finished");
-      });
+    if (!Browser.isFirefox) {
+      if (e.candidate == null) {
+        listeners.where((l) => l is PeerConnectionEventListener).forEach((PeerConnectionEventListener l) {
+          l.onIceGatheringStateChanged(getWrapperForPeer(e.target), "finished");
+        });
+      }
     }
   }
   /**

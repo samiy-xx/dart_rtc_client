@@ -87,20 +87,20 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
     }
   }
 
-  void setSessionDescription(RtcSessionDescription sdp) {
+  /*void setSessionDescription(RtcSessionDescription sdp) {
     _peer.setLocalDescription(sdp).then((val) {
         _logger.fine("(peerwrapper.dart) Setting local description was success");
     }).catchError((e) {
         _logger.severe("(peerwrapper.dart) setting local description failed ${e}");
     });
-  }
+  }*/
 
   void setRemoteSessionDescription(RtcSessionDescription sdp) {
     _peer.setRemoteDescription(sdp).then((val) {
-      _logger.fine("(peerwrapper.dart) Setting remote description was success");
+      _logger.fine("(peerwrapper.dart) Setting remote description was success ${sdp.type}");
     })
     .catchError((e) {
-      _logger.severe("(peerwrapper.dart) setting remote description failed ${e.runtimeType}");
+      _logger.severe("(peerwrapper.dart) setting remote description failed ${sdp.type} ${e} ${sdp.sdp}");
     });
 
     if (sdp.type == SDP_OFFER)
@@ -136,19 +136,15 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
   }
 
   void _onIceCandidate(RtcIceCandidateEvent c) {
-    try {
-      if (!Browser.isFirefox) {
-        if (c.candidate != null) {
-          //IcePacket ice = new IcePacket.With(c.candidate.candidate, c.candidate.sdpMid, c.candidate.sdpMLineIndex, id);
-          _manager.getSignaler().sendIceCandidate(this, c.candidate);
-          //_manager._sendPacket(PacketFactory.get(ice));
-        } else {
-          _logger.severe("ICE Candidate null");
-        }
+
+    if (!Browser.isFirefox) {
+      if (c.candidate != null) {
+        //IcePacket ice = new IcePacket.With(c.candidate.candidate, c.candidate.sdpMid, c.candidate.sdpMLineIndex, id);
+        _manager.getSignaler().sendIceCandidate(this, c.candidate);
+        //_manager._sendPacket(PacketFactory.get(ice));
+      } else {
+        _logger.severe("ICE Candidate null");
       }
-    } catch (e, s) {
-      _logger.severe("ICE Candidate ${e}");
-      _logger.severe("ICE Candidate ${s}");
     }
   }
 
@@ -162,7 +158,7 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
 
   void _sendOffer() {
     _peer.createOffer()
-      .then(_onOfferSuccess)
+      .then(_setLocalAndSend)
       .catchError((e) {
         _logger.severe("(peerwrapper.dart) Error creating offer $e");
       });
@@ -170,12 +166,22 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
 
   void _sendAnswer() {
     _peer.createAnswer()
-      .then(_onAnswerSuccess)
+      .then(_setLocalAndSend)
       .catchError((e) {
       });
   }
 
-  void _onOfferSuccess(RtcSessionDescription sdp) {
+  void _setLocalAndSend(RtcSessionDescription sd) {
+    sd = Util.hackTheSdp(sd);
+    _peer.setLocalDescription(sd).then((_) {
+      _logger.fine("(peerwrapper.dart) Setting local description was success");
+      _manager.getSignaler().sendSessionDescription(this, sd);
+    }).catchError((e) {
+        _logger.severe("(peerwrapper.dart) setting local description failed ${e}");
+    });
+  }
+
+  /*void _onOfferSuccess(RtcSessionDescription sdp) {
     _logger.fine("Offer created, sending");
     sdp = Util.hackTheSdp(sdp);
     setSessionDescription(sdp);
@@ -187,7 +193,7 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
     _logger.fine("(peerwrapper.dart) Answer created, sending");
     setSessionDescription(sdp);
     _manager.getSignaler().sendSessionDescription(this, sdp);
-  }
+  }*/
 
 
 

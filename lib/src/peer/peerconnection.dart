@@ -14,7 +14,8 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
   String _channelState = null;
   String _channel;
   String _id;
-
+  List<dynamic> _ices;
+  bool _hasLocalSet = false;
   BinaryDataWriter get binaryWriter => _binaryWriter;
   BinaryDataReader get binaryReader => _binaryReader;
   RtcPeerConnection get peer => _peer;
@@ -25,6 +26,7 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
   String get channel => _channel;
   set channel(String v) => _channel = v;
   PeerConnection(PeerManager pm, RtcPeerConnection p) : _manager = pm, _peer = p {
+    _ices = new List<dynamic>();
     _peer.onIceCandidate.listen(_onIceCandidate);
     _peer.onNegotiationNeeded.listen(_onNegotiationNeeded);
     _peer.onIceConnectionStateChange.listen(_onIceChange);
@@ -56,7 +58,8 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
       throw new Exception("MediaStream was null");
     _logger.fine("Adding stream to peer $id");
     try {
-      _peer.addStream(ms, _manager.getStreamConstraints().toMap());
+      //_peer.addStream(ms, _manager.getStreamConstraints().toMap());
+      _peer.addStream(ms);
       if (Browser.isFirefox) {
         initialize();
       }
@@ -98,25 +101,30 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
   void setRemoteSessionDescription(RtcSessionDescription sdp) {
     _peer.setRemoteDescription(sdp).then((val) {
       _logger.fine("(peerwrapper.dart) Setting remote description was success ${sdp.type}");
+      if (sdp.type == SDP_OFFER)
+        _sendAnswer();
     })
     .catchError((e) {
       _logger.severe("(peerwrapper.dart) setting remote description failed ${sdp.type} ${e} ${sdp.sdp}");
     });
 
-    if (sdp.type == SDP_OFFER)
-      _sendAnswer();
+
   }
 
   void addRemoteIceCandidate(RtcIceCandidate candidate) {
-    if (!Browser.isFirefox) {
+    //if (!Browser.isFirefox) {
       if (candidate == null)
         throw new Exception("RtcIceCandidate was null");
 
       if (_peer.signalingState != PEER_CLOSED) {
         _logger.fine("(peerwrapper.dart) Receiving remote ICE Candidate ${candidate.candidate}");
-        _peer.addIceCandidate(candidate);
+        if (_hasLocalSet)
+          _peer.addIceCandidate(candidate);
+        else
+          _ices.add(candidate);
       }
-    }
+
+    //}
   }
 
   void sendString(String s) {
@@ -168,19 +176,24 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
     _peer.createAnswer()
       .then(_setLocalAndSend)
       .catchError((e) {
+        _logger.severe("(peerwrapper.dart) Error creating answer $e");
       });
   }
 
   void _setLocalAndSend(RtcSessionDescription sd) {
     sd = Util.hackTheSdp(sd);
     _peer.setLocalDescription(sd).then((_) {
+      _hasLocalSet = true;
+      _setQueuedIces();
       _logger.fine("(peerwrapper.dart) Setting local description was success");
       _manager.getSignaler().sendSessionDescription(this, sd);
     }).catchError((e) {
         _logger.severe("(peerwrapper.dart) setting local description failed ${e}");
     });
   }
-
+  void _setQueuedIces() {
+    _ices.forEach((i) => _peer.addIceCandidate(i));
+  }
   /*void _onOfferSuccess(RtcSessionDescription sdp) {
     _logger.fine("Offer created, sending");
     sdp = Util.hackTheSdp(sdp);

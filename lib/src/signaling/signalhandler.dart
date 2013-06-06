@@ -193,7 +193,7 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
         return true;
       }
     } catch (e, s) {
-      _logger.severe("Error: $e $s");
+      _logger.severe("$e $s");
     }
     return false;
   }
@@ -307,15 +307,19 @@ class SignalHandler extends PacketHandler implements Signaler, PeerPacketEventLi
    * Handles ice
    */
   void handleIce(IcePacket p) {
-    RtcIceCandidate candidate = new RtcIceCandidate({
-      'candidate': p.candidate,
-      'sdpMid': p.sdpMid,
-      'sdpMLineIndex': p.sdpMLineIndex
-    });
+    try {
+      RtcIceCandidate candidate = new RtcIceCandidate({
+        'candidate': p.candidate,
+        'sdpMid': p.sdpMid,
+        'sdpMLineIndex': p.sdpMLineIndex
+      });
 
-    PeerConnection peer = _peerManager.findWrapper(p.id);
-    if (peer != null) {
-      peer.addRemoteIceCandidate(candidate);
+      PeerConnection peer = _peerManager.findWrapper(p.id);
+      if (peer != null) {
+        peer.addRemoteIceCandidate(candidate);
+      }
+    } catch (e, s) {
+      _logger.severe("$e $s");
     }
   }
 

@@ -122,7 +122,7 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
       wrapper = _createWrapper(
           new RtcPeerConnection(
               _serverConstraints.toMap(),
-              Browser.isWebKit ? _peerConstraints.toMap() : null
+              _peerConstraints.toMap()
           )
       );
     } catch (e, s) {

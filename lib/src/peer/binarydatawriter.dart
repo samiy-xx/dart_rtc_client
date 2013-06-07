@@ -81,5 +81,15 @@ abstract class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListen
   ByteBuffer addTcpHeader(ByteBuffer buf, int packetType, int signature, int total) {
     return BinaryData.writeTcpHeader(buf, packetType, signature, total);
   }
+
+// Faster than the default sublist
+  ByteBuffer _sublist(ByteBuffer buffer, int from, int to) {
+    var source = new Uint8List.view(buffer, from, to);
+    var result = new Uint8List(source.lengthInBytes);
+    for (int i = 0; i < source.lengthInBytes; i++) {
+      result[i] = source[i];
+    }
+    return result.buffer;
+  }
 }
 

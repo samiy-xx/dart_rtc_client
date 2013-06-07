@@ -1,30 +1,42 @@
 part of rtc_client;
 
 class TCPDataWriter extends BinaryDataWriter {
-  TCPDataWriter(PeerConnection peer) : super(BINARY_PROTOCOL_TCP, peer) {
+  const int MAX_FILE_BUFFER_SIZE = 1024 * 1024 * 20;
 
+  TCPDataWriter(PeerConnection peer) : super(BINARY_PROTOCOL_TCP, peer) {
+    _wrapToString = false;
+    _writeChunkSize = 2048;
   }
-/*
-  Future<int> send(ByteBuffer buffer, int packetType) {
+
+  Future<int> send(ByteBuffer buffer, int packetType, bool reliable) {
     Completer completer = new Completer();
     int signature = new Random().nextInt(100000000);
-    int totalSequences = (buffer.lengthInBytes ~/ _writeChunkSize) + 1;
-    int read = 0;
+  }
+
+  Future<int> sendFile(Blob file) {
+
+  }
+
+  Future<int> _send(ByteBuffer buffer, int packetType, int signature, int total) {
+    int totalSequences = (buffer.lengthInBytes / _writeChunkSize).ceil();
     int leftToRead = buffer.lengthInBytes;
+    int read = 0;
     while (read < buffer.lengthInBytes) {
-      int toRead = leftToRead > _writeChunkSize ? _writeChunkSize : leftToRead;
-      ByteBuffer toAdd = new Uint8List.fromList(new Uint8List.view(buffer).sublist(read, read+toRead));
-      ByteBuffer b = addTcpHeader(
+      var toRead = leftToRead > _writeChunkSize ? _writeChunkSize : leftToRead;
+      var toAdd = _sublist(buffer, read, toRead);
+      var b = addTcpHeader(
           toAdd,
           packetType,
           signature,
-          buffer.lengthInBytes
+          total
       );
-      write(b);
       read += toRead;
       leftToRead -= toRead;
+      write(b);
     }
-    completer.complete(1);
-    return completer.future;
-  }*/
+  }
+
+  void sendAck(ByteBuffer buffer) {
+
+  }
 }

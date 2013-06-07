@@ -52,14 +52,15 @@ class UDPReaderTests implements BinaryDataReceivedEventListener {
 
   int chunks = 0;
 
-  void onPeerString(PeerWrapper pw, String s) {}
-  void onPeerBuffer(PeerWrapper pw, ByteBuffer b) {
+  void onPeerString(PeerConnection pc, String s) {}
+  void onPeerBuffer(PeerConnection pc, ByteBuffer b,int binaryType) {
 
     //print("Got buffer of size ${b.lengthInBytes} in ${_now - _start} milliseconds");
     result = b;
   }
-  void onPeerFile(PeerWrapper pw, Blob b) {}
-  void onPeerReadUdpChunk(PeerWrapper pw, ByteBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesTotal) {
+  void onPeerFile(PeerConnection pc, Blob b) {}
+  void onPeerReadTcpChunk(PeerConnection pc, ByteBuffer buffer, int signature, int bytes, int bytesTotal) {}
+  void onPeerReadUdpChunk(PeerConnection pc, ByteBuffer buffer, int signature, int sequence, int totalSequences, int bytes, int bytesTotal) {
     chunks++;
     //print(chunks);
     if (chunks == 76) {

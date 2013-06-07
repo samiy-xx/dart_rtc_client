@@ -12,6 +12,8 @@ class TCPDataReader extends BinaryDataReader {
   ByteBuffer _latest;
   ByteData _latestView;
   int get leftToRead => _leftToRead;
+  bool _fileAsBuffer = false;
+  set fileAsBuffer(bool v) => _fileAsBuffer = v;
   TCPDataReader(PeerConnection peer) : super(peer) {
 
   }
@@ -36,38 +38,31 @@ class TCPDataReader extends BinaryDataReader {
       if (_currentReadState == BinaryReadState.INIT_READ) {
         _process_init_read(v.getUint8(i));
         i += SIZEOF8;
-        continue;
       }
 
       if (_currentReadState == BinaryReadState.READ_TYPE) {
         _process_read_type(v.getUint8(i));
         i += SIZEOF8;
-        continue;
       }
 
       if (_currentReadState == BinaryReadState.READ_LENGTH) {
         _process_read_length(v.getUint16(i));
         i += SIZEOF16;
-        continue;
       }
 
       if (_currentReadState == BinaryReadState.READ_TOTAL_LENGTH) {
         _process_read_total_length(v.getUint32(i));
         i += SIZEOF32;
-        continue;
       }
 
       if (_currentReadState == BinaryReadState.READ_SIGNATURE) {
         _process_read_signature(v.getUint32(i));
         i += SIZEOF32;
-        continue;
       }
 
       if (_currentReadState == BinaryReadState.READ_CONTENT) {
-        if (leftToRead > 0) {
-          _process_content(v.getUint8(i), i - SIZEOF_TCP_HEADER);
-          i += SIZEOF8;
-        }
+        _process_content_v2(buffer);
+        i += buffer.lengthInBytes - SIZEOF_TCP_HEADER;
       }
     }
   }
@@ -101,6 +96,13 @@ class TCPDataReader extends BinaryDataReader {
     _currentReadState = BinaryReadState.READ_CONTENT;
   }
 
+  void _process_content_v2(ByteBuffer buffer) {
+    _latest = buffer;
+    _totalRead += buffer.lengthInBytes - SIZEOF_TCP_HEADER;
+    _currentReadState = BinaryReadState.FINISH_READ;
+    process_end();
+  }
+
   void _process_content(int b, int index) {
 
     try {
@@ -112,18 +114,14 @@ class TCPDataReader extends BinaryDataReader {
     _leftToRead -= SIZEOF8;
     _totalRead += SIZEOF8;
 
-
     if (_leftToRead == 0) {
       _currentReadState = BinaryReadState.FINISH_READ;
-      _process_end();
+      process_end();
     }
   }
 
-  void _process_end() {
-
+  void process_end() {
     _signalReadChunk(_latest, _signature, _currentChunkContentLength, _contentTotalLength);
-
-    //new Logger().Debug("Processed $_totalRead of $_contentTotalLength");
     if (_totalRead == _contentTotalLength)
       _processBuffer();
 
@@ -132,17 +130,8 @@ class TCPDataReader extends BinaryDataReader {
 
   void _processBuffer() {
     _totalRead = 0;
-    //_contentTotalLength = 0;
-    //new Logger().Debug("Processing buffer");
-    ByteBuffer buffer;
-    //if (sequencerComplete(_signature)) {
-      //new Logger().Debug("Sequence complete, building complete buffer");
-      //buffer = buildCompleteBuffer(_signature);
-    //}
     _contentTotalLength = 0;
     _totalRead = 0;
-    //if (buffer != null)
-      //_doSignalingBasedOnBufferType(buffer);
   }
 
   void _signalReadChunk(ByteBuffer buf, int signature, int bytes, int bytesTotal) {

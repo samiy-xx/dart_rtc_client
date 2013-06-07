@@ -4,8 +4,10 @@ class MockTcpWriter extends TCPDataWriter {
   bool sentData = false;
   int packetsSent = 0;
   List<ByteBuffer> buffers;
+  MockTcpReader _reader;
 
-  MockTcpWriter() : super(null) {
+  MockTcpWriter(MockTcpReader reader) : super(null) {
+    _reader = reader;
     buffers = new List<ByteBuffer>();
   }
 
@@ -13,10 +15,6 @@ class MockTcpWriter extends TCPDataWriter {
     sentData = true;
     packetsSent++;
     buffers.add(buf);
-  }
-  void send(ByteBuffer buf) {
-    sentData = true;
-    packetsSent++;
-    buffers.add(buf);
+    _reader.readChunk(buf);
   }
 }

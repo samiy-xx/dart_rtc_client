@@ -3,6 +3,7 @@ part of rtc_client;
 abstract class BinaryDataReader extends GenericEventTarget<BinaryDataEventListener>{
   PeerConnection _peer;
   RtcDataChannel _channel;
+
   set dataChannel(RtcDataChannel c) => setChannel(c);
   set fileAsBuffer(bool v);
   BinaryDataReader(PeerConnection wrapper) : super() {
@@ -28,10 +29,7 @@ abstract class BinaryDataReader extends GenericEventTarget<BinaryDataEventListen
     }
 
     else {
-
-      Future f = readChunkString(e.data).then((_) {
-
-      });
+        Future f = readChunkString(e.data);
     }
   }
 

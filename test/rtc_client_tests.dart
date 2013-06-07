@@ -3,6 +3,7 @@ library rtc_client_tests;
 import 'dart:html';
 import 'dart:typed_data';
 import 'dart:math';
+import 'dart:async';
 
 import '../packages/unittest/unittest.dart';
 import '../packages/unittest/html_enhanced_config.dart';
@@ -14,6 +15,7 @@ import 'package:dart_rtc_common/rtc_common.dart';
 part 'mocks/binaryeventlistener.dart';
 part 'mocks/mockudpwriter.dart';
 part 'mocks/mocktcpwriter.dart';
+part 'mocks/mocktcpreader.dart';
 
 part 'tests/binarytests.dart';
 part 'tests/binarywritertests.dart';

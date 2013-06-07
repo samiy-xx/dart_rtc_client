@@ -6,7 +6,7 @@ class UDPDataWriter extends BinaryDataWriter {
   const int START_SEND_TRESHOLD = 30;
   const int TRESHOLD_INCREMENT = 5;
   const int ELAPSED_TIME_AFTER_SEND = 200;
-  const int MAX_FILE_BUFFER_SIZE = 1024 * 1024 * 20;
+
 
   Timer _observerTimer;
   SendQueue _queue;
@@ -129,16 +129,7 @@ class UDPDataWriter extends BinaryDataWriter {
 
 
 
-  int _getSequenceTotal(int bytes) {
-    int total = 0;
-    int leftToRead = bytes;
-    while (leftToRead > 0) {
-      int b = leftToRead > MAX_FILE_BUFFER_SIZE ? MAX_FILE_BUFFER_SIZE : leftToRead;
-      total += (b / _writeChunkSize).ceil();
-      leftToRead -= b;
-    }
-    return total;
-  }
+
 
   void _clearSequenceNumber() {
     _currentSequence = 1;

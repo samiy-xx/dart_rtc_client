@@ -25,6 +25,7 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
   set id(String v) => _id = v;
   String get channel => _channel;
   set channel(String v) => _channel = v;
+
   PeerConnection(PeerManager pm, RtcPeerConnection p) : _manager = pm, _peer = p {
     _ices = new List<dynamic>();
     _peer.onIceCandidate.listen(_onIceCandidate);
@@ -32,8 +33,13 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
     _peer.onIceConnectionStateChange.listen(_onIceChange);
     _peer.onSignalingStateChange.listen(_onStateChanged);
     _peer.onDataChannel.listen(_onNewDataChannelOpen);
-    _binaryWriter = new UDPDataWriter(this);
-    _binaryReader = new UDPDataReader(this);
+    if (Browser.isFirefox) {
+      _binaryWriter = new TCPDataWriter(this);
+      _binaryReader = new TCPDataReader(this);
+    } else {
+      _binaryWriter = new UDPDataWriter(this);
+      _binaryReader = new UDPDataReader(this);
+    }
     //_binaryWriter.subscribe(this);
     //_binaryReader.subscribe(this);
     if (Browser.isFirefox)

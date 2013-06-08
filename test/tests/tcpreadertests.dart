@@ -3,7 +3,8 @@ part of rtc_client_tests;
 class TcpReaderTests implements BinaryDataReceivedEventListener {
 
   final String testString = "0123456789";
-  TCPDataReader reader;
+  MockTcpWriter writer;
+  MockTcpReader reader;
   ByteBuffer result;
   String longTestString;
   ByteBuffer buffer;
@@ -17,7 +18,8 @@ class TcpReaderTests implements BinaryDataReceivedEventListener {
       setUp(() {
         longTestString = "0987654321"+ TestUtils.genRandomString(STRING_LENGTH) + "1234567890";
         buffer = BinaryData.bufferFromString(testString);
-        reader = new TCPDataReader(null);
+        reader = new MockTcpReader();
+        writer = new MockTcpWriter(reader);
         reader.subscribe(this);
       });
 

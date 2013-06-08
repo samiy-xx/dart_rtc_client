@@ -2,6 +2,7 @@ part of rtc_client;
 
 class TCPDataWriter extends BinaryDataWriter {
   const int MAX_FILE_BUFFER_SIZE = 1024 * 1024 * 20;
+  static final _logger = new Logger("dart_rtc_client.TCPDataWriter");
 
   TCPDataWriter(PeerConnection peer) : super(BINARY_PROTOCOL_TCP, peer) {
     _wrapToString = false;
@@ -38,8 +39,10 @@ class TCPDataWriter extends BinaryDataWriter {
   }
 
   Future<int> _send(ByteBuffer buffer, int packetType, int signature, int total) {
+    print("send ${buffer.lengthInBytes} bytes");
     Completer<int> completer = new Completer<int>();
     int totalSequences = (buffer.lengthInBytes / _writeChunkSize).ceil();
+
     int leftToRead = buffer.lengthInBytes;
     int read = 0;
     while (read < buffer.lengthInBytes) {
@@ -51,6 +54,7 @@ class TCPDataWriter extends BinaryDataWriter {
           signature,
           total
       );
+      print(toAdd.lengthInBytes);
       read += toRead;
       leftToRead -= toRead;
       write(b);

@@ -19,7 +19,7 @@ abstract class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListen
 
   // While Chrome hates binary
   bool _wrapToString = true;
-
+  set wrapToString(bool v) => _wrapToString = v;
   // tcp udp
   int _binaryProtocol;
 

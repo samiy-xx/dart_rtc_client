@@ -9,6 +9,7 @@ class MockTcpWriter extends TCPDataWriter {
   MockTcpWriter(MockTcpReader reader) : super(null) {
     _reader = reader;
     buffers = new List<ByteBuffer>();
+    wrapToString = false;
   }
 
   void write(ByteBuffer buf) {

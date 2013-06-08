@@ -7,7 +7,7 @@ class TcpWriterTests {
   ByteBuffer buffer;
   int expectedPacketCount;
 
-  const int CHUNK_SIZE = 50;
+  const int CHUNK_SIZE = 150;
   const int STRING_LENGTH = 1000;
 
 
@@ -84,6 +84,7 @@ class TcpWriterTests {
           }
         });
       });
+
     });
   }
 }

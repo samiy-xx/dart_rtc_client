@@ -9,5 +9,6 @@ class MockTcpReader extends TCPDataReader {
 
   void process_end() {
     read++;
+    super.process_end();
   }
 }

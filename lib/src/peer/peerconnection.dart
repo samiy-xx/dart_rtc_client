@@ -48,6 +48,7 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
 
   void setAsHost(bool value) {
     _isHost = value;
+    initChannel();
   }
 
   void initialize() {
@@ -82,6 +83,9 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
   }
 
   void initChannel() {
+    if (!_isHost)
+      return;
+
     _logger.fine("Initializing send data channel");
     try {
       //_dataChannel = _peer.createDataChannel("channel", !Browser.isFirefox ? {'reliable': _isReliable} : {});

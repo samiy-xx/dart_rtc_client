@@ -134,9 +134,49 @@ class TCPDataReader extends BinaryDataReader {
     _totalRead = 0;
   }
 
+  void _doSignalingBasedOnBufferType(ByteBuffer buffer, int type) {
+
+    switch (type) {
+        case BINARY_TYPE_STRING:
+          String s = BinaryData.stringFromBuffer(buffer);
+          _signalReadString(s);
+          break;
+        case BINARY_TYPE_CUSTOM:
+          _signalReadBuffer(buffer, BINARY_TYPE_CUSTOM);
+          break;
+        case BINARY_TYPE_FILE:
+          if (_fileAsBuffer)
+            _signalReadBuffer(buffer, BINARY_TYPE_FILE);
+          else
+            _signalReadFile(buffer);
+          break;
+        default:
+          break;
+      }
+  }
+
   void _signalReadChunk(ByteBuffer buf, int signature, int bytes, int bytesTotal) {
     listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
       l.onPeerReadTcpChunk(_peer, buf, signature, bytes, bytesTotal);
+    });
+  }
+
+  void _signalReadBuffer(ByteBuffer buffer, int binaryType) {
+    listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
+      l.onPeerBuffer(_peer, buffer, binaryType);
+    });
+  }
+
+  void _signalReadFile(ByteBuffer buffer) {
+    listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
+      //l.onPeerFile(_wrapper, new Blob([new Uint8Array.fromBuffer(buffer)]));
+      l.onPeerFile(_peer, new Blob([buffer]));
+    });
+  }
+
+  void _signalReadString(String s) {
+    listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
+      l.onPeerString(_peer, s);
     });
   }
 }

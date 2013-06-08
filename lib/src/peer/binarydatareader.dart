@@ -16,8 +16,9 @@ abstract class BinaryDataReader extends GenericEventTarget<BinaryDataEventListen
   }
 
   void _onChannelMessage(MessageEvent e) {
+
     if (e.data is Blob) {
-      throw new NotImplementedException("Blob is not implemented");
+      print("Binarydatareader got blob");
     }
 
     else if (e.data is ByteBuffer) {

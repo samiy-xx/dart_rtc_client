@@ -142,7 +142,7 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
     PeerConnection peer = new PeerConnection(this, p);
     if (_peerConstraints.dataChannelEnabled) {
       peer.isReliable = _reliableDataChannels;
-      peer.initChannel();
+
     }
 
 

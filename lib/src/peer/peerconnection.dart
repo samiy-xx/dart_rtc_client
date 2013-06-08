@@ -84,7 +84,7 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
   void initChannel() {
     _logger.fine("Initializing send data channel");
     try {
-      _dataChannel = _peer.createDataChannel("channel", Browser.isFirefox ? {'reliable': _isReliable} : {});
+      _dataChannel = _peer.createDataChannel("channel", !Browser.isFirefox ? {'reliable': _isReliable} : {});
       _dataChannel.binaryType = "arraybuffer";
       _dataChannel.onClose.listen(_onDataChannelClose);
       _dataChannel.onOpen.listen(_onDataChannelOpen);

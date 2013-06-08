@@ -188,7 +188,7 @@ class UDPDataReader extends BinaryDataReader {
   void _process_content_v2(ByteBuffer buffer) {
 
     if (_haveThisPart) {
-      _logger.fine("have this part");
+      _logger.fine("have this part $_currentChunkSequence");
       _ackBuffer.add(_currentChunkSequence);
       _currentReadState = BinaryReadState.INIT_READ;
       return;
@@ -362,7 +362,8 @@ class AckBuffer {
   List<int> get acks => _getAcks();
   AckBuffer() {
     _acks = new List<int>(ACK_LIMIT);
-    _bufferyController = new StreamController<List<int>>();
+    _bufferyController = new StreamController.broadcast(sync: true);
+    //_bufferyController = new StreamController<List<int>>();
     onFull = _bufferyController.stream;
   }
 

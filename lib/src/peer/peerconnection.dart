@@ -33,17 +33,17 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
     _peer.onIceConnectionStateChange.listen(_onIceChange);
     _peer.onSignalingStateChange.listen(_onStateChanged);
     _peer.onDataChannel.listen(_onNewDataChannelOpen);
-    if (Browser.isFirefox) {
-      _binaryWriter = new TCPDataWriter(this);
-      _binaryReader = new TCPDataReader(this);
-    } else {
+    //if (Browser.isFirefox) {
+    //  _binaryWriter = new TCPDataWriter(this);
+    //  _binaryReader = new TCPDataReader(this);
+    //} else {
       _binaryWriter = new UDPDataWriter(this);
       _binaryReader = new UDPDataReader(this);
-    }
+    //}
     //_binaryWriter.subscribe(this);
     //_binaryReader.subscribe(this);
-    if (Browser.isFirefox)
-      _isReliable = true;
+    //if (Browser.isFirefox)
+    //  _isReliable = true;
   }
 
   void setAsHost(bool value) {
@@ -84,7 +84,8 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
   void initChannel() {
     _logger.fine("Initializing send data channel");
     try {
-      _dataChannel = _peer.createDataChannel("channel", !Browser.isFirefox ? {'reliable': _isReliable} : {});
+      //_dataChannel = _peer.createDataChannel("channel", !Browser.isFirefox ? {'reliable': _isReliable} : {});
+      _dataChannel = _peer.createDataChannel("channel", {'reliable': false});
       _dataChannel.binaryType = "arraybuffer";
       _dataChannel.onClose.listen(_onDataChannelClose);
       _dataChannel.onOpen.listen(_onDataChannelOpen);
@@ -120,7 +121,6 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
   }
 
   void addRemoteIceCandidate(RtcIceCandidate candidate) {
-    //if (!Browser.isFirefox) {
       if (candidate == null)
         throw new Exception("RtcIceCandidate was null");
 
@@ -131,8 +131,6 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
         else
           _ices.add(candidate);
       }
-
-    //}
   }
 
   void sendString(String s) {
@@ -202,21 +200,6 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
   void _setQueuedIces() {
     _ices.forEach((i) => _peer.addIceCandidate(i));
   }
-  /*void _onOfferSuccess(RtcSessionDescription sdp) {
-    _logger.fine("Offer created, sending");
-    sdp = Util.hackTheSdp(sdp);
-    setSessionDescription(sdp);
-    _manager.getSignaler().sendSessionDescription(this, sdp);
-  }
-
-  void _onAnswerSuccess(RtcSessionDescription sdp) {
-    sdp = Util.hackTheSdp(sdp);
-    _logger.fine("(peerwrapper.dart) Answer created, sending");
-    setSessionDescription(sdp);
-    _manager.getSignaler().sendSessionDescription(this, sdp);
-  }*/
-
-
 
   void _onNegotiationNeeded(Event e) {
     _logger.info("onNegotiationNeeded");

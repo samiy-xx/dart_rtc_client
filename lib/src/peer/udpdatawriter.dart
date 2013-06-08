@@ -7,7 +7,6 @@ class UDPDataWriter extends BinaryDataWriter {
   const int TRESHOLD_INCREMENT = 5;
   const int ELAPSED_TIME_AFTER_SEND = 200;
 
-
   Timer _observerTimer;
   SendQueue _queue;
   int _c_packetsToSend;
@@ -77,6 +76,7 @@ class UDPDataWriter extends BinaryDataWriter {
     int leftToRead = buffer.lengthInBytes;
     StreamSubscription sub;
     sub = _queue.onEmpty.listen((bool b) {
+      print("Queue is empty");
       _adjustTreshold();
 
       resendCount = 0;
@@ -208,7 +208,8 @@ class SendQueue {
   int get itemCount => _length;
   int _length;
   SendQueue() {
-    _queueEmptyController = new StreamController<bool>();
+    _queueEmptyController = new StreamController.broadcast(sync: true);
+    //_queueEmptyController = new StreamController.broadcast<bool>();
     onEmpty = _queueEmptyController.stream;
   }
 

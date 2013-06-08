@@ -51,7 +51,7 @@ abstract class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListen
 
   void write(ByteBuffer buf) {
     try {
-      var toSend = _wrapToString ? wrapToString(buf) : buf;
+      var toSend = _wrapToString ? dowrapToString(buf) : buf;
       _writeChannel.send(toSend);
 
     } on DomException catch(e, s) {
@@ -71,7 +71,7 @@ abstract class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListen
     return BinaryData.isValid(buffer, _binaryProtocol);
   }
 
-  String wrapToString(ByteBuffer buf) {
+  String dowrapToString(ByteBuffer buf) {
     return BinaryData.stringFromBuffer(buf);
   }
 

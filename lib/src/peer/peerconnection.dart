@@ -33,17 +33,17 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
     _peer.onIceConnectionStateChange.listen(_onIceChange);
     _peer.onSignalingStateChange.listen(_onStateChanged);
     _peer.onDataChannel.listen(_onNewDataChannelOpen);
-    //if (Browser.isFirefox) {
-    //  _binaryWriter = new TCPDataWriter(this);
-    //  _binaryReader = new TCPDataReader(this);
-    //} else {
+    if (Browser.isFirefox) {
+      _binaryWriter = new TCPDataWriter(this);
+      _binaryReader = new TCPDataReader(this);
+    } else {
       _binaryWriter = new UDPDataWriter(this);
       _binaryReader = new UDPDataReader(this);
-    //}
+    }
     //_binaryWriter.subscribe(this);
     //_binaryReader.subscribe(this);
-    //if (Browser.isFirefox)
-    //  _isReliable = true;
+    if (Browser.isFirefox)
+      _isReliable = true;
   }
 
   void setAsHost(bool value) {
@@ -88,8 +88,8 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
 
     _logger.fine("Initializing send data channel");
     try {
-      //_dataChannel = _peer.createDataChannel("channel", !Browser.isFirefox ? {'reliable': _isReliable} : {});
-      _dataChannel = _peer.createDataChannel("channel", {'reliable': false});
+      _dataChannel = _peer.createDataChannel("channel", !Browser.isFirefox ? {'reliable': _isReliable} : {});
+      //_dataChannel = _peer.createDataChannel("channel", {'reliable': false});
       _dataChannel.binaryType = "arraybuffer";
       _dataChannel.onClose.listen(_onDataChannelClose);
       _dataChannel.onOpen.listen(_onDataChannelOpen);
@@ -225,7 +225,7 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
     _dataChannel.onClose.listen(_onDataChannelClose);
     _dataChannel.onOpen.listen(_onDataChannelOpen);
     _dataChannel.onError.listen(_onDataChannelError);
-
+    _dataChannel.binaryType = "arraybuffer";
     _binaryWriter.dataChannel = _dataChannel;
     _binaryReader.dataChannel = _dataChannel;
   }

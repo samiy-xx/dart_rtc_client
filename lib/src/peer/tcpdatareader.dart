@@ -75,20 +75,17 @@ class TCPDataReader extends BinaryDataReader {
   }
 
   void _process_init_read(int b) {
-    _logger.finest("_process_init_read");
     if (b == FULL_BYTE) {
       _currentReadState = BinaryReadState.READ_TYPE;
     }
   }
 
   void _process_read_type(int b) {
-    _logger.finest("_process_read_type");
     _packetType = b;
     _currentReadState = BinaryReadState.READ_LENGTH;
   }
 
   void _process_read_length(int b) {
-    _logger.finest("_process_read_length");
     _currentChunkContentLength = b;
     _leftToRead = b;
     _latest = new Uint8List(b).buffer;
@@ -97,23 +94,19 @@ class TCPDataReader extends BinaryDataReader {
   }
 
   void _process_read_total_length(int b) {
-    _logger.finest("_process_read_total_length $b");
     _contentTotalLength = b;
     _currentReadState = BinaryReadState.READ_SIGNATURE;
   }
 
   void _process_read_signature(int b) {
-    _logger.finest("_process_read_signature");
     _signature = b;
     _currentReadState = BinaryReadState.READ_CONTENT;
   }
 
   void _process_content_v2(ByteBuffer buffer) {
-    _logger.finest("_process_content_v2");
     _latest = buffer;
     _totalRead += buffer.lengthInBytes - SIZEOF_TCP_HEADER;
     //_currentReadState = BinaryReadState.FINISH_READ;
-    _logger.finest("$_totalRead");
     _buffers.add(buffer);
     process_end();
   }
@@ -130,18 +123,21 @@ class TCPDataReader extends BinaryDataReader {
 
   void _processBuffer() {
     _logger.finest("_processBuffer");
-    _totalRead = 0;
-    _contentTotalLength = 0;
-    _totalRead = 0;
+
     var type = _packetType;
     _buildCompleteBuffer(_contentTotalLength).then((ByteBuffer b) {
       _doSignalingBasedOnBufferType(b, type);
     });
+    _totalRead = 0;
+    _contentTotalLength = 0;
+    _totalRead = 0;
   }
 
   Future<ByteBuffer> _buildCompleteBuffer(int size) {
     Completer<ByteBuffer> completer = new Completer<ByteBuffer>();
+    _logger.finest("CREATE BUFFER OF SIZE $size");
     window.setImmediate(() {
+
       ByteBuffer complete = new Uint8List(size).buffer;
       ByteData completeView = new ByteData.view(complete);
       int k = 0;

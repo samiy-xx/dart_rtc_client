@@ -39,7 +39,6 @@ class TCPDataWriter extends BinaryDataWriter {
   }
 
   Future<int> _send(ByteBuffer buffer, int packetType, int signature, int total) {
-    print("send ${buffer.lengthInBytes} bytes");
     Completer<int> completer = new Completer<int>();
     int totalSequences = (buffer.lengthInBytes / _writeChunkSize).ceil();
 
@@ -54,7 +53,7 @@ class TCPDataWriter extends BinaryDataWriter {
           signature,
           total
       );
-      print(toAdd.lengthInBytes);
+
       read += toRead;
       leftToRead -= toRead;
       write(b);

@@ -44,20 +44,23 @@ class TCPDataWriter extends BinaryDataWriter {
 
     int leftToRead = buffer.lengthInBytes;
     int read = 0;
-    while (read < buffer.lengthInBytes) {
-      var toRead = leftToRead > _writeChunkSize ? _writeChunkSize : leftToRead;
-      var toAdd = _sublist(buffer, read, toRead);
-      var b = addTcpHeader(
-          toAdd,
-          packetType,
-          signature,
-          total
-      );
+    window.setImmediate(() {
+      while (read < buffer.lengthInBytes) {
+        var toRead = leftToRead > _writeChunkSize ? _writeChunkSize : leftToRead;
+        var toAdd = _sublist(buffer, read, toRead);
+        var b = addTcpHeader(
+            toAdd,
+            packetType,
+            signature,
+            total
+        );
 
-      read += toRead;
-      leftToRead -= toRead;
-      write(b);
-    }
+        read += toRead;
+        leftToRead -= toRead;
+        write(b);
+      }
+      completer.complete(1);
+    });
     return completer.future;
   }
 

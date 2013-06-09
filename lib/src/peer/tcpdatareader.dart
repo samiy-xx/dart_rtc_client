@@ -11,12 +11,14 @@ class TCPDataReader extends BinaryDataReader {
   int _currentChunkContentLength;
   ByteBuffer _latest;
   ByteData _latestView;
+  List<ByteBuffer> _buffers;
   int get leftToRead => _leftToRead;
   bool _fileAsBuffer = false;
   set fileAsBuffer(bool v) => _fileAsBuffer = v;
 
   TCPDataReader(PeerConnection peer) : super(peer) {
     _logger.finest("TCPDataReader created");
+    _buffers = new List<ByteBuffer>();
   }
 
   Future readChunkString(String s) {
@@ -66,10 +68,8 @@ class TCPDataReader extends BinaryDataReader {
       }
 
       if (_currentReadState == BinaryReadState.READ_CONTENT) {
-
         _process_content_v2(buffer);
         i += buffer.lengthInBytes - SIZEOF_TCP_HEADER;
-        //break;
       }
     }
   }
@@ -114,6 +114,7 @@ class TCPDataReader extends BinaryDataReader {
     _totalRead += buffer.lengthInBytes - SIZEOF_TCP_HEADER;
     //_currentReadState = BinaryReadState.FINISH_READ;
     _logger.finest("$_totalRead");
+    _buffers.add(buffer);
     process_end();
   }
 
@@ -132,6 +133,29 @@ class TCPDataReader extends BinaryDataReader {
     _totalRead = 0;
     _contentTotalLength = 0;
     _totalRead = 0;
+    var type = _packetType;
+    _buildCompleteBuffer(_contentTotalLength).then((ByteBuffer b) {
+      _doSignalingBasedOnBufferType(b, type);
+    });
+  }
+
+  Future<ByteBuffer> _buildCompleteBuffer(int size) {
+    Completer<ByteBuffer> completer = new Completer<ByteBuffer>();
+    window.setImmediate(() {
+      ByteBuffer complete = new Uint8List(size).buffer;
+      ByteData completeView = new ByteData.view(complete);
+      int k = 0;
+      for (int i = 0; i < _buffers.length; i++) {
+        ByteBuffer part = _buffers[i];
+        ByteData partView = new ByteData.view(part, SIZEOF_TCP_HEADER);
+        for (int j = 0; j < part.lengthInBytes - SIZEOF_TCP_HEADER; j++) {
+          completeView.setUint8(k, partView.getUint8(j));
+          k++;
+        }
+      }
+      completer.complete(complete);
+    });
+    return completer.future;
   }
 
   void _doSignalingBasedOnBufferType(ByteBuffer buffer, int type) {

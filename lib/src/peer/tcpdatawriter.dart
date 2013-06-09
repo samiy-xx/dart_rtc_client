@@ -6,7 +6,7 @@ class TCPDataWriter extends BinaryDataWriter {
 
   TCPDataWriter(PeerConnection peer) : super(BINARY_PROTOCOL_TCP, peer) {
     _wrapToString = false;
-    _writeChunkSize = 2048;
+    _writeChunkSize = 4096;
   }
 
   Future<int> send(ByteBuffer buffer, int packetType, bool reliable) {

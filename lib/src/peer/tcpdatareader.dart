@@ -31,12 +31,9 @@ class TCPDataReader extends BinaryDataReader {
   }
 
   void readChunk(ByteBuffer buffer) {
-    _logger.finest("readChunk called");
 
     int i = 0;
 
-    if (BinaryData.isValidTcp(buffer))
-      _logger.fine("Is valid TCP");
     ByteData v = new ByteData.view(buffer);
     int chunkLength = v.lengthInBytes;
 
@@ -113,7 +110,7 @@ class TCPDataReader extends BinaryDataReader {
 
 
   void process_end() {
-    _logger.finest("_process_end");
+
     _signalReadChunk(_latest, _signature, _currentChunkContentLength, _contentTotalLength);
     if (_totalRead == _contentTotalLength)
       _processBuffer();
@@ -145,7 +142,11 @@ class TCPDataReader extends BinaryDataReader {
         ByteBuffer part = _buffers[i];
         ByteData partView = new ByteData.view(part, SIZEOF_TCP_HEADER);
         for (int j = 0; j < part.lengthInBytes - SIZEOF_TCP_HEADER; j++) {
-          completeView.setUint8(k, partView.getUint8(j));
+          try {
+            completeView.setUint8(k, partView.getUint8(j));
+          } on RangeError catch(e) {
+            _logger.severe("Attempted to insert $k $j");
+          }
           k++;
         }
       }

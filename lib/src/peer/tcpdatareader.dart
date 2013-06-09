@@ -150,6 +150,7 @@ class TCPDataReader extends BinaryDataReader {
           k++;
         }
       }
+      _buffers.clear();
       completer.complete(complete);
     });
     return completer.future;

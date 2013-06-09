@@ -76,7 +76,6 @@ class UDPDataWriter extends BinaryDataWriter {
     int leftToRead = buffer.lengthInBytes;
     StreamSubscription sub;
     sub = _queue.onEmpty.listen((bool b) {
-      print("Queue is empty");
       _adjustTreshold();
 
       resendCount = 0;

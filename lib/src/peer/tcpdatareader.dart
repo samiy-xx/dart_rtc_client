@@ -158,17 +158,23 @@ class TCPDataReader extends BinaryDataReader {
 
     switch (type) {
         case BINARY_TYPE_STRING:
+          _logger.finest("Signaling read string");
           String s = BinaryData.stringFromBuffer(buffer);
           _signalReadString(s);
           break;
         case BINARY_TYPE_CUSTOM:
+          _logger.finest("Signaling read buffer");
           _signalReadBuffer(buffer, BINARY_TYPE_CUSTOM);
           break;
         case BINARY_TYPE_FILE:
-          if (_fileAsBuffer)
+          if (_fileAsBuffer) {
             _signalReadBuffer(buffer, BINARY_TYPE_FILE);
-          else
+            _logger.finest("Signaling read buffer");
+          }
+          else {
+            _logger.finest("Signaling read file");
             _signalReadFile(buffer);
+          }
           break;
         default:
           break;

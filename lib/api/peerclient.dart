@@ -337,13 +337,6 @@ class PeerClient implements RtcClient,
    */
   Future<int> sendBlob(String peerId, Blob blob) {
     var peer = _getPeer(peerId);
-    peer.setBinaryType("blob");
-    return peer.sendBlob(blob);
-  }
-
-  Future<int> sendBlobAsArrayBuffer(String peerId, Blob blob) {
-    var peer = _getPeer(peerId);
-    peer.setBinaryType("arraybuffer");
     return peer.sendBlob(blob);
   }
 
@@ -356,15 +349,13 @@ class PeerClient implements RtcClient,
    */
   Future<int> sendArrayBufferReliable(String peerId, ByteBuffer data) {
     var peer = _getPeer(peerId);
-    peer.setBinaryType("arraybuffer");
-    peer.sendBuffer(data, BINARY_TYPE_CUSTOM, true);
+    return peer.sendBuffer(data, BINARY_TYPE_CUSTOM, true);
   }
 
   void sendArrayBufferUnReliable(String peerId, ByteBuffer data) {
     if (_peerManager.reliableDataChannels)
       throw new Exception("Can not send unreliable data with reliable channel");
     var peer = _getPeer(peerId);
-    peer.setBinaryType("arraybuffer");
     peer.sendBuffer(data, BINARY_TYPE_CUSTOM, false);
   }
 

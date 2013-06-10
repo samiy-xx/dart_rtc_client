@@ -40,8 +40,7 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
       _binaryWriter = new UDPDataWriter(this);
       _binaryReader = new UDPDataReader(this);
     }
-    //_binaryWriter.subscribe(this);
-    //_binaryReader.subscribe(this);
+
     if (Browser.isFirefox)
       _isReliable = true;
   }
@@ -54,11 +53,6 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
   void initialize() {
     if (_isHost)
       _sendOffer();
-  }
-
-  void setBinaryType(String type) {
-    if (_dataChannel != null)
-      _dataChannel.binaryType = type;
   }
 
   void close() {
@@ -95,7 +89,7 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
     try {
       _dataChannel = _peer.createDataChannel("channel", !Browser.isFirefox ? {'reliable': _isReliable} : {});
       //_dataChannel = _peer.createDataChannel("channel", {'reliable': false});
-      _dataChannel.binaryType = Browser.isFirefox ? "blob" : "arraybuffer";
+      _dataChannel.binaryType = "arraybuffer";
       _dataChannel.onClose.listen(_onDataChannelClose);
       _dataChannel.onOpen.listen(_onDataChannelOpen);
       _dataChannel.onError.listen(_onDataChannelError);
@@ -107,14 +101,6 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
       _logger.fine("$s");
     }
   }
-
-  /*void setSessionDescription(RtcSessionDescription sdp) {
-    _peer.setLocalDescription(sdp).then((val) {
-        _logger.fine("(peerwrapper.dart) Setting local description was success");
-    }).catchError((e) {
-        _logger.severe("(peerwrapper.dart) setting local description failed ${e}");
-    });
-  }*/
 
   void setRemoteSessionDescription(RtcSessionDescription sdp) {
     _peer.setRemoteDescription(sdp).then((val) {
@@ -162,9 +148,7 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
 
     if (!Browser.isFirefox) {
       if (c.candidate != null) {
-        //IcePacket ice = new IcePacket.With(c.candidate.candidate, c.candidate.sdpMid, c.candidate.sdpMLineIndex, id);
         _manager.getSignaler().sendIceCandidate(this, c.candidate);
-        //_manager._sendPacket(PacketFactory.get(ice));
       } else {
         _logger.severe("ICE Candidate null");
       }

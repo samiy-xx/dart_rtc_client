@@ -4,6 +4,7 @@ class TCPDataWriter extends BinaryDataWriter {
   const int MAX_FILE_BUFFER_SIZE = 1024 * 1024 * 5;
   static final _logger = new Logger("dart_rtc_client.TCPDataWriter");
   List<ByteBuffer> _toSend;
+
   TCPDataWriter(PeerConnection peer) : super(BINARY_PROTOCOL_TCP, peer) {
     _wrapToString = false;
     _writeChunkSize = 4096 * 2;
@@ -17,10 +18,29 @@ class TCPDataWriter extends BinaryDataWriter {
 
   Future<int> sendFile(Blob b) {
     Completer<int> c = new Completer<int>();
-    window.setImmediate(() {
-      writeBlob(b);
-      c.complete(1);
+
+    int left_to_send = b.size;
+    int read = 0;
+
+
+    new Timer.periodic(const Duration(milliseconds: 1), (Timer t) {
+      if (buffered > 0)
+        return;
+
+      int size_to_send = left_to_send > _writeChunkSize ? _writeChunkSize : left_to_send;
+      Blob toSend = b.slice(read, read + size_to_send);
+
+      read += size_to_send;
+      left_to_send -= size_to_send;
+      _signalWriteChunk(0, 0, 0, toSend.size);
+      writeBlob(toSend);
+      _signalWroteChunk(0, 0, 0, toSend.size);
+      if (left_to_send == 0) {
+        t.cancel();
+        c.complete(1);
+      }
     });
+
     return c.future;
   }
 
@@ -91,5 +111,21 @@ class TCPDataWriter extends BinaryDataWriter {
   }
   void sendAck(ByteBuffer buffer) {
 
+  }
+
+  void _signalWriteChunk(int signature, int sequence, int totalSequences, int bytes) {
+    window.setImmediate(() {
+      listeners.where((l) => l is BinaryDataSentEventListener).forEach((BinaryDataSentEventListener l) {
+        l.onWriteChunk(_peer, signature, sequence, totalSequences, bytes);
+      });
+    });
+  }
+
+  void _signalWroteChunk(int signature, int sequence, int totalSequences, int bytes) {
+    window.setImmediate(() {
+      listeners.where((l) => l is BinaryDataSentEventListener).forEach((BinaryDataSentEventListener l) {
+        l.onWroteChunk(_peer, signature, sequence, totalSequences, bytes);
+      });
+    });
   }
 }

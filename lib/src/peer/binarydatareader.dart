@@ -18,7 +18,7 @@ abstract class BinaryDataReader extends GenericEventTarget<BinaryDataEventListen
   void _onChannelMessage(MessageEvent e) {
 
     if (e.data is Blob) {
-      print("Binarydatareader got blob");
+      readBlob(e.data);
     }
 
     else if (e.data is ByteBuffer) {
@@ -36,4 +36,5 @@ abstract class BinaryDataReader extends GenericEventTarget<BinaryDataEventListen
 
   Future readChunkString(String s);
   void readChunk(ByteBuffer buffer);
+  void readBlob(Blob b);
 }

@@ -24,7 +24,7 @@ class TCPDataReader extends BinaryDataReader {
   }
 
   void readBlob(Blob b) {
-    _signalReadBlob(b);
+    _signalReadBlobChunk(b);
   }
 
   Future readChunkString(String s) {
@@ -198,6 +198,12 @@ class TCPDataReader extends BinaryDataReader {
   void _signalReadBuffer(ByteBuffer buffer, int binaryType) {
     listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
       l.onPeerBuffer(_peer, buffer, binaryType);
+    });
+  }
+
+  void _signalReadBlobChunk(Blob blob) {
+    listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
+      l.onPeerBlobChunk(_peer, blob);
     });
   }
 

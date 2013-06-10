@@ -333,8 +333,13 @@ class UDPDataReader extends BinaryDataReader {
 
   void _signalReadFile(ByteBuffer buffer) {
     listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
-      //l.onPeerFile(_wrapper, new Blob([new Uint8Array.fromBuffer(buffer)]));
       l.onPeerFile(_peer, new Blob([buffer]));
+    });
+  }
+
+  void _signalReadBlobChunk(Blob blob) {
+    listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
+      l.onPeerBlobChunk(_peer, blob);
     });
   }
 

@@ -540,6 +540,10 @@ class PeerClient implements RtcClient,
       _binaryController.add(new BinaryFileCompleteEvent(pw, b));
   }
 
+  void onPeerBlobChunk(PeerConnection pc, Blob b) {
+    if (_binaryController.hasListener)
+      _binaryController.add(new BinaryBlobChunk(pc, b));
+  }
   /**
    * Implements BinaryDataReceivedEventListener onPeerBuffer
    */

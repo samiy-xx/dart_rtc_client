@@ -37,7 +37,7 @@ abstract class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListen
 
   /** Sets the write data channel */
   set dataChannel(RtcDataChannel c) => _writeChannel = c;
-
+  int get buffered => _writeChannel.bufferedAmount;
   BinaryDataWriter(int protocol, PeerConnection pc) : super() {
     _binaryProtocol = protocol;
     _peer = pc;

@@ -56,6 +56,11 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
       _sendOffer();
   }
 
+  void setBinaryType(String type) {
+    if (_dataChannel != null)
+      _dataChannel.binaryType = type;
+  }
+
   void close() {
     _logger.severe("(peerwrapper.dart) Closing peer");
     if (_peer.signalingState != PEER_CLOSED)
@@ -90,7 +95,7 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
     try {
       _dataChannel = _peer.createDataChannel("channel", !Browser.isFirefox ? {'reliable': _isReliable} : {});
       //_dataChannel = _peer.createDataChannel("channel", {'reliable': false});
-      _dataChannel.binaryType = "arraybuffer";
+      _dataChannel.binaryType = Browser.isFirefox ? "blob" : "arraybuffer";
       _dataChannel.onClose.listen(_onDataChannelClose);
       _dataChannel.onOpen.listen(_onDataChannelOpen);
       _dataChannel.onError.listen(_onDataChannelError);
@@ -141,12 +146,12 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
     _dataChannel.send(s);
   }
 
-  void sendBlob(Blob b) {
-    throw new NotImplementedException("Sending blob is not implemented");
+  Future<int> sendBlob(Blob b) {
+    return _binaryWriter.sendFile(b);
   }
 
   Future<int> sendFile(File f) {
-    return _binaryWriter.sendFile(f);
+    return sendBlob(f);
   }
 
   Future<int> sendBuffer(ByteBuffer buf, int packetType, bool reliable) {
@@ -225,7 +230,7 @@ class PeerConnection extends GenericEventTarget<PeerEventListener>{
     _dataChannel.onClose.listen(_onDataChannelClose);
     _dataChannel.onOpen.listen(_onDataChannelOpen);
     _dataChannel.onError.listen(_onDataChannelError);
-    _dataChannel.binaryType = "arraybuffer";
+    //_dataChannel.binaryType = "arraybuffer";
     _binaryWriter.dataChannel = _dataChannel;
     _binaryReader.dataChannel = _dataChannel;
   }

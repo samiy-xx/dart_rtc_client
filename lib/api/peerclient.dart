@@ -327,54 +327,52 @@ class PeerClient implements RtcClient,
     _signalHandler.send(PacketFactory.get(new ChannelMessage.With(_myId, _channelId, message)));
   }
 
+
   void sendString(String peerId, String message) {
-    _getDataPeerWrapper(peerId).sendString(message);
+    _getPeer(peerId).sendString(message);
   }
 
   /**
    * Sends a blob to peer
    */
-  void sendBlob(String peerId, Blob data) {
-    throw new UnsupportedError("sendBlob is a work in progress");
+  Future<int> sendBlob(String peerId, Blob blob) {
+    var peer = _getPeer(peerId);
+    peer.setBinaryType("blob");
+    return peer.sendBlob(blob);
+  }
+
+  Future<int> sendBlobAsArrayBuffer(String peerId, Blob blob) {
+    var peer = _getPeer(peerId);
+    peer.setBinaryType("arraybuffer");
+    return peer.sendBlob(blob);
   }
 
   Future<int> sendFile(String peerId, File f) {
-    return _getDataPeerWrapper(peerId).sendFile(f);
+    return sendBlob(peerId, f);
   }
 
   /**
    * Sends an arraybuffer to peer
    */
   Future<int> sendArrayBufferReliable(String peerId, ByteBuffer data) {
-      return _getDataPeerWrapper(peerId).sendBuffer(data, BINARY_TYPE_CUSTOM, true);
+    var peer = _getPeer(peerId);
+    peer.setBinaryType("arraybuffer");
+    peer.sendBuffer(data, BINARY_TYPE_CUSTOM, true);
   }
 
   void sendArrayBufferUnReliable(String peerId, ByteBuffer data) {
     if (_peerManager.reliableDataChannels)
       throw new Exception("Can not send unreliable data with reliable channel");
-    _getDataPeerWrapper(peerId).sendBuffer(data, BINARY_TYPE_CUSTOM, false);
+    var peer = _getPeer(peerId);
+    peer.setBinaryType("arraybuffer");
+    peer.sendBuffer(data, BINARY_TYPE_CUSTOM, false);
   }
 
-  PeerConnection _getPeerWrapper(String peerId) {
+  PeerConnection _getPeer(String peerId) {
     PeerConnection w = _peerManager.findWrapper(peerId);
     if (w == null)
       throw new PeerWrapperNullException("Peer wrapper null: $peerId");
     return w;
-  }
-  // TODO: Remove
-  PeerConnection _getDataPeerWrapper(String peerId) {
-    try {
-      PeerConnection w = _getPeerWrapper(peerId);
-      if (!(w is PeerConnection))
-        throw new PeerWrapperTypeException("Peer wrapper is not DataPeerWrapper type");
-      return w;
-    } on PeerWrapperNullException catch (e) {
-      _logger.severe("$e");
-      throw e;
-    } on PeerWrapperTypeException catch (e) {
-      _logger.severe("$e");
-      throw e;
-    }
   }
 
   /*

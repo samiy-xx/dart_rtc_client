@@ -52,24 +52,15 @@ class BinaryData {
     return array.buffer;
   }
 
-  /**
-   * Creates ArrayBuffer from Packet
-   */
   static ByteBuffer bufferFromPacket(Packet p) {
     String packet = PacketFactory.get(p);
     return bufferFromString(packet);
   }
 
-  /**
-   * Converts list of integers to string
-   */
   static String stringFromList(List<int> l) {
     return new String.fromCharCodes(l);
   }
 
-  /**
-   * Converts ArrayBuffer to string
-   */
   static String stringFromBuffer2(ByteBuffer buffer) {
     return new String.fromCharCodes(new Uint8List.view(buffer));
   }

@@ -13,6 +13,7 @@ const int BINARY_TYPE_COMMAND = 0;
 const int BINARY_TYPE_STRING = 1;
 const int BINARY_TYPE_FILE = 2;
 const int BINARY_TYPE_CUSTOM = 3;
+const int BINARY_TYPE_TEST = 10;
 
 const int BINARY_PROTOCOL_UDP = 1;
 const int BINARY_PROTOCOL_TCP = 2;

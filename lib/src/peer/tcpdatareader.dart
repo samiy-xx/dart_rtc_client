@@ -74,12 +74,19 @@ class TCPDataReader extends BinaryDataReader {
         _process_content_v2(buffer);
         i += buffer.lengthInBytes - SIZEOF_TCP_HEADER;
       }
+
+      if (_currentReadState == BinaryReadState.READ_CUSTOM) {
+        _process_custom(buffer);
+        i += buffer.lengthInBytes;
+      }
     }
   }
 
   void _process_init_read(int b) {
     if (b == FULL_BYTE) {
       _currentReadState = BinaryReadState.READ_TYPE;
+    } else {
+      _currentReadState = BinaryReadState.READ_CUSTOM;
     }
   }
 
@@ -134,6 +141,11 @@ class TCPDataReader extends BinaryDataReader {
     _totalRead = 0;
     _contentTotalLength = 0;
     _totalRead = 0;
+  }
+
+  void _process_custom(ByteBuffer b) {
+    _signalReadBuffer(b, BINARY_TYPE_TEST);
+    _currentReadState = BinaryReadState.INIT_READ;
   }
 
   Future<ByteBuffer> _buildCompleteBuffer(int size) {

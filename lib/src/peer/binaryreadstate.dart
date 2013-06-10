@@ -11,7 +11,7 @@ class BinaryReadState {
   static final BinaryReadState READ_SIGNATURE = const BinaryReadState(6);
   static final BinaryReadState READ_CONTENT = const BinaryReadState(7);
   static final BinaryReadState FINISH_READ = const BinaryReadState(8);
-
+  static final BinaryReadState READ_CUSTOM = const BinaryReadState(9);
   const BinaryReadState(int s) : _state = s;
 
   operator ==(Object o) {

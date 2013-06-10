@@ -15,7 +15,16 @@ class TCPDataWriter extends BinaryDataWriter {
     return _send(buffer, packetType, signature, buffer.lengthInBytes);
   }
 
-  Future<int> sendFile(Blob file) {
+  Future<int> sendFile(Blob b) {
+    Completer<int> c = new Completer<int>();
+    window.setImmediate(() {
+      writeBlob(b);
+      c.complete(1);
+    });
+    return c.future;
+  }
+
+  Future<int> _sendFile(Blob file) {
     Completer<int> completer = new Completer<int>();
     FileReader reader = new FileReader();
     int totalSequences = _getSequenceTotal(file.size);

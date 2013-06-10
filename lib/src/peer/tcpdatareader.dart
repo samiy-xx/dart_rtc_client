@@ -11,6 +11,7 @@ class TCPDataReader extends BinaryDataReader {
   int _currentChunkContentLength;
   ByteBuffer _latest;
   ByteData _latestView;
+  List<Blob> _blobs;
   List<ByteBuffer> _buffers;
   int get leftToRead => _leftToRead;
   bool _fileAsBuffer = false;
@@ -19,6 +20,11 @@ class TCPDataReader extends BinaryDataReader {
   TCPDataReader(PeerConnection peer) : super(peer) {
     _logger.finest("TCPDataReader created");
     _buffers = new List<ByteBuffer>();
+    _blobs = new List<Blob>();
+  }
+
+  void readBlob(Blob b) {
+    _signalReadBlob(b);
   }
 
   Future readChunkString(String s) {
@@ -195,6 +201,12 @@ class TCPDataReader extends BinaryDataReader {
     });
   }
 
+  void _signalReadBlob(Blob blob) {
+    listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
+      //l.onPeerFile(_wrapper, new Blob([new Uint8Array.fromBuffer(buffer)]));
+      l.onPeerFile(_peer, blob);
+    });
+  }
   void _signalReadFile(ByteBuffer buffer) {
     listeners.where((l) => l is BinaryDataReceivedEventListener).forEach((BinaryDataReceivedEventListener l) {
       //l.onPeerFile(_wrapper, new Blob([new Uint8Array.fromBuffer(buffer)]));

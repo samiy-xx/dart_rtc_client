@@ -49,6 +49,10 @@ abstract class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListen
   Future<int> send(ByteBuffer buffer, int packetType, bool reliable);
   Future<int> sendFile(File f);
 
+  void writeBlob(Blob b) {
+    _writeChannel.send(b);
+  }
+
   void write(ByteBuffer buf) {
     try {
       var toSend = _wrapToString ? dowrapToString(buf) : buf;

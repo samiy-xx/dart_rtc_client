@@ -8,8 +8,8 @@ class UDPReaderTests implements BinaryDataReceivedEventListener {
   String longTestString;
   ByteBuffer buffer;
   int _start;
-  const int CHUNK_SIZE = 50;
-  const int STRING_LENGTH = 1000;
+  static const int CHUNK_SIZE = 50;
+  static const int STRING_LENGTH = 1000;
 
   run() {
     group('UdpReaderTests', () {

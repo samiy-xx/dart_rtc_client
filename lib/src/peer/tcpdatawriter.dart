@@ -1,7 +1,7 @@
 part of rtc_client;
 
 class TCPDataWriter extends BinaryDataWriter {
-  const int MAX_FILE_BUFFER_SIZE = 1024 * 1024 * 5;
+  static const int MAX_FILE_BUFFER_SIZE = 1024 * 1024 * 5;
   static final _logger = new Logger("dart_rtc_client.TCPDataWriter");
   List<ByteBuffer> _toSend;
 

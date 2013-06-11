@@ -7,8 +7,8 @@ class TcpWriterTests {
   ByteBuffer buffer;
   int expectedPacketCount;
 
-  const int CHUNK_SIZE = 150;
-  const int STRING_LENGTH = 1000;
+  static const int CHUNK_SIZE = 150;
+  static const int STRING_LENGTH = 1000;
 
 
   run() {

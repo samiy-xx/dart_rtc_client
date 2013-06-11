@@ -9,8 +9,8 @@ class TcpReaderTests implements BinaryDataReceivedEventListener {
   String longTestString;
   ByteBuffer buffer;
 
-  const int CHUNK_SIZE = 50;
-  const int STRING_LENGTH = 6000;
+  static const int CHUNK_SIZE = 50;
+  static const int STRING_LENGTH = 6000;
 
   run() {
     group('TcpReaderTests', () {

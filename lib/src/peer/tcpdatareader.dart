@@ -39,7 +39,10 @@ class TCPDataReader extends BinaryDataReader {
   void readChunk(ByteBuffer buffer) {
 
     int i = 0;
-
+    if (!BinaryData.isValidTcp(buffer)) {
+      _process_custom(buffer);
+      return;
+    }
     ByteData v = new ByteData.view(buffer);
     int chunkLength = v.lengthInBytes;
 
@@ -75,10 +78,10 @@ class TCPDataReader extends BinaryDataReader {
         i += buffer.lengthInBytes - SIZEOF_TCP_HEADER;
       }
 
-      if (_currentReadState == BinaryReadState.READ_CUSTOM) {
-        _process_custom(buffer);
-        i += buffer.lengthInBytes;
-      }
+      //if (_currentReadState == BinaryReadState.READ_CUSTOM) {
+      //  _process_custom(buffer);
+      //  i += buffer.lengthInBytes;
+      //}
     }
   }
 
@@ -145,7 +148,7 @@ class TCPDataReader extends BinaryDataReader {
 
   void _process_custom(ByteBuffer b) {
     _signalReadBuffer(b, BINARY_TYPE_TEST);
-    _currentReadState = BinaryReadState.INIT_READ;
+    //_currentReadState = BinaryReadState.INIT_READ;
   }
 
   Future<ByteBuffer> _buildCompleteBuffer(int size) {

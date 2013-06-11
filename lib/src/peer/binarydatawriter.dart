@@ -6,7 +6,7 @@ part of rtc_client;
  * Needs to be extended for udp and tcp
  */
 abstract class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListener> {
-  const int MAX_FILE_BUFFER_SIZE = 1024 * 1024 * 20;
+  static const int MAX_FILE_BUFFER_SIZE = 1024 * 1024 * 20;
   static final _logger = new Logger("dart_rtc_client.BinaryDataWriter");
 
   PeerConnection _peer;

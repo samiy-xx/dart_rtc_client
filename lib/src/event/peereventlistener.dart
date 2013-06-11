@@ -59,7 +59,7 @@ abstract class PeerDataEventListener extends PeerEventListener {
   /**
    * Channel state changed
    */
-  void onChannelStateChanged(PeerConnection pc, String state);
+  void onChannelStateChanged(PeerConnection pc, RtcDataChannel channel, String state);
 
   /**
    * Packet arrived trough data channel

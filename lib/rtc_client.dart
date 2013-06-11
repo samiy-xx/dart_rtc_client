@@ -13,6 +13,8 @@ import 'package:dart_rtc_common/rtc_common.dart';
 
 part 'src/peer/peermanager.dart';
 part 'src/peer/peerconnection.dart';
+part 'src/peer/sctppeerconnection.dart';
+part 'src/peer/tmppeerconnection.dart';
 part 'src/peer/binarydata.dart';
 part 'src/peer/binaryreadstate.dart';
 part 'src/peer/binarydatareader.dart';

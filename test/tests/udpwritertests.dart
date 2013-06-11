@@ -6,8 +6,8 @@ class UdpWriterTests {
   ByteBuffer buffer;
   int expectedPacketCount;
 
-  const int CHUNK_SIZE = 50;
-  const int STRING_LENGTH = 1024 * 10;
+  static const int CHUNK_SIZE = 50;
+  static const int STRING_LENGTH = 1024 * 10;
 
 
   run() {

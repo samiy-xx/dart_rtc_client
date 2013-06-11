@@ -1,8 +1,8 @@
 part of rtc_client_tests;
 
 class BinaryTests {
-  const String testString = "this is a string for test";
-  const int defaultSignature = 1337;
+  static const String testString = "this is a string for test";
+  static const int defaultSignature = 1337;
   run() {
     group('BinaryTests', () {
       setUp(() {

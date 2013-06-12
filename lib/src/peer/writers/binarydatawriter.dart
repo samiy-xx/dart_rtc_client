@@ -44,10 +44,10 @@ abstract class BinaryDataWriter extends GenericEventTarget<BinaryDataEventListen
     _roundTripCalculator = new RoundTripCalculator();
   }
 
-  void sendAck(ByteBuffer buffer);
+  //void sendAck(ByteBuffer buffer);
   //void writeAck(int signature, int sequence);
-  Future<int> send(ByteBuffer buffer, int packetType, bool reliable);
-  Future<int> sendFile(File f);
+  //Future<int> send(ByteBuffer buffer, int packetType, bool reliable);
+  //Future<int> sendFile(File f);
 
   void writeBlob(Blob b) {
     _writeChannel.send(b);

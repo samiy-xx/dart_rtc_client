@@ -1,7 +1,7 @@
 part of rtc_client;
 
-class TCPDataReader extends BinaryDataReader {
-  static final _logger = new Logger("dart_rtc_client.TCPDataReader");
+class ByteReader extends BinaryDataReader {
+  static final _logger = new Logger("dart_rtc_client.ByteReader");
   BinaryReadState _currentReadState = BinaryReadState.INIT_READ;
   int _packetType;
   int _leftToRead = 0;
@@ -17,27 +17,14 @@ class TCPDataReader extends BinaryDataReader {
   bool _fileAsBuffer = false;
   set fileAsBuffer(bool v) => _fileAsBuffer = v;
 
-  TCPDataReader(PeerConnection peer) : super(peer) {
-    _logger.finest("TCPDataReader created");
+  ByteReader(PeerConnection peer) : super(peer) {
+    _logger.finest("ByteReader created");
     _buffers = new List<ByteBuffer>();
     _blobs = new List<Blob>();
   }
 
-  void readBlob(Blob b) {
-    _signalReadBlobChunk(b);
-  }
-
-  Future readChunkString(String s) {
-    Completer c = new Completer();
-    window.setImmediate(() {
-      readChunk(BinaryData.bufferFromString(s));
-      c.complete();
-    });
-    return c.future;
-  }
-
   void readChunk(ByteBuffer buffer) {
-
+    _logger.finest("readChunk");
     int i = 0;
     if (!BinaryData.isValidTcp(buffer)) {
       _process_custom(buffer);

@@ -16,12 +16,11 @@ abstract class PeerConnection extends GenericEventTarget<PeerEventListener>{
   bool _isHost = false;
 
   String get id => _id;
-  set id(String v) => _id = v;
-
   String get channel => _channel;
-  set channel(String v) => _channel = v;
-
   RtcPeerConnection get peer => _peer;
+
+  set id(String v) => _id = v;
+  set channel(String v) => _channel = v;
 
   factory PeerConnection.create(PeerManager pm, RtcPeerConnection rpc) {
     PeerConnection pc;
@@ -39,6 +38,36 @@ abstract class PeerConnection extends GenericEventTarget<PeerEventListener>{
     _peer.onIceConnectionStateChange.listen(_onIceChange);
     _peer.onSignalingStateChange.listen(_onStateChanged);
     _peer.onDataChannel.listen(_onNewDataChannelOpen);
+  }
+
+  void setAsHost(bool value) {
+    _isHost = value;
+  }
+
+  void initialize();
+  void addStream(MediaStream ms);
+  void initChannel();
+  void addRemoteIceCandidate(RtcIceCandidate candidate);
+  void subscribeToReaders(BinaryDataEventListener l);
+  void subscribeToWriters(BinaryDataEventListener l);
+  void sendString(String s);
+  Future<int> sendBlob(Blob b);
+  Future<int> sendFile(File f);
+  Future<int> sendBuffer(ByteBuffer buf, int packetType, bool reliable);
+  void _sendOffer();
+  void _sendAnswer();
+  void _onIceCandidate(RtcIceCandidateEvent c);
+  void _onNegotiationNeeded(Event e);
+
+  void setRemoteSessionDescription(RtcSessionDescription sdp) {
+    _peer.setRemoteDescription(sdp).then((val) {
+      _logger.fine("Setting remote description was success ${sdp.type}");
+      if (sdp.type == SDP_OFFER)
+        _sendAnswer();
+    })
+    .catchError((e) {
+      _logger.severe("setting remote description failed ${sdp.type} ${e} ${sdp.sdp}");
+    });
   }
 
   void close() {
@@ -71,11 +100,19 @@ abstract class PeerConnection extends GenericEventTarget<PeerEventListener>{
     return dc;
   }
 
-  void _onIceCandidate(RtcIceCandidateEvent c);
-  void _onIceChange(Event c);
-  void _onRTCError(String error);
-  void _onNegotiationNeeded(Event e);
-  void _onStateChanged(Event e);
+  void _onIceChange(Event c) {
+    _logger.fine("(peerwrapper.dart) ICE Change ${c} (ice gathering state ${_peer.iceGatheringState}) (ice state ${_peer.iceConnectionState})");
+  }
+
+  void _onRTCError(String error) {
+    _logger.severe("(peerwrapper.dart) RTC ERROR : $error");
+  }
+
+  void _onStateChanged(Event e) {
+    if (_peer.signalingState == PEER_STABLE) {
+
+    }
+  }
 
   void _onDataChannelError(RtcDataChannelEvent e) {
     _logger.severe("_onDataChannelError $e");

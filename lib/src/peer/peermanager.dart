@@ -140,10 +140,10 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
    */
   PeerConnection _createWrapper(RtcPeerConnection p) {
     PeerConnection peer = new PeerConnection.create(this, p);
-    if (_peerConstraints.dataChannelEnabled) {
-      peer.isReliable = _reliableDataChannels;
-
-    }
+    //if (_peerConstraints.dataChannelEnabled) {
+    //  peer.isReliable = _reliableDataChannels;
+    //
+    //}
 
 
     if (_setLocalStreamAtStart && _ms != null)

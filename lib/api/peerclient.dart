@@ -445,7 +445,7 @@ class PeerClient implements RtcClient,
   /**
    * Implements PeerDataEventListener onChannelStateChanged
    */
-  void onChannelStateChanged(PeerConnection p, String state){
+  void onChannelStateChanged(PeerConnection p, RtcDataChannel c, String state){
     if (_dataChannelStateChangeController.hasListener)
       _dataChannelStateChangeController.add(new DataChannelStateChangedEvent(p, state));
   }
@@ -470,16 +470,10 @@ class PeerClient implements RtcClient,
    * Implements PeerConnectionEventListener onPeerCreated
    * TODO : Cant i do this somewhere else?
    */
-  void onPeerCreated(PeerConnection pw) {
-
-      try {
-        pw.binaryReader.subscribe(this);
-        pw.binaryWriter.subscribe(this);
-      } catch(e) {
-       _logger.severe("Error: $e");
-      }
-      //dpw.binaryWriter.subscribe(this);
-      pw.subscribe(this);
+  void onPeerCreated(PeerConnection pc) {
+      pc.subscribeToReaders(this);
+      pc.subscribeToWriters(this);
+      pc.subscribe(this);
 
   }
   /**

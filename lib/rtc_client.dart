@@ -17,17 +17,21 @@ part 'src/peer/sctppeerconnection.dart';
 part 'src/peer/tmppeerconnection.dart';
 part 'src/peer/binarydata.dart';
 part 'src/peer/binaryreadstate.dart';
-part 'src/peer/binarydatareader.dart';
-part 'src/peer/binarydatawriter.dart';
-part 'src/peer/udpdatareader.dart';
-part 'src/peer/udpdatawriter.dart';
-part 'src/peer/tcpdatareader.dart';
-part 'src/peer/tcpdatawriter.dart';
-part 'src/peer/abdatareader.dart';
 part 'src/peer/rtt.dart';
 part 'src/peer/peerstate.dart';
 part 'src/peer/sequencer.dart';
 
+part 'src/peer/readers/binarydatareader.dart';
+part 'src/peer/readers/udpdatareader.dart';
+part 'src/peer/readers/bytebufferreader.dart';
+part 'src/peer/readers/blobreader.dart';
+part 'src/peer/readers/stringreader.dart';
+
+part 'src/peer/writers/binarydatawriter.dart';
+part 'src/peer/writers/bytebufferwriter.dart';
+part 'src/peer/writers/udpdatawriter.dart';
+part 'src/peer/writers/blobwriter.dart';
+part 'src/peer/writers/stringwriter.dart';
 
 part 'src/event/peereventlistener.dart';
 part 'src/event/signalingeventlistener.dart';
@@ -40,14 +44,12 @@ part 'src/event/peerevent.dart';
 part 'src/event/datasourceevent.dart';
 part 'src/event/initializationevent.dart';
 part 'src/event/packetevent.dart';
-part 'src/event/queueevent.dart';
 part 'src/event/binaryevent.dart';
 part 'src/event/serverevent.dart';
 
 part 'src/signaling/signaler.dart';
 part 'src/signaling/signalhandler.dart';
 part 'src/signaling/channelsignalhandler.dart';
-part 'src/signaling/wheelsignalhandler.dart';
 part 'src/signaling/streamingsignalhandler.dart';
 
 part 'src/util/constraints.dart';

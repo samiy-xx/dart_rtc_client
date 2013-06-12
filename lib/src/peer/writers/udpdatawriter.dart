@@ -51,14 +51,14 @@ class UDPDataWriter extends BinaryDataWriter {
     int read = 0;
     int leftToRead = file.size;
     int signature = new Random().nextInt(100000000);
-    int toRead = file.size > MAX_FILE_BUFFER_SIZE ? MAX_FILE_BUFFER_SIZE : file.size;
+    int toRead = file.size > BinaryDataWriter.MAX_FILE_BUFFER_SIZE ? BinaryDataWriter.MAX_FILE_BUFFER_SIZE : file.size;
     reader.readAsArrayBuffer(file.slice(read, read + toRead));
     reader.onLoadEnd.listen((ProgressEvent e) {
       _send(reader.result, signature, totalSequences, file.size, BINARY_TYPE_FILE).then((int i) {
         read += toRead;
         leftToRead -= toRead;
         if (read < file.size) {
-          toRead = leftToRead > MAX_FILE_BUFFER_SIZE ? MAX_FILE_BUFFER_SIZE : file.size;
+          toRead = leftToRead > BinaryDataWriter.MAX_FILE_BUFFER_SIZE ? BinaryDataWriter.MAX_FILE_BUFFER_SIZE : file.size;
           reader.readAsArrayBuffer(file.slice(read, read + toRead));
         } else {
           completer.complete(1);

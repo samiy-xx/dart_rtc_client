@@ -4,16 +4,16 @@ class TmpPeerConnection extends PeerConnection {
   static final _logger = new Logger("dart_rtc_client.TmpPeerConnection");
 
   RtcDataChannel _dataChannel;
-  BinaryDataWriter _binaryWriter;
-  BinaryDataReader _binaryReader;
+  UDPDataWriter _binaryWriter;
+  UDPDataReader _binaryReader;
 
   bool _isReliable = false;
   String _channelState = null;
 
   List<dynamic> _ices;
   bool _hasLocalSet = false;
-  BinaryDataWriter get binaryWriter => _binaryWriter;
-  BinaryDataReader get binaryReader => _binaryReader;
+  UDPDataWriter get binaryWriter => _binaryWriter;
+  UDPDataReader get binaryReader => _binaryReader;
 
 
   set isReliable(bool r) => _isReliable = r;
@@ -26,7 +26,7 @@ class TmpPeerConnection extends PeerConnection {
   }
 
   void setAsHost(bool value) {
-    _isHost = value;
+    super.setAsHost(value);
     initChannel();
   }
 
@@ -38,6 +38,14 @@ class TmpPeerConnection extends PeerConnection {
   void close() {
     _dataChannel.close();
     super.close();
+  }
+
+  void subscribeToReaders(BinaryDataEventListener l) {
+    binaryReader.subscribe(l);
+  }
+
+  void subscribeToWriters(BinaryDataEventListener l) {
+    binaryWriter.subscribe(l);
   }
 
   void addStream(MediaStream ms) {
@@ -81,18 +89,16 @@ class TmpPeerConnection extends PeerConnection {
     }
   }
 
-  void setRemoteSessionDescription(RtcSessionDescription sdp) {
+  /*void setRemoteSessionDescription(RtcSessionDescription sdp) {
     _peer.setRemoteDescription(sdp).then((val) {
-      _logger.fine("(peerwrapper.dart) Setting remote description was success ${sdp.type}");
+      _logger.fine("Setting remote description was success ${sdp.type}");
       if (sdp.type == SDP_OFFER)
         _sendAnswer();
     })
     .catchError((e) {
-      _logger.severe("(peerwrapper.dart) setting remote description failed ${sdp.type} ${e} ${sdp.sdp}");
+      _logger.severe("setting remote description failed ${sdp.type} ${e} ${sdp.sdp}");
     });
-
-
-  }
+  }*/
 
   void addRemoteIceCandidate(RtcIceCandidate candidate) {
       if (candidate == null)
@@ -124,22 +130,11 @@ class TmpPeerConnection extends PeerConnection {
   }
 
   void _onIceCandidate(RtcIceCandidateEvent c) {
-
-    if (!Browser.isFirefox) {
-      if (c.candidate != null) {
-        _manager.getSignaler().sendIceCandidate(this, c.candidate);
-      } else {
-        _logger.severe("ICE Candidate null");
-      }
+    if (c.candidate != null) {
+      _manager.getSignaler().sendIceCandidate(this, c.candidate);
+    } else {
+      _logger.severe("ICE Candidate null");
     }
-  }
-
-  void _onIceChange(Event c) {
-    _logger.fine("(peerwrapper.dart) ICE Change ${c} (ice gathering state ${_peer.iceGatheringState}) (ice state ${_peer.iceConnectionState})");
-  }
-
-  void _onRTCError(String error) {
-    _logger.severe("(peerwrapper.dart) RTC ERROR : $error");
   }
 
   void _sendOffer() {
@@ -180,11 +175,7 @@ class TmpPeerConnection extends PeerConnection {
       _sendOffer();
   }
 
-  void _onStateChanged(Event e) {
-    if (_peer.signalingState == PEER_STABLE) {
 
-    }
-  }
 
   void _onNewDataChannelOpen(RtcDataChannelEvent e) {
     _logger.fine("--- Receiving incoming data channel");;

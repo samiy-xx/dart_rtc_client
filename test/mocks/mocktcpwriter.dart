@@ -1,6 +1,6 @@
 part of rtc_client_tests;
 
-class MockTcpWriter extends TCPDataWriter {
+class MockTcpWriter extends ByteWriter {
   bool sentData = false;
   int packetsSent = 0;
   List<ByteBuffer> buffers;

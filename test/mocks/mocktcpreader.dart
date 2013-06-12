@@ -1,6 +1,6 @@
 part of rtc_client_tests;
 
-class MockTcpReader extends TCPDataReader {
+class MockTcpReader extends ByteReader {
   int read = 0;
 
   MockTcpReader() : super(null) {

@@ -18,13 +18,11 @@ class ByteReader extends BinaryDataReader {
   set fileAsBuffer(bool v) => _fileAsBuffer = v;
 
   ByteReader(PeerConnection peer) : super(peer) {
-    _logger.finest("ByteReader created");
     _buffers = new List<ByteBuffer>();
     _blobs = new List<Blob>();
   }
 
   void readChunk(ByteBuffer buffer) {
-    _logger.finest("readChunk");
     int i = 0;
     if (!BinaryData.isValidTcp(buffer)) {
       _process_custom(buffer);

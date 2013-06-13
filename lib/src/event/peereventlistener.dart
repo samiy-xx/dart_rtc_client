@@ -40,12 +40,12 @@ abstract class PeerMediaEventListener extends PeerEventListener {
 /**
  * Interface for peer packet (datasource) related notifications
  */
-abstract class PeerPacketEventListener extends PeerEventListener {
+//abstract class PeerPacketEventListener extends PeerEventListener {
   /**
    * Packet needs to be sent
    */
-  void onPacketToSend(String p);
-}
+//  void onPacketToSend(String p);
+//}
 
 /**
  * Interface for DataChannel related stuff

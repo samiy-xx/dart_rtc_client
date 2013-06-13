@@ -215,11 +215,11 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
   /**
    * Signal handler should listen for event onPacketToSend so that this actually gets sent
    */
-  void _sendPacket(String p) {
-    listeners.where((l) => l is PeerPacketEventListener).forEach((PeerPacketEventListener l) {
-      l.onPacketToSend(p);
-    });
-  }
+  //void _sendPacket(String p) {
+  //  listeners.where((l) => l is PeerPacketEventListener).forEach((PeerPacketEventListener l) {
+  //    l.onPacketToSend(p);
+  //  });
+  //}
 
   /**
    * Closes all peer connections

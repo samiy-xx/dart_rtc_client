@@ -1,6 +1,6 @@
 part of rtc_client;
 
-class SimpleSignalHandler extends PacketHandler implements Signaler, PeerPacketEventListener, DataSourceConnectionEventListener {
+class SimpleSignalHandler extends PacketHandler implements Signaler, DataSourceConnectionEventListener {
   static final _logger = new Logger("dart_rtc_client.SimpleSignalHandler");
 
   StreamController<SignalingStateEvent> _signalingStateController;

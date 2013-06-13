@@ -101,11 +101,11 @@ abstract class PeerConnection extends GenericEventTarget<PeerEventListener>{
   }
 
   void _onIceChange(Event c) {
-    _logger.fine("(peerwrapper.dart) ICE Change ${c} (ice gathering state ${_peer.iceGatheringState}) (ice state ${_peer.iceConnectionState})");
+    _logger.fine("ICE Change ${c} (ice gathering state ${_peer.iceGatheringState}) (ice state ${_peer.iceConnectionState})");
   }
 
   void _onRTCError(String error) {
-    _logger.severe("(peerwrapper.dart) RTC ERROR : $error");
+    _logger.severe("RTC ERROR : $error");
   }
 
   void _onStateChanged(Event e) {

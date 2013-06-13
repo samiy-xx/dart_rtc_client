@@ -53,8 +53,6 @@ class PeerClient implements RtcClient,
    */
   String get myId => _myId;
 
-  bool get isChannelOwner => _signalHandler.isChannelOwner;
-
   StreamController<MediaStreamAvailableEvent> _mediaStreamAvailableStreamController;
   Stream<MediaStreamAvailableEvent> get onRemoteMediaStreamAvailableEvent  => _mediaStreamAvailableStreamController.stream;
 
@@ -204,7 +202,7 @@ class PeerClient implements RtcClient,
    */
   PeerClient setAutoCreatePeer(bool v) {
     _createPeerOnJoin = v;
-    _signalHandler.createPeerOnJoin = v;
+    //_signalHandler.createPeerOnJoin = v;
     return this;
   }
 
@@ -317,11 +315,11 @@ class PeerClient implements RtcClient,
    * Request the server that users gets kicked out of channel
    */
   /* Should not assume that signal handler supports this */
-  void disconnectUser(String id) {
+  /*void disconnectUser(String id) {
     if (isChannelOwner) {
       _signalHandler.send(PacketFactory.get(new RemoveUserCommand.With(id, _channelId)));
     }
-  }
+  }*/
 
   /**
    * Requests the server to transmit the message to all users in channel

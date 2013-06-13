@@ -134,7 +134,6 @@ class SctpPeerConnection extends PeerConnection {
   }
 
   void _setLocalAndSend(RtcSessionDescription sd) {
-    sd = Util.hackTheSdp(sd);
     _peer.setLocalDescription(sd).then((_) {
       _logger.fine("Setting local description was success");
       _manager.getSignaler().sendSessionDescription(this, sd);

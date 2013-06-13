@@ -46,3 +46,16 @@ class ServerChannelMessageEvent extends ServerEvent {
   ServerChannelMessageEvent(this.id, this.channel, this.message);
 }
 
+class ServerIceEvent extends ServerEvent {
+  String id;
+  RtcIceCandidate candidate;
+
+  ServerIceEvent(this.id, this.candidate);
+}
+
+class ServerSessionDescriptionEvent extends ServerEvent {
+  String id;
+  RtcSessionDescription description;
+
+  ServerSessionDescriptionEvent(this.id, this.description);
+}

@@ -146,8 +146,8 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
     //}
 
 
-    if (_setLocalStreamAtStart && _ms != null)
-      peer.addStream(_ms);
+    //if (_setLocalStreamAtStart && _ms != null)
+    //  peer.addStream(_ms);
 
     p.onAddStream.listen(onAddStream);
     p.onRemoveStream.listen(onRemoveStream);

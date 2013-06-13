@@ -27,7 +27,7 @@ class TmpPeerConnection extends PeerConnection {
 
   void setAsHost(bool value) {
     super.setAsHost(value);
-    initChannel();
+    //initChannel();
   }
 
   void initialize() {

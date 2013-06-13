@@ -8,6 +8,9 @@ abstract class Signaler {
   Stream<SignalingStateEvent> get onSignalingStateChanged;
   Stream<ServerEvent> get onServerEvent;
 
+  set channelId(String channelId);
+  String get channelId;
+
   void initialize();
   void send(String message);
   void close();
@@ -16,10 +19,7 @@ abstract class Signaler {
   void sendIceCandidate(PeerConnection pc, RtcIceCandidate candidate);
   void joinChannel(String id, String channelId);
   void changeId(String id, String newId);
-  set channelId(String channelId);
-  //void setDataChannelsEnabled(bool value);
-  bool get isChannelOwner;
-  set createPeerOnJoin(bool v);
+
   bool setChannelLimit(String id, String channelId, int l);
 }
 

@@ -48,6 +48,7 @@ part 'src/event/binaryevent.dart';
 part 'src/event/serverevent.dart';
 
 part 'src/signaling/signaler.dart';
+part 'src/signaling/simplesignalhandler.dart';
 part 'src/signaling/signalhandler.dart';
 part 'src/signaling/channelsignalhandler.dart';
 part 'src/signaling/streamingsignalhandler.dart';

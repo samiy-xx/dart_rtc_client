@@ -30,6 +30,8 @@ class PeerClient implements RtcClient,
   /* MediaStream from our own webcam etc... */
   MediaStream _ms = null;
 
+  bool _createPeerOnJoin = true;
+
   /* The channel we're in. TODO: We should support multiple channels? */
   String _channelId;
 
@@ -84,7 +86,7 @@ class PeerClient implements RtcClient,
     _peerManager = new PeerManager();
     _peerManager.subscribe(this);
 
-    _signalHandler = new StreamingSignalHandler(ds);
+    _signalHandler = new SimpleSignalHandler(ds);
     _peerManager.signaler = _signalHandler;
 
     _defaultGetUserMediaConstraints = new VideoConstraints();
@@ -201,6 +203,7 @@ class PeerClient implements RtcClient,
    * When ever a channel is joined.
    */
   PeerClient setAutoCreatePeer(bool v) {
+    _createPeerOnJoin = v;
     _signalHandler.createPeerOnJoin = v;
     return this;
   }
@@ -406,15 +409,38 @@ class PeerClient implements RtcClient,
     }
 
     else if (e is ServerParticipantJoinEvent) {
-      // TODO: Why do i even care about id's here
       ServerParticipantJoinEvent p = e;
-      //_otherId = p.id;
+      if (_createPeerOnJoin) {
+        PeerConnection pc = _peerManager.createPeer();
+        pc.id = p.id;
+        pc.channel = p.channel;
+        pc.setAsHost(true);
+
+        if (_defaultGetUserMediaConstraints.audio || _defaultGetUserMediaConstraints.video) {
+          MediaStream ms = peerManager.getLocalStream();
+          if (ms != null)
+            pc.addStream(ms);
+        }
+
+        if (_defaultPeerCreationConstraints.dataChannelEnabled) {
+          pc.initChannel();
+        }
+      }
     }
 
     else if (e is ServerParticipantIdEvent) {
-    // TODO: Why do i even care about id's here
       ServerParticipantIdEvent p = e;
-      //_otherId = p.id;
+      if (_createPeerOnJoin) {
+        PeerConnection pc = _peerManager.createPeer();
+        pc.id = p.id;
+        pc.channel = p.channel;
+
+        if (_defaultGetUserMediaConstraints.audio || _defaultGetUserMediaConstraints.video) {
+          MediaStream ms = peerManager.getLocalStream();
+          if (ms != null)
+            pc.addStream(ms);
+        }
+      }
     }
 
     else if (e is ServerParticipantLeftEvent) {
@@ -431,6 +457,20 @@ class PeerClient implements RtcClient,
 
     else if (e is ServerChannelMessageEvent) {
 
+    }
+
+    else if (e is ServerIceEvent) {
+      ServerIceEvent sie = e;
+      PeerConnection peer = _peerManager.findWrapper(sie.id);
+      if (peer != null)
+        peer.addRemoteIceCandidate(sie.candidate);
+    }
+
+    else if (e is ServerSessionDescriptionEvent) {
+      ServerSessionDescriptionEvent ssde = e;
+      PeerConnection peer = _peerManager.findWrapper(ssde.id);
+      if (peer != null)
+        peer.setRemoteSessionDescription(ssde.description);
     }
   }
 

@@ -70,12 +70,12 @@ abstract class RtcClient {
   /**
    * Sends an ArrayBuffer unreliably trough peer connection
    */
-  void sendArrayBufferUnReliable(String peerId, ByteBuffer data);
+  void sendByteBufferUnReliable(String peerId, ByteBuffer data);
 
   /**
    * Sends an ArrayBuffer reliably trough peer connection
    */
-  Future<int> sendArrayBufferReliable(String peerId, ByteBuffer data);
+  Future<int> sendByteBufferReliable(String peerId, ByteBuffer data);
 
   /**
    * Event that fires when a remote peer offers an video or audio stream

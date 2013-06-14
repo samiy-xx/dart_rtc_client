@@ -328,7 +328,6 @@ class PeerClient implements RtcClient,
     _signalHandler.send(PacketFactory.get(new ChannelMessage.With(_myId, _channelId, message)));
   }
 
-
   void sendString(String peerId, String message) {
     _getPeer(peerId).sendString(message);
   }
@@ -345,19 +344,19 @@ class PeerClient implements RtcClient,
     return sendBlob(peerId, f);
   }
 
-  /**
-   * Sends an arraybuffer to peer
-   */
-  Future<int> sendArrayBufferReliable(String peerId, ByteBuffer data) {
-    var peer = _getPeer(peerId);
-    return peer.sendBuffer(data, BINARY_TYPE_CUSTOM, true);
+  Future<int> sendByteBufferReliable(String peerId, ByteBuffer data) {
+    return sendByteBuffer(peerId, data, true);
   }
 
-  void sendArrayBufferUnReliable(String peerId, ByteBuffer data) {
+  void sendByteBufferUnReliable(String peerId, ByteBuffer data) {
     if (_peerManager.reliableDataChannels)
       throw new Exception("Can not send unreliable data with reliable channel");
+    sendByteBuffer(peerId, data, false);
+  }
+
+  Future<int> sendByteBuffer(String peerId, ByteBuffer data, bool reliable) {
     var peer = _getPeer(peerId);
-    peer.sendBuffer(data, BINARY_TYPE_CUSTOM, false);
+    return peer.sendBuffer(data, BINARY_TYPE_CUSTOM, reliable);
   }
 
   PeerConnection _getPeer(String peerId) {

@@ -9,8 +9,8 @@ class SctpPeerConnection extends PeerConnection {
   BlobReader _blobReader;
   BlobWriter _blobWriter;
 
-  ByteReader _tcpReader;
-  ByteWriter _tcpWriter;
+  ByteReader _byteReader;
+  ByteWriter _byteWriter;
 
   StringReader _stringReader;
   StringWriter _stringWriter;
@@ -19,8 +19,8 @@ class SctpPeerConnection extends PeerConnection {
     _blobReader = new BlobReader(this);
     _blobWriter = new BlobWriter(this);
 
-    _tcpReader = new ByteReader(this);
-    _tcpWriter = new ByteWriter(this);
+    _byteReader = new ByteReader(this);
+    _byteWriter = new ByteWriter(this);
 
     _stringReader = new StringReader(this);
     _stringWriter = new StringWriter(this);
@@ -59,8 +59,8 @@ class SctpPeerConnection extends PeerConnection {
     _stringReader.setChannel(_stringChannel);
 
     _byteChannel = createByteBufferChannel(PeerConnection.BYTE_CHANNEL, {});
-    _tcpWriter.dataChannel = _byteChannel;
-    _tcpReader.dataChannel = _byteChannel;
+    _byteWriter.dataChannel = _byteChannel;
+    _byteReader.dataChannel = _byteChannel;
 
     _blobChannel = createBlobChannel(PeerConnection.BLOB_CHANNEL, {});
     _blobWriter.setChannel(_blobChannel);
@@ -80,7 +80,7 @@ class SctpPeerConnection extends PeerConnection {
   }
 
   Future<int> sendBuffer(ByteBuffer buffer, int packetType, bool reliable) {
-    return _tcpWriter.send(buffer, packetType, reliable);
+    return _byteWriter.send(buffer, packetType, reliable);
   }
 
   void close() {
@@ -92,13 +92,13 @@ class SctpPeerConnection extends PeerConnection {
 
   void subscribeToReaders(BinaryDataEventListener l) {
     _blobReader.subscribe(l);
-    _tcpReader.subscribe(l);
+    _byteReader.subscribe(l);
     _stringReader.subscribe(l);
   }
 
   void subscribeToWriters(BinaryDataEventListener l) {
     _blobWriter.subscribe(l);
-    _tcpWriter.subscribe(l);
+    _byteWriter.subscribe(l);
     _stringWriter.subscribe(l);
   }
 
@@ -149,8 +149,8 @@ class SctpPeerConnection extends PeerConnection {
     if (channel.label == PeerConnection.BYTE_CHANNEL) {
       _byteChannel = channel;
       _byteChannel.binaryType = "arraybuffer";
-      _tcpWriter.dataChannel = _byteChannel;
-      _tcpReader.dataChannel = _byteChannel;
+      _byteWriter.dataChannel = _byteChannel;
+      _byteReader.dataChannel = _byteChannel;
     } else if (channel.label == PeerConnection.BLOB_CHANNEL) {
       _blobChannel = channel;
       _blobWriter.setChannel(_blobChannel);

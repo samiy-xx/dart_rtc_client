@@ -236,30 +236,30 @@ class PeerClient implements RtcClient,
    * Clears all Stun and Turn server entries.
    */
   void clearStun() {
-    _peerManager._serverConstraints.clear();
+    _peerManager._stunEntries.clear();
   }
 
   /**
    * Creates a Stun server entry and adds it to the peermanager
    */
-  StunServer createStunEntry(String address, String port) {
-    StunServer ss = new StunServer();
+  StunEntry createStunEntry(String address, String port) {
+    StunEntry ss = new StunEntry();
     ss.setAddress(address);
     ss.setPort(port);
-    _peerManager._serverConstraints.addStun(ss);
+    _peerManager._stunEntries.addStun(ss);
     return ss;
   }
 
   /**
    * Creates a Turn server entry and adds it to the peermanager
    */
-  TurnServer createTurnEntry(String address, String port, String userName, String password) {
-    TurnServer ts = new TurnServer();
+  TurnEntry createTurnEntry(String address, String port, String userName, String password) {
+    TurnEntry ts = new TurnEntry();
     ts.setAddress(address);
     ts.setPort(port);
     ts.setUserName(userName);
     ts.setPassword(password);
-    _peerManager._serverConstraints.addTurn(ts);
+    _peerManager._stunEntries.addTurn(ts);
     return ts;
   }
 

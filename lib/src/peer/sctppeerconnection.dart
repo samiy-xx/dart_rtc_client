@@ -81,7 +81,8 @@ class SctpPeerConnection extends PeerConnection {
     _blobReader.setChannel(_blobChannel);
 
     _unreliableChannel = createByteBufferChannel(PeerConnection.UNRELIABLE_BYTE_CHANNEL ,
-        {'outOfOrderAllowed': true, 'maxRetransmitNum': 0}
+        {'ordered': false, 'maxRetransmits': 0}
+    // ordered, maxRetransmitTime, maxRetransmits, protocol, negotiated
     );
     _unreliableByteWriter.dataChannel = _unreliableChannel;
     _unreliableByteReader.dataChannel = _unreliableChannel;

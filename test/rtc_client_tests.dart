@@ -28,10 +28,14 @@ part 'tests/tcpreadertests.dart';
 part 'tests/udpwritertests.dart';
 part 'tests/tcpwritertests.dart';
 part 'tests/testutils.dart';
+part 'tests/constraintstests.dart';
+part 'tests/stuntests.dart';
 
 void run() {
   setLogging();
   useHtmlEnhancedConfiguration();
+  new StunTests.run();
+  new ConstraintTests.run();
   new BinaryTests().run();
   //new RoundTripTimerTests().run();
   new SequencerTests().run();

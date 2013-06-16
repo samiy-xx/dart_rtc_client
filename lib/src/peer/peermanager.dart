@@ -15,7 +15,7 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
   Signaler get signaler => _signaler;
   PeerConstraints _peerConstraints;
   StreamConstraints _streamConstraints;
-  ServerConstraints _serverConstraints;
+  StunEntries _stunEntries;
 
   set setLocalStreamAtStart(bool v) => _setLocalStreamAtStart = v;
   set localMediaStream(MediaStream lms) => setLocalStream(lms);
@@ -37,13 +37,14 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
     _peers = new List<PeerConnection>();
     _streamConstraints = new StreamConstraints();
     _peerConstraints = new PeerConstraints();
-    _serverConstraints = new ServerConstraints();
-    _serverConstraints.addStun(new StunServer());
+    _stunEntries = new StunEntries();
+    _stunEntries.addStun(new StunEntry.google());
   }
 
   Signaler getSignaler() {
     return _signaler;
   }
+
   /**
    * Convenience method
    * Sets the max bit rate to stream constraints
@@ -85,7 +86,7 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
     try {
       wrapper = _createWrapper(
           new RtcPeerConnection(
-              _serverConstraints.toMap(),
+              _stunEntries.toMap(),
               _peerConstraints.toMap()
           )
       );

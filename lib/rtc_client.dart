@@ -58,15 +58,20 @@ part 'src/util/constraints.dart';
 part 'src/util/peerconstraints.dart';
 part 'src/util/streamconstraints.dart';
 part 'src/util/videoconstraints.dart';
-part 'src/util/serverconstraints.dart';
+part 'src/util/stunentries.dart';
 part 'src/util/util.dart';
 part 'src/util/browser.dart';
+part 'src/util/stunentry.dart';
+part 'src/util/turnentry.dart';
+part 'src/util/str.dart';
+
 part 'src/datasource/datasource.dart';
 part 'src/datasource/websocketdatasource.dart';
 
 part 'src/exception/notimplementedexception.dart';
 part 'src/exception/wrapperexceptions.dart';
 part 'src/exception/datachannelexceptions.dart';
+part 'src/exception/configurationexceptions.dart';
 
 part 'api/rtcclient.dart';
 part 'api/peerclient.dart';

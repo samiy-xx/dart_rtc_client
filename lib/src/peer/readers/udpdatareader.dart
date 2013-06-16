@@ -6,7 +6,8 @@ class UDPDataReader extends BinaryDataReader {
   bool _fileAsBuffer = false;
   set fileAsBuffer(bool v) => _fileAsBuffer = v;
   Sequencer _sequencer;
-
+  UDPDataWriter _writer;
+  set writer(UDPDataWriter v) => _writer = v;
   int _totalRead = 0;
   int _currentChunkContentLength;
   int _contentTotalLength;
@@ -253,7 +254,7 @@ class UDPDataReader extends BinaryDataReader {
         //print("Timeout. writing acks ${_ackBuffer.acks.length}");
         _ackBuffer.clear();
         if (_peer != null)
-          _peer.binaryWriter.sendAck(ack);
+          _writer.sendAck(ack);
 
       }
     });
@@ -263,7 +264,7 @@ class UDPDataReader extends BinaryDataReader {
     //print("writing acks ${_ackBuffer.acks.length}");
     _ackBuffer.clear();
     if (_peer != null)
-      _peer.binaryWriter.sendAck(ack);
+      _writer.sendAck(ack);
   }
 
   void _cancelMonitor() {
@@ -303,7 +304,7 @@ class UDPDataReader extends BinaryDataReader {
     for (int i = 0; i < sequenceCount; i++) {
       int sequence = byteData.getUint32(i * SIZEOF32);
       _signalSendSuccess(signature, sequence);
-      _peer.binaryWriter.receiveAck(signature, sequence);
+      _writer.receiveAck(signature, sequence);
     }
   }
 

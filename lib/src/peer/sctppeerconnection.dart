@@ -4,6 +4,7 @@ class SctpPeerConnection extends PeerConnection {
   static final _logger = new Logger("dart_rtc_client.SctpPeerConnection");
   RtcDataChannel _stringChannel;
   RtcDataChannel _byteChannel;
+  RtcDataChannel _unreliableChannel;
   RtcDataChannel _blobChannel;
 
   BlobReader _blobReader;
@@ -11,6 +12,9 @@ class SctpPeerConnection extends PeerConnection {
 
   ByteReader _byteReader;
   ByteWriter _byteWriter;
+
+  UDPDataReader _unreliableByteReader;
+  UDPDataWriter _unreliableByteWriter;
 
   StringReader _stringReader;
   StringWriter _stringWriter;
@@ -24,6 +28,10 @@ class SctpPeerConnection extends PeerConnection {
 
     _stringReader = new StringReader(this);
     _stringWriter = new StringWriter(this);
+
+    _unreliableByteReader = new UDPDataReader(this);
+    _unreliableByteWriter = new UDPDataWriter(this);
+    _unreliableByteReader.writer = _unreliableByteWriter;
   }
 
   void setAsHost(bool value) {
@@ -54,17 +62,29 @@ class SctpPeerConnection extends PeerConnection {
   }
 
   void initChannel() {
-    _stringChannel = createStringChannel(PeerConnection.STRING_CHANNEL, {});
+    _stringChannel = createStringChannel(PeerConnection.STRING_CHANNEL,
+        {}
+    );
     _stringWriter.setChannel(_stringChannel);
     _stringReader.setChannel(_stringChannel);
 
-    _byteChannel = createByteBufferChannel(PeerConnection.BYTE_CHANNEL, {});
+    _byteChannel = createByteBufferChannel(PeerConnection.RELIABLE_BYTE_CHANNEL,
+        {}
+    );
     _byteWriter.dataChannel = _byteChannel;
     _byteReader.dataChannel = _byteChannel;
 
-    _blobChannel = createBlobChannel(PeerConnection.BLOB_CHANNEL, {});
+    _blobChannel = createBlobChannel(PeerConnection.BLOB_CHANNEL,
+        {}
+    );
     _blobWriter.setChannel(_blobChannel);
     _blobReader.setChannel(_blobChannel);
+
+    _unreliableChannel = createByteBufferChannel(PeerConnection.UNRELIABLE_BYTE_CHANNEL ,
+        {'outOfOrderAllowed': true, 'maxRetransmitNum': 0}
+    );
+    _unreliableByteWriter.dataChannel = _unreliableChannel;
+    _unreliableByteReader.dataChannel = _unreliableChannel;
   }
 
   void sendString(String s) {
@@ -80,7 +100,10 @@ class SctpPeerConnection extends PeerConnection {
   }
 
   Future<int> sendBuffer(ByteBuffer buffer, int packetType, bool reliable) {
-    return _byteWriter.send(buffer, packetType, reliable);
+    if (reliable)
+      return _byteWriter.send(buffer, packetType, reliable);
+    else
+      return _unreliableByteWriter.send(buffer, packetType, reliable);
   }
 
   void close() {
@@ -94,12 +117,14 @@ class SctpPeerConnection extends PeerConnection {
     _blobReader.subscribe(l);
     _byteReader.subscribe(l);
     _stringReader.subscribe(l);
+    _unreliableByteReader.subscribe(l);
   }
 
   void subscribeToWriters(BinaryDataEventListener l) {
     _blobWriter.subscribe(l);
     _byteWriter.subscribe(l);
     _stringWriter.subscribe(l);
+    _unreliableByteWriter.subscribe(l);
   }
 
   void _onIceCandidate(RtcIceCandidateEvent c) {
@@ -146,11 +171,16 @@ class SctpPeerConnection extends PeerConnection {
     super._onNewDataChannelOpen(e);
     var channel = e.channel;
 
-    if (channel.label == PeerConnection.BYTE_CHANNEL) {
+    if (channel.label == PeerConnection.RELIABLE_BYTE_CHANNEL) {
       _byteChannel = channel;
       _byteChannel.binaryType = "arraybuffer";
       _byteWriter.dataChannel = _byteChannel;
       _byteReader.dataChannel = _byteChannel;
+    } else if (channel.label == PeerConnection.UNRELIABLE_BYTE_CHANNEL) {
+      _unreliableChannel = channel;
+      _byteChannel.binaryType = "arraybuffer";
+      _unreliableByteReader.dataChannel = _unreliableChannel;
+      _unreliableByteWriter.dataChannel = _unreliableChannel;
     } else if (channel.label == PeerConnection.BLOB_CHANNEL) {
       _blobChannel = channel;
       _blobWriter.setChannel(_blobChannel);

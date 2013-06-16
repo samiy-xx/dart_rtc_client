@@ -23,6 +23,7 @@ class TmpPeerConnection extends PeerConnection {
     _ices = new List<dynamic>();
     _binaryWriter = new UDPDataWriter(this);
     _binaryReader = new UDPDataReader(this);
+    _binaryReader.writer = _binaryWriter;
   }
 
   void setAsHost(bool value) {

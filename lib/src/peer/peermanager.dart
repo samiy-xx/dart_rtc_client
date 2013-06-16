@@ -5,29 +5,11 @@ part of rtc_client;
  */
 class PeerManager extends GenericEventTarget<PeerEventListener> {
   static PeerManager _instance;
-
   static final _logger = new Logger("dart_rtc_client.PeerManager");
-
-  /*
-   * Add local stream to peer connections when created
-   */
   bool _setLocalStreamAtStart = false;
-
-  /*
-   * false = udp, true = tcp
-  */
   bool _reliableDataChannels = false;
-
-  /*
-   * Local media stream from webcam/microphone
-  */
   MediaStream _ms;
-
-  /*
-   * Created peerwrapper
-   */
   List<PeerConnection> _peers;
-
   Signaler _signaler;
   set signaler(Signaler s) => _signaler = s;
   Signaler get signaler => _signaler;
@@ -35,34 +17,16 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
   StreamConstraints _streamConstraints;
   ServerConstraints _serverConstraints;
 
-  /** Add local stream to peer connections when created */
   set setLocalStreamAtStart(bool v) => _setLocalStreamAtStart = v;
-
-  /**
-   * Sets the local media stream
-   */
   set localMediaStream(MediaStream lms) => setLocalStream(lms);
-
-  /**
-   * Returns the local media stream
-   */
   MediaStream get localMediaStream => getLocalStream();
-
-  /**
-   * Set data channels enabled or disabled for all peers created
-   */
   set dataChannelsEnabled(bool value) => _peerConstraints.dataChannelEnabled = value;
-
-  /**
-   * Set data channels reliable = tcp or unreliable = udp
-   */
   set reliableDataChannels(bool value) => _reliableDataChannels = value;
   bool get reliableDataChannels => _reliableDataChannels;
 
   factory PeerManager() {
     if (_instance == null)
       _instance = new PeerManager._internal();
-
     return _instance;
   }
 
@@ -140,14 +104,6 @@ class PeerManager extends GenericEventTarget<PeerEventListener> {
    */
   PeerConnection _createWrapper(RtcPeerConnection p) {
     PeerConnection peer = new PeerConnection.create(this, p);
-    //if (_peerConstraints.dataChannelEnabled) {
-    //  peer.isReliable = _reliableDataChannels;
-    //
-    //}
-
-
-    //if (_setLocalStreamAtStart && _ms != null)
-    //  peer.addStream(_ms);
 
     p.onAddStream.listen(onAddStream);
     p.onRemoveStream.listen(onRemoveStream);

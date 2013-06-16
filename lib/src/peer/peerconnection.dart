@@ -6,8 +6,8 @@ abstract class PeerConnection extends GenericEventTarget<PeerEventListener>{
   static const String SDP_ANSWER = 'answer';
   static const String STRING_CHANNEL = "string_channel";
   static const String BLOB_CHANNEL = "blob_channel";
-  static const String BYTE_CHANNEL = "byte_channel";
-
+  static const String RELIABLE_BYTE_CHANNEL = "reliable_byte_channel";
+  static const String UNRELIABLE_BYTE_CHANNEL = "unreliable_byte_channel";
   final RtcPeerConnection _peer;
   final PeerManager _manager;
 

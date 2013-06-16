@@ -146,7 +146,7 @@ class ChromeSctpPeerConnection extends PeerConnection {
     super._onNewDataChannelOpen(e);
     var channel = e.channel;
 
-    if (channel.label == PeerConnection.BYTE_CHANNEL) {
+    if (channel.label == PeerConnection.RELIABLE_BYTE_CHANNEL) {
       _byteChannel = channel;
       _byteChannel.binaryType = "arraybuffer";
       _byteWriter.dataChannel = _byteChannel;

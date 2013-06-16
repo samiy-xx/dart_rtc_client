@@ -1,6 +1,6 @@
 part of rtc_client;
 
-class BlobWriter extends GenericEventTarget<BinaryDataEventListener>{
+class BlobWriter extends DataWriter {
   static final _logger = new Logger("dart_rtc_client.BlobWriter");
   static const int MAX_CHUNK_SIZE = 1024 * 50;
   final PeerConnection _peerConnection;

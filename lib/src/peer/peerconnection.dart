@@ -28,6 +28,7 @@ abstract class PeerConnection extends GenericEventTarget<PeerEventListener>{
       pc = new SctpPeerConnection(pm, rpc);
     } else {
       pc = new TmpPeerConnection(pm, rpc);
+      //pc = new ChromeSctpPeerConnection(pm, rpc);
     }
     return pc;
   }

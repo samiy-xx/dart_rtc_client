@@ -80,12 +80,12 @@ abstract class RtcClient {
   /**
    * Event that fires when a remote peer offers an video or audio stream
    */
-  Stream<MediaStreamAvailableEvent> get onRemoteMediaStreamAvailableEvent;
+  Stream<MediaStreamAvailableEvent> get onMediaStreamAvailableEvent;
 
   /**
    * Event that fires when a remote peer removes the video or audio stream
    */
-  Stream<MediaStreamRemovedEvent> get onRemoteMediaStreamRemovedEvent;
+  Stream<MediaStreamRemovedEvent> get onMediaStreamRemovedEvent;
 
   /**
    * Event fires when signalhandler is ready

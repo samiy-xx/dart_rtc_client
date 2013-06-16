@@ -1,6 +1,6 @@
 part of rtc_client;
 
-class BlobReader extends GenericEventTarget<BinaryDataEventListener> {
+class BlobReader extends DataReader {
   static final _logger = new Logger("dart_rtc_client.BlobReader");
   final PeerConnection _peerConnection;
   RtcDataChannel _channel;

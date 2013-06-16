@@ -54,10 +54,10 @@ class PeerClient implements RtcClient,
   String get myId => _myId;
 
   StreamController<MediaStreamAvailableEvent> _mediaStreamAvailableStreamController;
-  Stream<MediaStreamAvailableEvent> get onRemoteMediaStreamAvailableEvent  => _mediaStreamAvailableStreamController.stream;
+  Stream<MediaStreamAvailableEvent> get onMediaStreamAvailableEvent  => _mediaStreamAvailableStreamController.stream;
 
   StreamController<MediaStreamRemovedEvent> _mediaStreamRemovedStreamController;
-  Stream<MediaStreamRemovedEvent> get onRemoteMediaStreamRemovedEvent  => _mediaStreamRemovedStreamController.stream;
+  Stream<MediaStreamRemovedEvent> get onMediaStreamRemovedEvent  => _mediaStreamRemovedStreamController.stream;
 
   StreamController<InitializationStateEvent> _initializedController;
   Stream<InitializationStateEvent> get onInitializationStateChangeEvent => _initializedController.stream;
@@ -390,7 +390,8 @@ class PeerClient implements RtcClient,
   }
 
   void _signalingEventHandler(SignalingStateEvent e) {
-    _logger.fine("Signaling event $e");
+
+    _logger.fine("Signaling event ${e.state}");
     if (e is SignalingReadyEvent) {
       SignalingReadyEvent p = e;
       _myId = p.id;

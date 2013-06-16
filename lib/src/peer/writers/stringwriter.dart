@@ -1,6 +1,6 @@
 part of rtc_client;
 
-class StringWriter extends GenericEventTarget<BinaryDataEventListener>{
+class StringWriter extends DataWriter {
   static final _logger = new Logger("dart_rtc_client.StringWriter");
   final PeerConnection _peerConnection;
   RtcDataChannel _channel;

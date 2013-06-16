@@ -14,19 +14,23 @@ import 'package:dart_rtc_common/rtc_common.dart';
 part 'src/peer/peermanager.dart';
 part 'src/peer/peerconnection.dart';
 part 'src/peer/sctppeerconnection.dart';
+part 'src/peer/chromesctppeerconnection.dart';
 part 'src/peer/tmppeerconnection.dart';
+part 'src/peer/datachannelcontainer.dart';
 part 'src/peer/binarydata.dart';
 part 'src/peer/binaryreadstate.dart';
 part 'src/peer/rtt.dart';
 part 'src/peer/peerstate.dart';
 part 'src/peer/sequencer.dart';
 
+part 'src/peer/readers/datareader.dart';
 part 'src/peer/readers/binarydatareader.dart';
 part 'src/peer/readers/udpdatareader.dart';
 part 'src/peer/readers/bytebufferreader.dart';
 part 'src/peer/readers/blobreader.dart';
 part 'src/peer/readers/stringreader.dart';
 
+part 'src/peer/writers/datawriter.dart';
 part 'src/peer/writers/binarydatawriter.dart';
 part 'src/peer/writers/bytebufferwriter.dart';
 part 'src/peer/writers/udpdatawriter.dart';
@@ -62,6 +66,7 @@ part 'src/datasource/websocketdatasource.dart';
 
 part 'src/exception/notimplementedexception.dart';
 part 'src/exception/wrapperexceptions.dart';
+part 'src/exception/datachannelexceptions.dart';
 
 part 'api/rtcclient.dart';
 part 'api/peerclient.dart';

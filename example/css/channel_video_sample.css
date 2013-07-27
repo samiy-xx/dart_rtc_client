@@ -1,0 +1,33 @@
+body {
+  margin: 0px;
+  padding: 0px;  
+  text-align:center;
+  background: #000;
+}
+
+#aux {
+  position: absolute;  
+  bottom: 0px;
+  left: 0px;
+  height: 100px;
+  width: 100%;
+  background: #fff;
+}
+
+.linkarea  {
+  position: relative;
+  height: 20px;
+  background: #ddd;
+  text-align: center;
+}
+
+.auxvideos {
+  position: relative;
+  height: 80px;
+  text-align: center;
+}
+
+video {
+  display: inline-block;
+  opacity:1.0;
+}

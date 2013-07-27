@@ -3,7 +3,8 @@ version: 0.2.0
 author: Sami Ylonen <sami.ylonen@gmail.com>
 description: A Dart WebRTC Client library
 dependencies:
-  unittest: 0.5.5
-  logging_handlers: 0.5.0+2
+  browser: any
   dart_rtc_common:
     git: git://github.com/samiy-xx/dart_rtc_common.git
+  logging_handlers: 0.5.0+2
+  unittest: 0.5.5

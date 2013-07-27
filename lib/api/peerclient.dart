@@ -108,8 +108,8 @@ class PeerClient implements RtcClient,
   /**
    * Initializes client and tells signalhandler to connect.
    */
-  void initialize([VideoConstraints constraints]) {
-    VideoConstraints con = ?constraints ? constraints : _defaultGetUserMediaConstraints;
+  void initialize() {
+    VideoConstraints con = _defaultGetUserMediaConstraints;
     if (!con.audio && !con.video && !_defaultPeerCreationConstraints.dataChannelEnabled)
       throw new Exception("Must require either video, audio or data channel");
 

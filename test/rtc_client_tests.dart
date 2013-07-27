@@ -34,8 +34,8 @@ part 'tests/stuntests.dart';
 void run() {
   setLogging();
   useHtmlEnhancedConfiguration();
-  new StunTests.run();
-  new ConstraintTests.run();
+  //new StunTests.run();
+  //new ConstraintTests.run();
   new BinaryTests().run();
   //new RoundTripTimerTests().run();
   new SequencerTests().run();

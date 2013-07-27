@@ -81,7 +81,7 @@ class UDPReaderTests implements BinaryDataReceivedEventListener {
     print("creating $totalSequences sequences");
     while (read < buffer.lengthInBytes) {
       int toRead = leftToRead > 800 ? 800 : leftToRead;
-      ByteBuffer toAdd = new Uint8List.fromList(new Uint8List.view(buffer).sublist(read, read+toRead));
+      ByteBuffer toAdd = new Uint8List.fromList(new Uint8List.view(buffer).sublist(read, read+toRead)).buffer;
       ByteBuffer b = addUdpHeader(
           //buffer.slice(read, read + toRead),
           toAdd,

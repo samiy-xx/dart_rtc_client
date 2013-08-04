@@ -54,8 +54,7 @@ class SimpleSignalHandler extends PacketHandler implements Signaler, DataSourceC
   }
 
   void onDataSourceError(String e) {
-    // TODO: Do something?
-    _logger.severe("Error $e");
+    _logger.severe("Error: Failed to connect");
   }
 
   void onOpenDataSource(String m) {

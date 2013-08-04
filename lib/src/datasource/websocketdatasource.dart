@@ -5,6 +5,7 @@ part of rtc_client;
  * Extends GenericEventTarget for dispatching events
  */
 class WebSocketDataSource extends GenericEventTarget<DataSourceEventListener> implements DataSource {
+  static final _logger = new Logger("dart_rtc_client.WebSocketDataSource");
   /* Where do we connect */
   String _connectionString;
 

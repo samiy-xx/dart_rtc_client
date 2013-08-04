@@ -5,6 +5,7 @@ part of rtc_client;
  * using this.
  */
 class DcPc {
+  static final _logger = new Logger("dart_rtc_client.DcPc");
   Signaler _signalHandler;
   PeerManager _peerManager;
   DataSource _ds;
@@ -22,6 +23,7 @@ class DcPc {
         _signalHandler = new SimpleSignalHandler(ds);
     }
     _setupListeners();
+    _logger.fine("Initialized");
   }
 
   PeerConnection createPeerConnection(String id) {

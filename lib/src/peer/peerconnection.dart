@@ -27,8 +27,8 @@ abstract class PeerConnection extends GenericEventTarget<PeerEventListener>{
     if (Browser.isFirefox) {
       pc = new SctpPeerConnection(pm, rpc);
     } else {
-      pc = new TmpPeerConnection(pm, rpc);
-      //pc = new ChromeSctpPeerConnection(pm, rpc);
+      //pc = new TmpPeerConnection(pm, rpc);
+      pc = new ChromeSctpPeerConnection(pm, rpc);
     }
     return pc;
   }

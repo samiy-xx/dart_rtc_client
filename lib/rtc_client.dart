@@ -75,6 +75,7 @@ part 'src/exception/configurationexceptions.dart';
 
 part 'api/rtcclient.dart';
 part 'api/peerclient.dart';
+part 'api/dcpc.dart';
 
 final Logger libLogger = new Logger("dart_rtc_client");
 

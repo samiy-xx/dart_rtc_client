@@ -54,17 +54,17 @@ class ChromeSctpPeerConnection extends PeerConnection {
   }
 
   void initChannel() {
-    _stringChannel = createStringChannel(PeerConnection.STRING_CHANNEL, { 'reliable':false });
+    _stringChannel = createStringChannel(PeerConnection.STRING_CHANNEL, {});
     _stringWriter.setChannel(_stringChannel);
     _stringReader.setChannel(_stringChannel);
 
-    //_byteChannel = createByteBufferChannel(PeerConnection.BYTE_CHANNEL, {});
-    //_byteWriter.dataChannel = _byteChannel;
-    //_byteReader.dataChannel = _byteChannel;
+    _byteChannel = createByteBufferChannel(PeerConnection.UNRELIABLE_BYTE_CHANNEL, {});
+    _byteWriter.dataChannel = _byteChannel;
+    _byteReader.dataChannel = _byteChannel;
 
-    //_blobChannel = createBlobChannel(PeerConnection.BLOB_CHANNEL, {});
-    //_blobWriter.setChannel(_blobChannel);
-    //_blobReader.setChannel(_blobChannel);
+    _blobChannel = createBlobChannel(PeerConnection.BLOB_CHANNEL, {});
+    _blobWriter.setChannel(_blobChannel);
+    _blobReader.setChannel(_blobChannel);
   }
 
   void sendString(String s) {
